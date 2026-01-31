@@ -1,0 +1,302 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Wood Theme CSS Variables */
+    --color-wood-primary: 139 69 19;
+    --color-wood-secondary: 210 105 30;
+    --color-wood-light: 245 222 179;
+    --color-wood-dark: 93 58 26;
+    --color-wood-cream: 255 248 220;
+    --color-wood-accent: 205 133 63;
+    --color-gold: 201 162 39;
+
+    /* Spacing */
+    --header-height: 80px;
+    --topbar-height: 40px;
+    --sidebar-width: 280px;
+    --container-max: 1280px;
+
+    /* Transitions */
+    --transition-fast: 150ms;
+    --transition-normal: 300ms;
+    --transition-slow: 500ms;
+
+    /* Border Radius */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-full: 9999px;
+  }
+
+  /* Base styles */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-wood-cream text-wood-dark font-body antialiased;
+  }
+
+  /* RTL Support */
+  [dir="rtl"] {
+    font-family: "Noto Sans Arabic", "Inter", system-ui, sans-serif;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold text-wood-dark;
+  }
+
+  [dir="rtl"] h1,
+  [dir="rtl"] h2,
+  [dir="rtl"] h3,
+  [dir="rtl"] h4,
+  [dir="rtl"] h5,
+  [dir="rtl"] h6 {
+    @apply font-arabic;
+  }
+
+  /* Links */
+  a {
+    @apply transition-colors duration-200;
+  }
+
+  /* Focus styles */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-wood-primary ring-offset-2;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-wood-primary text-white;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-wood-light;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-wood-muted rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-wood-primary;
+  }
+}
+
+@layer components {
+  /* Container */
+  .container-custom {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Section Padding */
+  .section-padding {
+    @apply py-16 md:py-20 lg:py-24;
+  }
+
+  /* Card Base */
+  .card {
+    @apply bg-white rounded-xl shadow-wood border border-wood-light/50 overflow-hidden;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-300 hover:shadow-wood-lg hover:-translate-y-1;
+  }
+
+  /* Button Base */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-wood-gradient text-white hover:opacity-90 focus:ring-wood-primary;
+  }
+
+  .btn-secondary {
+    @apply btn bg-wood-light text-wood-dark hover:bg-wood-accent hover:text-white focus:ring-wood-accent;
+  }
+
+  .btn-outline {
+    @apply btn border-2 border-wood-primary text-wood-primary hover:bg-wood-primary hover:text-white focus:ring-wood-primary;
+  }
+
+  .btn-gold {
+    @apply btn bg-gold-gradient text-wood-dark hover:opacity-90 focus:ring-gold;
+  }
+
+  .btn-ghost {
+    @apply btn text-wood-primary hover:bg-wood-light focus:ring-wood-primary;
+  }
+
+  /* Size variants */
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm rounded-md;
+  }
+
+  .btn-md {
+    @apply px-5 py-2.5 text-base rounded-lg;
+  }
+
+  .btn-lg {
+    @apply px-7 py-3.5 text-lg rounded-xl;
+  }
+
+  .btn-icon {
+    @apply p-2.5 rounded-lg;
+  }
+
+  /* Input Base */
+  .input {
+    @apply w-full px-4 py-3 bg-white border border-wood-light rounded-lg
+           text-wood-dark placeholder:text-wood-muted
+           focus:border-wood-primary focus:ring-2 focus:ring-wood-primary/20
+           transition-all duration-200;
+  }
+
+  .input-error {
+    @apply border-error focus:border-error focus:ring-error/20;
+  }
+
+  /* Label */
+  .label {
+    @apply block text-sm font-medium text-wood-dark mb-1.5;
+  }
+
+  /* Form Error */
+  .form-error {
+    @apply text-sm text-error mt-1;
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-wood {
+    @apply badge bg-wood-light text-wood-primary;
+  }
+
+  .badge-gold {
+    @apply badge bg-gold-light text-gold-dark;
+  }
+
+  .badge-success {
+    @apply badge bg-success-light text-success-dark;
+  }
+
+  .badge-error {
+    @apply badge bg-error-light text-error-dark;
+  }
+
+  .badge-warning {
+    @apply badge bg-warning-light text-warning-dark;
+  }
+
+  /* Skeleton loading */
+  .skeleton {
+    @apply animate-pulse bg-wood-light rounded;
+  }
+
+  .skeleton-shimmer {
+    @apply bg-gradient-to-r from-wood-light via-wood-cream to-wood-light bg-[length:200%_100%] animate-shimmer;
+  }
+
+  /* Section Title */
+  .section-title {
+    @apply text-heading-2 md:text-heading-1 font-heading font-bold text-wood-dark mb-4;
+  }
+
+  .section-subtitle {
+    @apply text-body-lg text-wood-muted max-w-2xl;
+  }
+
+  /* Divider */
+  .divider {
+    @apply border-t border-wood-light;
+  }
+
+  .divider-gold {
+    @apply h-1 w-20 bg-gold-gradient rounded-full;
+  }
+}
+
+@layer utilities {
+  /* RTL utilities */
+  .rtl-flip {
+    @apply rtl:scale-x-[-1];
+  }
+
+  .rtl-space-flip > * {
+    @apply rtl:mr-0 rtl:ml-2;
+  }
+
+  /* Text balance */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Hide scrollbar */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Glass effect */
+  .glass {
+    @apply bg-white/80 backdrop-blur-md;
+  }
+
+  .glass-dark {
+    @apply bg-wood-dark/80 backdrop-blur-md;
+  }
+
+  /* Text gradient */
+  .text-gradient-wood {
+    @apply bg-wood-gradient bg-clip-text text-transparent;
+  }
+
+  .text-gradient-gold {
+    @apply bg-gold-gradient bg-clip-text text-transparent;
+  }
+
+  /* Aspect ratios */
+  .aspect-product {
+    aspect-ratio: 3/4;
+  }
+
+  .aspect-project {
+    aspect-ratio: 4/3;
+  }
+
+  .aspect-hero {
+    aspect-ratio: 16/9;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

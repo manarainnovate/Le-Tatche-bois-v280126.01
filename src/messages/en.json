@@ -1,0 +1,250 @@
+{
+  "common": {
+    "readMore": "Read more",
+    "viewAll": "View all",
+    "contactUs": "Contact us",
+    "requestQuote": "Request a quote",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "success": "Success",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "filter": "Filter",
+    "sort": "Sort",
+    "noResults": "No results",
+    "yes": "Yes",
+    "no": "No",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "close": "Close"
+  },
+  "nav": {
+    "home": "Home",
+    "about": "Workshop",
+    "services": "Services",
+    "projects": "Portfolio",
+    "shop": "Shop",
+    "cart": "Cart",
+    "quote": "Quote",
+    "contact": "Contact"
+  },
+  "home": {
+    "hero": {
+      "title": "The Art of Moroccan Wood",
+      "subtitle": "Custom creations by passionate artisans. Traditional and modern woodworking for your living spaces.",
+      "cta": "Request a Quote",
+      "ctaSecondary": "View Our Work"
+    },
+    "services": {
+      "title": "Our Services",
+      "subtitle": "Artisan craftsmanship at the service of your projects"
+    },
+    "projects": {
+      "title": "Our Portfolio",
+      "subtitle": "Discover our custom creations"
+    },
+    "products": {
+      "title": "Our Shop",
+      "subtitle": "Unique pieces and wooden accessories"
+    },
+    "about": {
+      "title": "Our Workshop",
+      "subtitle": "Over 20 years of expertise in traditional Moroccan woodworking"
+    },
+    "cta": {
+      "title": "Custom Project?",
+      "subtitle": "Contact us to discuss your project and get a free quote.",
+      "button": "Request a Free Quote"
+    }
+  },
+  "services": {
+    "title": "Our Services",
+    "subtitle": "Complete woodworking solutions",
+    "priceFrom": "Starting from",
+    "requestQuote": "Request a quote",
+    "viewDetails": "View details"
+  },
+  "projects": {
+    "title": "Our Portfolio",
+    "subtitle": "Discover our work",
+    "viewProject": "View project",
+    "client": "Client",
+    "location": "Location",
+    "year": "Year",
+    "duration": "Duration",
+    "surface": "Surface area",
+    "woodType": "Wood type",
+    "challenge": "The Challenge",
+    "solution": "Our Solution",
+    "relatedProjects": "Related Projects"
+  },
+  "products": {
+    "title": "Shop",
+    "subtitle": "Unique artisan pieces",
+    "addToCart": "Add to cart",
+    "buyNow": "Buy now",
+    "inStock": "In stock",
+    "lowStock": "Low stock",
+    "outOfStock": "Out of stock",
+    "onOrder": "Made to order",
+    "specifications": "Specifications",
+    "dimensions": "Dimensions",
+    "weight": "Weight",
+    "material": "Material",
+    "finish": "Finish",
+    "relatedProducts": "Related Products"
+  },
+  "cart": {
+    "title": "Your Cart",
+    "empty": "Your cart is empty",
+    "continueShopping": "Continue shopping",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "shippingCalculated": "Calculated at next step",
+    "total": "Total",
+    "checkout": "Proceed to checkout",
+    "remove": "Remove",
+    "quantity": "Quantity"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "shipping": {
+      "title": "Shipping Address",
+      "fullName": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "city": "City",
+      "postalCode": "Postal code"
+    },
+    "payment": {
+      "title": "Payment Method",
+      "stripe": "Credit card (Stripe)",
+      "cod": "Cash on delivery",
+      "codNote": "Pay in cash when you receive your order"
+    },
+    "summary": "Order Summary",
+    "placeOrder": "Place Order"
+  },
+  "order": {
+    "confirmation": {
+      "title": "Order Confirmed!",
+      "thankYou": "Thank you for your order",
+      "orderNumber": "Order number",
+      "emailSent": "A confirmation email has been sent to",
+      "whatNext": "What's next?",
+      "trackOrder": "Track my order",
+      "continueShopping": "Continue shopping"
+    },
+    "tracking": {
+      "title": "Order Tracking",
+      "enterOrder": "Enter your order number",
+      "orderNumber": "Order number",
+      "email": "Email",
+      "track": "Track",
+      "status": {
+        "pending": "Pending",
+        "confirmed": "Confirmed",
+        "processing": "Processing",
+        "shipped": "Shipped",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled"
+      }
+    }
+  },
+  "quote": {
+    "title": "Quote Request",
+    "subtitle": "Describe your project and receive a personalized quote",
+    "steps": {
+      "service": "Service type",
+      "details": "Project details",
+      "contact": "Your contact info",
+      "review": "Review"
+    },
+    "form": {
+      "serviceType": "Service type",
+      "selectService": "Select a service",
+      "description": "Project description",
+      "descriptionPlaceholder": "Describe your project in detail...",
+      "dimensions": "Approximate dimensions",
+      "dimensionsPlaceholder": "E.g.: 3m x 2m",
+      "budget": "Estimated budget",
+      "deadline": "Desired date",
+      "attachments": "Photos or plans (optional)",
+      "name": "Full name",
+      "email": "Email",
+      "phone": "Phone",
+      "city": "City",
+      "company": "Company (optional)"
+    },
+    "submit": "Send my request",
+    "success": {
+      "title": "Request Sent!",
+      "message": "We have received your request. Our team will contact you within 24-48 hours.",
+      "reference": "Reference"
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Have a question? Feel free to contact us",
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "subject": "Subject",
+      "message": "Message",
+      "send": "Send"
+    },
+    "info": {
+      "address": "Address",
+      "phone": "Phone",
+      "email": "Email",
+      "hours": "Hours"
+    },
+    "success": "Message sent successfully!",
+    "whatsapp": "Chat on WhatsApp"
+  },
+  "footer": {
+    "about": "Artisan woodworking workshop specialized in custom creations with noble wood.",
+    "quickLinks": "Quick Links",
+    "contact": "Contact",
+    "newsletter": {
+      "title": "Newsletter",
+      "subtitle": "Receive our news and offers",
+      "placeholder": "Your email",
+      "subscribe": "Subscribe"
+    },
+    "legal": {
+      "privacy": "Privacy Policy",
+      "terms": "Terms & Conditions",
+      "cookies": "Cookie Policy",
+      "shipping": "Shipping & Returns"
+    },
+    "copyright": "© {year} LE TATCHE BOIS. All rights reserved.",
+    "paymentMethods": "Payment methods"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Invalid email",
+    "phone": "Invalid phone number",
+    "minLength": "Minimum {min} characters",
+    "maxLength": "Maximum {max} characters"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "message": "The page you are looking for does not exist.",
+      "backHome": "Back to home"
+    },
+    "serverError": {
+      "title": "Server error",
+      "message": "An error occurred. Please try again later."
+    }
+  }
+}

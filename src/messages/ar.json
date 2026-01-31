@@ -1,0 +1,250 @@
+{
+  "common": {
+    "readMore": "اقرأ المزيد",
+    "viewAll": "عرض الكل",
+    "contactUs": "اتصل بنا",
+    "requestQuote": "طلب عرض سعر",
+    "loading": "جار التحميل...",
+    "error": "حدث خطأ",
+    "success": "نجاح",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "edit": "تعديل",
+    "add": "إضافة",
+    "search": "بحث",
+    "filter": "تصفية",
+    "sort": "ترتيب",
+    "noResults": "لا توجد نتائج",
+    "yes": "نعم",
+    "no": "لا",
+    "confirm": "تأكيد",
+    "back": "رجوع",
+    "next": "التالي",
+    "previous": "السابق",
+    "close": "إغلاق"
+  },
+  "nav": {
+    "home": "الرئيسية",
+    "about": "الورشة",
+    "services": "الخدمات",
+    "projects": "المشاريع",
+    "shop": "المتجر",
+    "cart": "السلة",
+    "quote": "عرض سعر",
+    "contact": "اتصل بنا"
+  },
+  "home": {
+    "hero": {
+      "title": "فن الخشب المغربي",
+      "subtitle": "إبداعات حسب الطلب من حرفيين شغوفين. نجارة تقليدية وحديثة لمساحاتك.",
+      "cta": "طلب عرض سعر",
+      "ctaSecondary": "مشاهدة أعمالنا"
+    },
+    "services": {
+      "title": "خدماتنا",
+      "subtitle": "حرفية في خدمة مشاريعكم"
+    },
+    "projects": {
+      "title": "مشاريعنا",
+      "subtitle": "اكتشف إبداعاتنا المخصصة"
+    },
+    "products": {
+      "title": "متجرنا",
+      "subtitle": "قطع فريدة وإكسسوارات خشبية"
+    },
+    "about": {
+      "title": "ورشتنا",
+      "subtitle": "أكثر من 20 عامًا من الخبرة في النجارة التقليدية المغربية"
+    },
+    "cta": {
+      "title": "مشروع مخصص؟",
+      "subtitle": "اتصل بنا لمناقشة مشروعك والحصول على عرض سعر مجاني.",
+      "button": "طلب عرض سعر مجاني"
+    }
+  },
+  "services": {
+    "title": "خدماتنا",
+    "subtitle": "حلول نجارة متكاملة",
+    "priceFrom": "ابتداءً من",
+    "requestQuote": "طلب عرض سعر",
+    "viewDetails": "عرض التفاصيل"
+  },
+  "projects": {
+    "title": "مشاريعنا",
+    "subtitle": "اكتشف أعمالنا",
+    "viewProject": "عرض المشروع",
+    "client": "العميل",
+    "location": "الموقع",
+    "year": "السنة",
+    "duration": "المدة",
+    "surface": "المساحة",
+    "woodType": "نوع الخشب",
+    "challenge": "التحدي",
+    "solution": "حلنا",
+    "relatedProjects": "مشاريع مشابهة"
+  },
+  "products": {
+    "title": "المتجر",
+    "subtitle": "قطع حرفية فريدة",
+    "addToCart": "أضف إلى السلة",
+    "buyNow": "اشتر الآن",
+    "inStock": "متوفر",
+    "lowStock": "مخزون محدود",
+    "outOfStock": "نفذ المخزون",
+    "onOrder": "حسب الطلب",
+    "specifications": "المواصفات",
+    "dimensions": "الأبعاد",
+    "weight": "الوزن",
+    "material": "المادة",
+    "finish": "التشطيب",
+    "relatedProducts": "منتجات مشابهة"
+  },
+  "cart": {
+    "title": "سلتك",
+    "empty": "سلتك فارغة",
+    "continueShopping": "متابعة التسوق",
+    "subtotal": "المجموع الفرعي",
+    "shipping": "الشحن",
+    "shippingCalculated": "يحسب في الخطوة التالية",
+    "total": "المجموع",
+    "checkout": "إتمام الطلب",
+    "remove": "إزالة",
+    "quantity": "الكمية"
+  },
+  "checkout": {
+    "title": "الطلب",
+    "shipping": {
+      "title": "عنوان الشحن",
+      "fullName": "الاسم الكامل",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "address": "العنوان",
+      "city": "المدينة",
+      "postalCode": "الرمز البريدي"
+    },
+    "payment": {
+      "title": "طريقة الدفع",
+      "stripe": "بطاقة ائتمان (Stripe)",
+      "cod": "الدفع عند الاستلام",
+      "codNote": "ادفع نقدًا عند استلام طلبك"
+    },
+    "summary": "ملخص الطلب",
+    "placeOrder": "تأكيد الطلب"
+  },
+  "order": {
+    "confirmation": {
+      "title": "تم تأكيد الطلب!",
+      "thankYou": "شكرًا لطلبك",
+      "orderNumber": "رقم الطلب",
+      "emailSent": "تم إرسال بريد تأكيد إلى",
+      "whatNext": "ماذا بعد؟",
+      "trackOrder": "تتبع طلبي",
+      "continueShopping": "متابعة التسوق"
+    },
+    "tracking": {
+      "title": "تتبع الطلب",
+      "enterOrder": "أدخل رقم طلبك",
+      "orderNumber": "رقم الطلب",
+      "email": "البريد الإلكتروني",
+      "track": "تتبع",
+      "status": {
+        "pending": "قيد الانتظار",
+        "confirmed": "مؤكد",
+        "processing": "قيد التحضير",
+        "shipped": "تم الشحن",
+        "delivered": "تم التوصيل",
+        "cancelled": "ملغى"
+      }
+    }
+  },
+  "quote": {
+    "title": "طلب عرض سعر",
+    "subtitle": "صف مشروعك واحصل على عرض سعر مخصص",
+    "steps": {
+      "service": "نوع الخدمة",
+      "details": "تفاصيل المشروع",
+      "contact": "معلومات الاتصال",
+      "review": "المراجعة"
+    },
+    "form": {
+      "serviceType": "نوع الخدمة",
+      "selectService": "اختر خدمة",
+      "description": "وصف المشروع",
+      "descriptionPlaceholder": "صف مشروعك بالتفصيل...",
+      "dimensions": "الأبعاد التقريبية",
+      "dimensionsPlaceholder": "مثال: 3م × 2م",
+      "budget": "الميزانية المقدرة",
+      "deadline": "التاريخ المطلوب",
+      "attachments": "صور أو مخططات (اختياري)",
+      "name": "الاسم الكامل",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "city": "المدينة",
+      "company": "الشركة (اختياري)"
+    },
+    "submit": "إرسال طلبي",
+    "success": {
+      "title": "تم إرسال الطلب!",
+      "message": "لقد استلمنا طلبك. سيتواصل معك فريقنا خلال 24-48 ساعة.",
+      "reference": "المرجع"
+    }
+  },
+  "contact": {
+    "title": "اتصل بنا",
+    "subtitle": "هل لديك سؤال؟ لا تتردد في الاتصال بنا",
+    "form": {
+      "name": "الاسم",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "subject": "الموضوع",
+      "message": "الرسالة",
+      "send": "إرسال"
+    },
+    "info": {
+      "address": "العنوان",
+      "phone": "الهاتف",
+      "email": "البريد الإلكتروني",
+      "hours": "ساعات العمل"
+    },
+    "success": "تم إرسال الرسالة بنجاح!",
+    "whatsapp": "تحدث عبر واتساب"
+  },
+  "footer": {
+    "about": "ورشة نجارة حرفية متخصصة في الإبداعات المخصصة بالخشب النبيل.",
+    "quickLinks": "روابط سريعة",
+    "contact": "اتصل بنا",
+    "newsletter": {
+      "title": "النشرة الإخبارية",
+      "subtitle": "احصل على أخبارنا وعروضنا",
+      "placeholder": "بريدك الإلكتروني",
+      "subscribe": "اشترك"
+    },
+    "legal": {
+      "privacy": "سياسة الخصوصية",
+      "terms": "الشروط والأحكام",
+      "cookies": "سياسة ملفات تعريف الارتباط",
+      "shipping": "الشحن والإرجاع"
+    },
+    "copyright": "© {year} LE TATCHE BOIS. جميع الحقوق محفوظة.",
+    "paymentMethods": "طرق الدفع"
+  },
+  "validation": {
+    "required": "هذا الحقل مطلوب",
+    "email": "بريد إلكتروني غير صالح",
+    "phone": "رقم هاتف غير صالح",
+    "minLength": "الحد الأدنى {min} أحرف",
+    "maxLength": "الحد الأقصى {max} أحرف"
+  },
+  "errors": {
+    "notFound": {
+      "title": "الصفحة غير موجودة",
+      "message": "الصفحة التي تبحث عنها غير موجودة.",
+      "backHome": "العودة للرئيسية"
+    },
+    "serverError": {
+      "title": "خطأ في الخادم",
+      "message": "حدث خطأ. يرجى المحاولة مرة أخرى لاحقًا."
+    }
+  }
+}

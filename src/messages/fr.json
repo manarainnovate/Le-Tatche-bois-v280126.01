@@ -1,0 +1,250 @@
+{
+  "common": {
+    "readMore": "Lire la suite",
+    "viewAll": "Voir tout",
+    "contactUs": "Contactez-nous",
+    "requestQuote": "Demander un devis",
+    "loading": "Chargement...",
+    "error": "Une erreur est survenue",
+    "success": "Succès",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "filter": "Filtrer",
+    "sort": "Trier",
+    "noResults": "Aucun résultat",
+    "yes": "Oui",
+    "no": "Non",
+    "confirm": "Confirmer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "close": "Fermer"
+  },
+  "nav": {
+    "home": "Accueil",
+    "about": "L'Atelier",
+    "services": "Services",
+    "projects": "Réalisations",
+    "shop": "Boutique",
+    "cart": "Panier",
+    "quote": "Devis",
+    "contact": "Contact"
+  },
+  "home": {
+    "hero": {
+      "title": "L'Art du Bois Marocain",
+      "subtitle": "Créations sur mesure par des artisans passionnés. Menuiserie traditionnelle et moderne pour vos espaces de vie.",
+      "cta": "Demander un Devis",
+      "ctaSecondary": "Voir nos Réalisations"
+    },
+    "services": {
+      "title": "Nos Services",
+      "subtitle": "Un savoir-faire artisanal au service de vos projets"
+    },
+    "projects": {
+      "title": "Nos Réalisations",
+      "subtitle": "Découvrez nos créations sur mesure"
+    },
+    "products": {
+      "title": "Notre Boutique",
+      "subtitle": "Pièces uniques et accessoires en bois"
+    },
+    "about": {
+      "title": "Notre Atelier",
+      "subtitle": "Plus de 20 ans d'expertise en menuiserie traditionnelle marocaine"
+    },
+    "cta": {
+      "title": "Un Projet sur Mesure ?",
+      "subtitle": "Contactez-nous pour discuter de votre projet et obtenir un devis gratuit.",
+      "button": "Demander un Devis Gratuit"
+    }
+  },
+  "services": {
+    "title": "Nos Services",
+    "subtitle": "Solutions complètes en menuiserie",
+    "priceFrom": "À partir de",
+    "requestQuote": "Demander un devis",
+    "viewDetails": "Voir les détails"
+  },
+  "projects": {
+    "title": "Nos Réalisations",
+    "subtitle": "Découvrez notre portfolio",
+    "viewProject": "Voir le projet",
+    "client": "Client",
+    "location": "Lieu",
+    "year": "Année",
+    "duration": "Durée",
+    "surface": "Surface",
+    "woodType": "Type de bois",
+    "challenge": "Le Défi",
+    "solution": "Notre Solution",
+    "relatedProjects": "Projets Similaires"
+  },
+  "products": {
+    "title": "Boutique",
+    "subtitle": "Pièces uniques artisanales",
+    "addToCart": "Ajouter au panier",
+    "buyNow": "Acheter maintenant",
+    "inStock": "En stock",
+    "lowStock": "Stock limité",
+    "outOfStock": "Rupture de stock",
+    "onOrder": "Sur commande",
+    "specifications": "Caractéristiques",
+    "dimensions": "Dimensions",
+    "weight": "Poids",
+    "material": "Matériau",
+    "finish": "Finition",
+    "relatedProducts": "Produits Similaires"
+  },
+  "cart": {
+    "title": "Votre Panier",
+    "empty": "Votre panier est vide",
+    "continueShopping": "Continuer mes achats",
+    "subtotal": "Sous-total",
+    "shipping": "Livraison",
+    "shippingCalculated": "Calculée à l'étape suivante",
+    "total": "Total",
+    "checkout": "Passer la commande",
+    "remove": "Supprimer",
+    "quantity": "Quantité"
+  },
+  "checkout": {
+    "title": "Commande",
+    "shipping": {
+      "title": "Adresse de Livraison",
+      "fullName": "Nom complet",
+      "email": "Email",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "city": "Ville",
+      "postalCode": "Code postal"
+    },
+    "payment": {
+      "title": "Mode de Paiement",
+      "stripe": "Carte bancaire (Stripe)",
+      "cod": "Paiement à la livraison",
+      "codNote": "Payez en espèces à la réception de votre commande"
+    },
+    "summary": "Récapitulatif",
+    "placeOrder": "Confirmer la commande"
+  },
+  "order": {
+    "confirmation": {
+      "title": "Commande Confirmée !",
+      "thankYou": "Merci pour votre commande",
+      "orderNumber": "Numéro de commande",
+      "emailSent": "Un email de confirmation a été envoyé à",
+      "whatNext": "Et maintenant ?",
+      "trackOrder": "Suivre ma commande",
+      "continueShopping": "Continuer mes achats"
+    },
+    "tracking": {
+      "title": "Suivi de Commande",
+      "enterOrder": "Entrez votre numéro de commande",
+      "orderNumber": "Numéro de commande",
+      "email": "Email",
+      "track": "Suivre",
+      "status": {
+        "pending": "En attente",
+        "confirmed": "Confirmée",
+        "processing": "En préparation",
+        "shipped": "Expédiée",
+        "delivered": "Livrée",
+        "cancelled": "Annulée"
+      }
+    }
+  },
+  "quote": {
+    "title": "Demande de Devis",
+    "subtitle": "Décrivez votre projet et recevez un devis personnalisé",
+    "steps": {
+      "service": "Type de service",
+      "details": "Détails du projet",
+      "contact": "Vos coordonnées",
+      "review": "Récapitulatif"
+    },
+    "form": {
+      "serviceType": "Type de service",
+      "selectService": "Sélectionnez un service",
+      "description": "Description du projet",
+      "descriptionPlaceholder": "Décrivez votre projet en détail...",
+      "dimensions": "Dimensions approximatives",
+      "dimensionsPlaceholder": "Ex: 3m x 2m",
+      "budget": "Budget estimé",
+      "deadline": "Date souhaitée",
+      "attachments": "Photos ou plans (optionnel)",
+      "name": "Nom complet",
+      "email": "Email",
+      "phone": "Téléphone",
+      "city": "Ville",
+      "company": "Entreprise (optionnel)"
+    },
+    "submit": "Envoyer ma demande",
+    "success": {
+      "title": "Demande Envoyée !",
+      "message": "Nous avons bien reçu votre demande. Notre équipe vous contactera sous 24-48h.",
+      "reference": "Référence"
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "subtitle": "Une question ? N'hésitez pas à nous contacter",
+    "form": {
+      "name": "Nom",
+      "email": "Email",
+      "phone": "Téléphone",
+      "subject": "Sujet",
+      "message": "Message",
+      "send": "Envoyer"
+    },
+    "info": {
+      "address": "Adresse",
+      "phone": "Téléphone",
+      "email": "Email",
+      "hours": "Horaires"
+    },
+    "success": "Message envoyé avec succès !",
+    "whatsapp": "Discuter sur WhatsApp"
+  },
+  "footer": {
+    "about": "Atelier de menuiserie artisanale spécialisé dans les créations sur mesure en bois noble.",
+    "quickLinks": "Liens Rapides",
+    "contact": "Contact",
+    "newsletter": {
+      "title": "Newsletter",
+      "subtitle": "Recevez nos actualités et offres",
+      "placeholder": "Votre email",
+      "subscribe": "S'inscrire"
+    },
+    "legal": {
+      "privacy": "Politique de Confidentialité",
+      "terms": "Conditions Générales",
+      "cookies": "Politique des Cookies",
+      "shipping": "Livraison & Retours"
+    },
+    "copyright": "© {year} LE TATCHE BOIS. Tous droits réservés.",
+    "paymentMethods": "Moyens de paiement"
+  },
+  "validation": {
+    "required": "Ce champ est requis",
+    "email": "Email invalide",
+    "phone": "Numéro de téléphone invalide",
+    "minLength": "Minimum {min} caractères",
+    "maxLength": "Maximum {max} caractères"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page non trouvée",
+      "message": "La page que vous recherchez n'existe pas.",
+      "backHome": "Retour à l'accueil"
+    },
+    "serverError": {
+      "title": "Erreur serveur",
+      "message": "Une erreur est survenue. Veuillez réessayer plus tard."
+    }
+  }
+}

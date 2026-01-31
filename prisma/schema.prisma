@@ -1,0 +1,597 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ═══════════════════════════════════════════════════════════
+// USER & AUTH
+// ═══════════════════════════════════════════════════════════
+
+enum UserRole {
+  ADMIN
+  EDITOR
+  SALES
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  name          String?
+  image         String?
+  role          UserRole  @default(EDITOR)
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+
+  // Relations
+  addresses     Address[]
+  orders        Order[]
+  cart          Cart?
+  quoteNotes    QuoteNote[]
+  assignedQuotes Quote[]  @relation("AssignedQuotes")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([email])
+  @@index([role])
+}
+
+model Address {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label       String?  // "Home", "Work", etc.
+  fullName    String
+  phone       String
+  street      String
+  city        String
+  postalCode  String?
+  country     String   @default("Morocco")
+  isDefault   Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════════════════════════
+
+enum CategoryType {
+  PROJECT
+  PRODUCT
+  SERVICE
+}
+
+model Category {
+  id           String       @id @default(cuid())
+  slug         String       @unique
+  type         CategoryType
+  image        String?
+  sortOrder    Int          @default(0)
+  isActive     Boolean      @default(true)
+
+  // Hierarchy
+  parentId     String?
+  parent       Category?    @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children     Category[]   @relation("CategoryHierarchy")
+
+  // Relations
+  translations CategoryTranslation[]
+  projects     Project[]
+  products     Product[]
+  services     Service[]
+
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@index([slug])
+  @@index([type])
+  @@index([parentId])
+}
+
+model CategoryTranslation {
+  id          String   @id @default(cuid())
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  locale      String   // fr, en, es, ar
+  name        String
+  description String?
+
+  @@unique([categoryId, locale])
+  @@index([locale])
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROJECTS (Portfolio)
+// ═══════════════════════════════════════════════════════════
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model Project {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  categoryId   String
+  category     Category      @relation(fields: [categoryId], references: [id])
+
+  featured     Boolean       @default(false)
+  sortOrder    Int           @default(0)
+  status       ContentStatus @default(DRAFT)
+
+  // Project details
+  client       String?
+  location     String?
+  year         Int?
+  duration     String?       // "3 months"
+  surface      String?       // "150m²"
+  woodType     String?
+
+  images       Json          @default("[]") // Array of image URLs
+
+  // Relations
+  translations ProjectTranslation[]
+
+  publishedAt  DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([status])
+  @@index([featured])
+}
+
+model ProjectTranslation {
+  id              String  @id @default(cuid())
+  projectId       String
+  project         Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  locale          String
+  title           String
+  description     String? @db.Text
+  challenge       String? @db.Text
+  solution        String? @db.Text
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  @@unique([projectId, locale])
+  @@index([locale])
+}
+
+// ═══════════════════════════════════════════════════════════
+// PRODUCTS (E-commerce)
+// ═══════════════════════════════════════════════════════════
+
+enum StockStatus {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+  ON_ORDER
+}
+
+model Product {
+  id            String        @id @default(cuid())
+  slug          String        @unique
+  sku           String?       @unique
+  categoryId    String
+  category      Category      @relation(fields: [categoryId], references: [id])
+
+  // Pricing (all in MAD)
+  priceMAD      Decimal       @db.Decimal(10, 2)
+  comparePrice  Decimal?      @db.Decimal(10, 2)
+
+  // Stock
+  stockStatus   StockStatus   @default(IN_STOCK)
+  stockQty      Int           @default(0)
+
+  featured      Boolean       @default(false)
+  sortOrder     Int           @default(0)
+  status        ContentStatus @default(DRAFT)
+
+  // Product details
+  dimensions    String?       // "L x W x H"
+  weight        Decimal?      @db.Decimal(10, 2)
+  woodType      String?
+  finish        String?
+
+  images        Json          @default("[]")
+  specifications Json?        // Custom specs
+
+  // Relations
+  translations  ProductTranslation[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+
+  publishedAt   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([sku])
+  @@index([categoryId])
+  @@index([status])
+  @@index([stockStatus])
+  @@index([featured])
+}
+
+model ProductTranslation {
+  id          String  @id @default(cuid())
+  productId   String
+  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  locale      String
+  name        String
+  description String? @db.Text
+  shortDesc   String?
+
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+
+  @@unique([productId, locale])
+  @@index([locale])
+}
+
+// ═══════════════════════════════════════════════════════════
+// SERVICES
+// ═══════════════════════════════════════════════════════════
+
+model Service {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id])
+
+  // Pricing
+  priceFrom    Decimal?      @db.Decimal(10, 2)
+  priceTo      Decimal?      @db.Decimal(10, 2)
+  priceUnit    String?       // "per m²", "per project"
+
+  featured     Boolean       @default(false)
+  sortOrder    Int           @default(0)
+  status       ContentStatus @default(DRAFT)
+
+  icon         String?       // Lucide icon name
+  image        String?
+  duration     String?       // "1-2 weeks"
+
+  // Relations
+  translations ServiceTranslation[]
+  quotes       Quote[]
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([status])
+}
+
+model ServiceTranslation {
+  id          String   @id @default(cuid())
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  locale      String
+  name        String
+  description String?  @db.Text
+  features    String[] // Array of feature strings
+  process     String?  @db.Text
+
+  @@unique([serviceId, locale])
+  @@index([locale])
+}
+
+// ═══════════════════════════════════════════════════════════
+// QUOTES (Custom Work Requests)
+// ═══════════════════════════════════════════════════════════
+
+enum QuoteStatus {
+  NEW
+  CONTACTED
+  IN_PROGRESS
+  SENT
+  WON
+  LOST
+  CANCELLED
+}
+
+model Quote {
+  id              String      @id @default(cuid())
+  reference       String      @unique // QT-2025-0001
+  status          QuoteStatus @default(NEW)
+
+  // Customer info
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  customerCity    String?
+  customerCompany String?
+
+  // Service details
+  serviceId       String?
+  service         Service?    @relation(fields: [serviceId], references: [id])
+  serviceType     String?     // Free text if no service selected
+
+  description     String      @db.Text
+  dimensions      String?
+  budget          String?
+  deadline        DateTime?
+
+  attachments     Json        @default("[]") // Array of URLs
+
+  // Assignment
+  assignedToId    String?
+  assignedTo      User?       @relation("AssignedQuotes", fields: [assignedToId], references: [id])
+
+  // Notes
+  notes           QuoteNote[]
+
+  locale          String      @default("fr")
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([reference])
+  @@index([status])
+  @@index([customerEmail])
+  @@index([assignedToId])
+}
+
+model QuoteNote {
+  id        String   @id @default(cuid())
+  quoteId   String
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  content   String   @db.Text
+  isPrivate Boolean  @default(true)
+
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([quoteId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// ORDERS (E-commerce)
+// ═══════════════════════════════════════════════════════════
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  STRIPE
+  COD
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique // ORD-2025-0001
+  status          OrderStatus   @default(PENDING)
+
+  // Customer
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  customerEmail   String
+  customerPhone   String
+
+  // Shipping
+  shippingAddress Json          // Full address object
+  shippingMethod  String?
+  shippingCost    Decimal       @db.Decimal(10, 2) @default(0)
+  trackingNumber  String?
+
+  // Payment
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus @default(PENDING)
+  stripeSessionId String?
+  stripePaymentId String?
+
+  // Totals (in MAD)
+  subtotal        Decimal       @db.Decimal(10, 2)
+  total           Decimal       @db.Decimal(10, 2)
+
+  // Items
+  items           OrderItem[]
+
+  notes           String?
+  locale          String        @default("fr")
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([orderNumber])
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([customerEmail])
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+
+  quantity  Int
+  priceMAD  Decimal  @db.Decimal(10, 2)
+  total     Decimal  @db.Decimal(10, 2)
+
+  // Snapshot of product at order time
+  productName String
+  productImage String?
+
+  @@unique([orderId, productId])
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// CART
+// ═══════════════════════════════════════════════════════════
+
+model Cart {
+  id        String     @id @default(cuid())
+
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  visitorId String?    @unique // For anonymous carts
+
+  items     CartItem[]
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+
+  quantity  Int      @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@index([cartId])
+  @@index([productId])
+}
+
+// ═══════════════════════════════════════════════════════════
+// MESSAGES (Contact Form)
+// ═══════════════════════════════════════════════════════════
+
+model Message {
+  id        String    @id @default(cuid())
+
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  content   String    @db.Text
+
+  read      Boolean   @default(false)
+  readAt    DateTime?
+
+  locale    String    @default("fr")
+
+  createdAt DateTime  @default(now())
+
+  @@index([read])
+  @@index([email])
+}
+
+// ═══════════════════════════════════════════════════════════
+// SETTINGS & CONFIG
+// ═══════════════════════════════════════════════════════════
+
+model Currency {
+  id        String   @id @default(cuid())
+  code      String   @unique // MAD, EUR, USD, GBP
+  symbol    String   // DH, €, $, £
+  name      String
+  rate      Decimal  @db.Decimal(10, 6) // Rate from MAD
+  locale    String   // en-US, fr-FR, etc.
+  position  String   @default("after") // before/after
+  isDefault Boolean  @default(false)
+  isActive  Boolean  @default(true)
+
+  updatedAt DateTime @updatedAt
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  group String // contact, social, seo, shipping, payment
+  key   String
+  value Json
+
+  @@unique([group, key])
+  @@index([group])
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  url          String
+  publicId     String?  // Cloudinary public ID
+  type         String   // image, document
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  alt          String?
+  folder       String?
+
+  createdAt    DateTime @default(now())
+
+  @@index([type])
+  @@index([folder])
+}
+
+// ═══════════════════════════════════════════════════════════
+// GDPR & NEWSLETTER
+// ═══════════════════════════════════════════════════════════
+
+model ConsentLog {
+  id         String   @id @default(cuid())
+  visitorId  String
+  ipAddress  String?
+  userAgent  String?
+
+  essential  Boolean  @default(true)
+  analytics  Boolean  @default(false)
+  marketing  Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+
+  @@index([visitorId])
+}
+
+model NewsletterSubscriber {
+  id             String    @id @default(cuid())
+  email          String    @unique
+  locale         String    @default("fr")
+  source         String?   // footer, popup, checkout
+
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+
+  @@index([email])
+}

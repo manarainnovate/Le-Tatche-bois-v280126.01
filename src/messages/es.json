@@ -1,0 +1,250 @@
+{
+  "common": {
+    "readMore": "Leer más",
+    "viewAll": "Ver todo",
+    "contactUs": "Contáctenos",
+    "requestQuote": "Solicitar presupuesto",
+    "loading": "Cargando...",
+    "error": "Ha ocurrido un error",
+    "success": "Éxito",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "add": "Añadir",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sort": "Ordenar",
+    "noResults": "Sin resultados",
+    "yes": "Sí",
+    "no": "No",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "close": "Cerrar"
+  },
+  "nav": {
+    "home": "Inicio",
+    "about": "Taller",
+    "services": "Servicios",
+    "projects": "Proyectos",
+    "shop": "Tienda",
+    "cart": "Carrito",
+    "quote": "Presupuesto",
+    "contact": "Contacto"
+  },
+  "home": {
+    "hero": {
+      "title": "El Arte de la Madera Marroquí",
+      "subtitle": "Creaciones a medida por artesanos apasionados. Carpintería tradicional y moderna para sus espacios.",
+      "cta": "Solicitar Presupuesto",
+      "ctaSecondary": "Ver Proyectos"
+    },
+    "services": {
+      "title": "Nuestros Servicios",
+      "subtitle": "Artesanía al servicio de sus proyectos"
+    },
+    "projects": {
+      "title": "Nuestros Proyectos",
+      "subtitle": "Descubra nuestras creaciones a medida"
+    },
+    "products": {
+      "title": "Nuestra Tienda",
+      "subtitle": "Piezas únicas y accesorios de madera"
+    },
+    "about": {
+      "title": "Nuestro Taller",
+      "subtitle": "Más de 20 años de experiencia en carpintería tradicional marroquí"
+    },
+    "cta": {
+      "title": "¿Proyecto a Medida?",
+      "subtitle": "Contáctenos para discutir su proyecto y obtener un presupuesto gratuito.",
+      "button": "Solicitar Presupuesto Gratuito"
+    }
+  },
+  "services": {
+    "title": "Nuestros Servicios",
+    "subtitle": "Soluciones completas en carpintería",
+    "priceFrom": "Desde",
+    "requestQuote": "Solicitar presupuesto",
+    "viewDetails": "Ver detalles"
+  },
+  "projects": {
+    "title": "Nuestros Proyectos",
+    "subtitle": "Descubra nuestro portfolio",
+    "viewProject": "Ver proyecto",
+    "client": "Cliente",
+    "location": "Ubicación",
+    "year": "Año",
+    "duration": "Duración",
+    "surface": "Superficie",
+    "woodType": "Tipo de madera",
+    "challenge": "El Desafío",
+    "solution": "Nuestra Solución",
+    "relatedProjects": "Proyectos Relacionados"
+  },
+  "products": {
+    "title": "Tienda",
+    "subtitle": "Piezas únicas artesanales",
+    "addToCart": "Añadir al carrito",
+    "buyNow": "Comprar ahora",
+    "inStock": "En stock",
+    "lowStock": "Stock limitado",
+    "outOfStock": "Agotado",
+    "onOrder": "Bajo pedido",
+    "specifications": "Especificaciones",
+    "dimensions": "Dimensiones",
+    "weight": "Peso",
+    "material": "Material",
+    "finish": "Acabado",
+    "relatedProducts": "Productos Relacionados"
+  },
+  "cart": {
+    "title": "Su Carrito",
+    "empty": "Su carrito está vacío",
+    "continueShopping": "Continuar comprando",
+    "subtotal": "Subtotal",
+    "shipping": "Envío",
+    "shippingCalculated": "Calculado en el siguiente paso",
+    "total": "Total",
+    "checkout": "Finalizar compra",
+    "remove": "Eliminar",
+    "quantity": "Cantidad"
+  },
+  "checkout": {
+    "title": "Pedido",
+    "shipping": {
+      "title": "Dirección de Envío",
+      "fullName": "Nombre completo",
+      "email": "Email",
+      "phone": "Teléfono",
+      "address": "Dirección",
+      "city": "Ciudad",
+      "postalCode": "Código postal"
+    },
+    "payment": {
+      "title": "Método de Pago",
+      "stripe": "Tarjeta de crédito (Stripe)",
+      "cod": "Pago contra reembolso",
+      "codNote": "Pague en efectivo al recibir su pedido"
+    },
+    "summary": "Resumen del Pedido",
+    "placeOrder": "Realizar Pedido"
+  },
+  "order": {
+    "confirmation": {
+      "title": "¡Pedido Confirmado!",
+      "thankYou": "Gracias por su pedido",
+      "orderNumber": "Número de pedido",
+      "emailSent": "Se ha enviado un email de confirmación a",
+      "whatNext": "¿Qué sigue?",
+      "trackOrder": "Seguir mi pedido",
+      "continueShopping": "Continuar comprando"
+    },
+    "tracking": {
+      "title": "Seguimiento de Pedido",
+      "enterOrder": "Introduzca su número de pedido",
+      "orderNumber": "Número de pedido",
+      "email": "Email",
+      "track": "Seguir",
+      "status": {
+        "pending": "Pendiente",
+        "confirmed": "Confirmado",
+        "processing": "En preparación",
+        "shipped": "Enviado",
+        "delivered": "Entregado",
+        "cancelled": "Cancelado"
+      }
+    }
+  },
+  "quote": {
+    "title": "Solicitud de Presupuesto",
+    "subtitle": "Describa su proyecto y reciba un presupuesto personalizado",
+    "steps": {
+      "service": "Tipo de servicio",
+      "details": "Detalles del proyecto",
+      "contact": "Sus datos de contacto",
+      "review": "Resumen"
+    },
+    "form": {
+      "serviceType": "Tipo de servicio",
+      "selectService": "Seleccione un servicio",
+      "description": "Descripción del proyecto",
+      "descriptionPlaceholder": "Describa su proyecto en detalle...",
+      "dimensions": "Dimensiones aproximadas",
+      "dimensionsPlaceholder": "Ej: 3m x 2m",
+      "budget": "Presupuesto estimado",
+      "deadline": "Fecha deseada",
+      "attachments": "Fotos o planos (opcional)",
+      "name": "Nombre completo",
+      "email": "Email",
+      "phone": "Teléfono",
+      "city": "Ciudad",
+      "company": "Empresa (opcional)"
+    },
+    "submit": "Enviar mi solicitud",
+    "success": {
+      "title": "¡Solicitud Enviada!",
+      "message": "Hemos recibido su solicitud. Nuestro equipo le contactará en 24-48 horas.",
+      "reference": "Referencia"
+    }
+  },
+  "contact": {
+    "title": "Contacto",
+    "subtitle": "¿Tiene alguna pregunta? No dude en contactarnos",
+    "form": {
+      "name": "Nombre",
+      "email": "Email",
+      "phone": "Teléfono",
+      "subject": "Asunto",
+      "message": "Mensaje",
+      "send": "Enviar"
+    },
+    "info": {
+      "address": "Dirección",
+      "phone": "Teléfono",
+      "email": "Email",
+      "hours": "Horario"
+    },
+    "success": "¡Mensaje enviado con éxito!",
+    "whatsapp": "Chatear en WhatsApp"
+  },
+  "footer": {
+    "about": "Taller de carpintería artesanal especializado en creaciones a medida con maderas nobles.",
+    "quickLinks": "Enlaces Rápidos",
+    "contact": "Contacto",
+    "newsletter": {
+      "title": "Newsletter",
+      "subtitle": "Reciba nuestras novedades y ofertas",
+      "placeholder": "Su email",
+      "subscribe": "Suscribirse"
+    },
+    "legal": {
+      "privacy": "Política de Privacidad",
+      "terms": "Términos y Condiciones",
+      "cookies": "Política de Cookies",
+      "shipping": "Envío y Devoluciones"
+    },
+    "copyright": "© {year} LE TATCHE BOIS. Todos los derechos reservados.",
+    "paymentMethods": "Métodos de pago"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "email": "Email inválido",
+    "phone": "Número de teléfono inválido",
+    "minLength": "Mínimo {min} caracteres",
+    "maxLength": "Máximo {max} caracteres"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Página no encontrada",
+      "message": "La página que busca no existe.",
+      "backHome": "Volver al inicio"
+    },
+    "serverError": {
+      "title": "Error del servidor",
+      "message": "Ha ocurrido un error. Por favor, inténtelo de nuevo más tarde."
+    }
+  }
+}
