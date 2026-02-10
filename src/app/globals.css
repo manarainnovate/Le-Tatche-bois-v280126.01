@@ -294,9 +294,258 @@
   }
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* RTL SUPPORT                                                   */
+/* ═══════════════════════════════════════════════════════════ */
+
+/* RTL base direction */
+[dir="rtl"] {
+  direction: rtl;
+  text-align: right;
+}
+
+/* RTL-aware margin auto */
+[dir="rtl"] .ml-auto {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+[dir="rtl"] .mr-auto {
+  margin-right: 0;
+  margin-left: auto;
+}
+
+/* RTL-aware flex */
+[dir="rtl"] .flex-row-rtl {
+  flex-direction: row-reverse;
+}
+
+/* RTL space reverse for horizontal spacing */
+[dir="rtl"] .space-x-rtl > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-x-reverse: 1;
+}
+
+/* RTL-aware icons that should flip */
+[dir="rtl"] .rotate-rtl {
+  transform: scaleX(-1);
+}
+
+/* RTL form inputs alignment */
+[dir="rtl"] input:not([type="checkbox"]):not([type="radio"]),
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+}
+
+/* RTL checkbox/radio label spacing */
+[dir="rtl"] .checkbox-label,
+[dir="rtl"] .radio-label {
+  padding-right: 0.5rem;
+  padding-left: 0;
+}
+
+/* RTL list markers */
+[dir="rtl"] ul,
+[dir="rtl"] ol {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+/* RTL breadcrumb separators */
+[dir="rtl"] .breadcrumb-separator {
+  transform: scaleX(-1);
+}
+
+/* RTL navigation arrows */
+[dir="rtl"] .nav-arrow-left {
+  transform: scaleX(-1);
+}
+
+[dir="rtl"] .nav-arrow-right {
+  transform: scaleX(-1);
+}
+
+/* RTL slider/carousel navigation */
+[dir="rtl"] .carousel-prev,
+[dir="rtl"] .carousel-next {
+  transform: scaleX(-1);
+}
+
+/* RTL progress bars */
+[dir="rtl"] .progress-bar {
+  direction: rtl;
+}
+
+/* RTL timeline */
+[dir="rtl"] .timeline::before {
+  left: auto;
+  right: 0;
+}
+
+/* RTL modal close button position */
+[dir="rtl"] .modal-close {
+  left: 1rem;
+  right: auto;
+}
+
+/* RTL dropdown positioning */
+[dir="rtl"] .dropdown-start {
+  left: auto;
+  right: 0;
+}
+
+[dir="rtl"] .dropdown-end {
+  left: 0;
+  right: auto;
+}
+
+/* RTL table alignment */
+[dir="rtl"] th,
+[dir="rtl"] td {
+  text-align: right;
+}
+
+/* RTL border adjustments */
+[dir="rtl"] .border-l {
+  border-left: none;
+  border-right-width: 1px;
+}
+
+[dir="rtl"] .border-r {
+  border-right: none;
+  border-left-width: 1px;
+}
+
+/* RTL rounded corners */
+[dir="rtl"] .rounded-l {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: var(--radius-md);
+  border-bottom-right-radius: var(--radius-md);
+}
+
+[dir="rtl"] .rounded-r {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: var(--radius-md);
+  border-bottom-left-radius: var(--radius-md);
+}
+
 /* Print styles */
 @media print {
   .no-print {
     display: none !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   Hero Slider Animations
+   ═══════════════════════════════════════════════════════════ */
+
+@keyframes heroProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.5s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out forwards;
+}
+
+.animation-delay-200 {
+  animation-delay: 0.2s;
+}
+
+.animation-delay-400 {
+  animation-delay: 0.4s;
+}
+
+/* Smooth image transitions for hero slider */
+.hero-slide-image {
+  transition: opacity 0.7s ease-in-out;
+}
+
+/* Progress bar for hero slider */
+.hero-progress-bar {
+  animation: heroProgress var(--progress-duration, 2000ms) linear;
+}
+
+/* Pause animation on hover */
+.hero-slider:hover .hero-progress-bar {
+  animation-play-state: paused;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   WOOD TEXTURE ACTIVE - Make section backgrounds transparent
+   so the fixed wood texture shows through
+   ═══════════════════════════════════════════════════════════ */
+
+[data-texture-active="true"] section.bg-white,
+[data-texture-active="true"] section.bg-gray-50,
+[data-texture-active="true"] section > .bg-white,
+[data-texture-active="true"] main > section.bg-white,
+[data-texture-active="true"] main > section.bg-gray-50 {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-texture-active="true"] section.bg-gradient-to-b {
+  background-color: rgba(255, 255, 255, 0.85) !important;
+  background-image: none !important;
 }

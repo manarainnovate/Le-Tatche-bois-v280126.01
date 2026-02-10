@@ -6,538 +6,1201 @@ datasource db {
   provider = "postgresql"
 }
 
-// ═══════════════════════════════════════════════════════════
-// USER & AUTH
-// ═══════════════════════════════════════════════════════════
+// ============================================
+// USERS & AUTHENTICATION
+// ============================================
 
 enum UserRole {
-  ADMIN
-  EDITOR
-  SALES
+  ADMIN // Full access
+  MANAGER // Manage all except settings
+  COMMERCIAL // Leads, Clients, Quotes
+  CHEF_ATELIER // Projects, Production
+  COMPTABLE // Invoices, Payments
+  READONLY // View only
 }
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  name          String?
-  image         String?
-  role          UserRole  @default(EDITOR)
-  isActive      Boolean   @default(true)
-  lastLogin     DateTime?
+  id       String   @id @default(cuid())
+  email    String   @unique
+  password String?
+  name     String?
+  phone    String?
+  role     UserRole @default(COMMERCIAL)
+  isActive Boolean  @default(true)
+  avatar   String?
+  image    String? // For NextAuth profile image
+
+  // NextAuth fields
+  emailVerified DateTime?
 
   // Relations
-  addresses     Address[]
-  orders        Order[]
-  cart          Cart?
-  quoteNotes    QuoteNote[]
-  assignedQuotes Quote[]  @relation("AssignedQuotes")
+  leadsAssigned     Lead[]
+  projectsAssigned  CRMProject[]
+  tasksAssigned     Task[]
+  documentsCreated  CRMDocument[]  @relation("DocumentCreator")
+  activitiesCreated Activity[]
+  paymentsCreated   CRMPayment[]
+  auditLogs         AuditLog[]
+  notifications     Notification[]
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  @@index([email])
-  @@index([role])
+  lastLogin DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
-model Address {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  label       String?  // "Home", "Work", etc.
-  fullName    String
-  phone       String
-  street      String
-  city        String
-  postalCode  String?
-  country     String   @default("Morocco")
-  isDefault   Boolean  @default(false)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([userId])
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
 }
 
-// ═══════════════════════════════════════════════════════════
-// CATEGORIES
-// ═══════════════════════════════════════════════════════════
+// ============================================
+// CRM - LEADS
+// ============================================
 
-enum CategoryType {
-  PROJECT
-  PRODUCT
-  SERVICE
+enum LeadSource {
+  WEBSITE // Site web
+  WHATSAPP // WhatsApp
+  PHONE // Appel téléphonique
+  FACEBOOK // Facebook
+  INSTAGRAM // Instagram
+  REFERRAL // Recommandation
+  WALK_IN // Visite atelier
+  OTHER // Autre
 }
 
-model Category {
-  id           String       @id @default(cuid())
-  slug         String       @unique
-  type         CategoryType
-  image        String?
-  sortOrder    Int          @default(0)
-  isActive     Boolean      @default(true)
-
-  // Hierarchy
-  parentId     String?
-  parent       Category?    @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children     Category[]   @relation("CategoryHierarchy")
-
-  // Relations
-  translations CategoryTranslation[]
-  projects     Project[]
-  products     Product[]
-  services     Service[]
-
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  @@index([slug])
-  @@index([type])
-  @@index([parentId])
+enum LeadStatus {
+  NEW // Nouveau
+  CONTACTED // Contacté
+  VISIT_SCHEDULED // Visite prévue
+  MEASURES_TAKEN // Mesures prises
+  QUOTE_SENT // Devis envoyé
+  NEGOTIATION // Négociation
+  WON // Gagné
+  LOST // Perdu
 }
 
-model CategoryTranslation {
-  id          String   @id @default(cuid())
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  locale      String   // fr, en, es, ar
-  name        String
-  description String?
-
-  @@unique([categoryId, locale])
-  @@index([locale])
+enum ClientType {
+  INDIVIDUAL // Particulier
+  COMPANY // Entreprise
 }
 
-// ═══════════════════════════════════════════════════════════
-// PROJECTS (Portfolio)
-// ═══════════════════════════════════════════════════════════
-
-enum ContentStatus {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
+enum Urgency {
+  LOW // Faible
+  MEDIUM // Moyen
+  HIGH // Urgent
 }
 
-model Project {
-  id           String        @id @default(cuid())
-  slug         String        @unique
-  categoryId   String
-  category     Category      @relation(fields: [categoryId], references: [id])
+model Lead {
+  id         String @id @default(cuid())
+  leadNumber String @unique // L-2025-000001
 
-  featured     Boolean       @default(false)
-  sortOrder    Int           @default(0)
-  status       ContentStatus @default(DRAFT)
+  // Source & Status
+  source LeadSource @default(WEBSITE)
+  status LeadStatus @default(NEW)
 
-  // Project details
-  client       String?
-  location     String?
-  year         Int?
-  duration     String?       // "3 months"
-  surface      String?       // "150m²"
-  woodType     String?
+  // Contact Info
+  fullName String
+  company  String?
+  phone    String
+  phoneAlt String?
+  email    String?
 
-  images       Json          @default("[]") // Array of image URLs
+  // Location
+  city    String?
+  address String?
 
-  // Relations
-  translations ProjectTranslation[]
+  // Client Type
+  clientType ClientType @default(INDIVIDUAL)
+  ice        String? // For companies
 
-  publishedAt  DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  @@index([slug])
-  @@index([categoryId])
-  @@index([status])
-  @@index([featured])
-}
-
-model ProjectTranslation {
-  id              String  @id @default(cuid())
-  projectId       String
-  project         Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  locale          String
-  title           String
-  description     String? @db.Text
-  challenge       String? @db.Text
-  solution        String? @db.Text
-
-  // SEO
-  metaTitle       String?
-  metaDescription String?
-
-  @@unique([projectId, locale])
-  @@index([locale])
-}
-
-// ═══════════════════════════════════════════════════════════
-// PRODUCTS (E-commerce)
-// ═══════════════════════════════════════════════════════════
-
-enum StockStatus {
-  IN_STOCK
-  LOW_STOCK
-  OUT_OF_STOCK
-  ON_ORDER
-}
-
-model Product {
-  id            String        @id @default(cuid())
-  slug          String        @unique
-  sku           String?       @unique
-  categoryId    String
-  category      Category      @relation(fields: [categoryId], references: [id])
-
-  // Pricing (all in MAD)
-  priceMAD      Decimal       @db.Decimal(10, 2)
-  comparePrice  Decimal?      @db.Decimal(10, 2)
-
-  // Stock
-  stockStatus   StockStatus   @default(IN_STOCK)
-  stockQty      Int           @default(0)
-
-  featured      Boolean       @default(false)
-  sortOrder     Int           @default(0)
-  status        ContentStatus @default(DRAFT)
-
-  // Product details
-  dimensions    String?       // "L x W x H"
-  weight        Decimal?      @db.Decimal(10, 2)
-  woodType      String?
-  finish        String?
-
-  images        Json          @default("[]")
-  specifications Json?        // Custom specs
-
-  // Relations
-  translations  ProductTranslation[]
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-
-  publishedAt   DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  @@index([slug])
-  @@index([sku])
-  @@index([categoryId])
-  @@index([status])
-  @@index([stockStatus])
-  @@index([featured])
-}
-
-model ProductTranslation {
-  id          String  @id @default(cuid())
-  productId   String
-  product     Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-
-  locale      String
-  name        String
-  description String? @db.Text
-  shortDesc   String?
-
-  // SEO
-  metaTitle       String?
-  metaDescription String?
-
-  @@unique([productId, locale])
-  @@index([locale])
-}
-
-// ═══════════════════════════════════════════════════════════
-// SERVICES
-// ═══════════════════════════════════════════════════════════
-
-model Service {
-  id           String        @id @default(cuid())
-  slug         String        @unique
-  categoryId   String?
-  category     Category?     @relation(fields: [categoryId], references: [id])
-
-  // Pricing
-  priceFrom    Decimal?      @db.Decimal(10, 2)
-  priceTo      Decimal?      @db.Decimal(10, 2)
-  priceUnit    String?       // "per m²", "per project"
-
-  featured     Boolean       @default(false)
-  sortOrder    Int           @default(0)
-  status       ContentStatus @default(DRAFT)
-
-  icon         String?       // Lucide icon name
-  image        String?
-  duration     String?       // "1-2 weeks"
-
-  // Relations
-  translations ServiceTranslation[]
-  quotes       Quote[]
-
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-
-  @@index([slug])
-  @@index([categoryId])
-  @@index([status])
-}
-
-model ServiceTranslation {
-  id          String   @id @default(cuid())
-  serviceId   String
-  service     Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
-
-  locale      String
-  name        String
-  description String?  @db.Text
-  features    String[] // Array of feature strings
-  process     String?  @db.Text
-
-  @@unique([serviceId, locale])
-  @@index([locale])
-}
-
-// ═══════════════════════════════════════════════════════════
-// QUOTES (Custom Work Requests)
-// ═══════════════════════════════════════════════════════════
-
-enum QuoteStatus {
-  NEW
-  CONTACTED
-  IN_PROGRESS
-  SENT
-  WON
-  LOST
-  CANCELLED
-}
-
-model Quote {
-  id              String      @id @default(cuid())
-  reference       String      @unique // QT-2025-0001
-  status          QuoteStatus @default(NEW)
-
-  // Customer info
-  customerName    String
-  customerEmail   String
-  customerPhone   String
-  customerCity    String?
-  customerCompany String?
-
-  // Service details
-  serviceId       String?
-  service         Service?    @relation(fields: [serviceId], references: [id])
-  serviceType     String?     // Free text if no service selected
-
-  description     String      @db.Text
-  dimensions      String?
-  budget          String?
-  deadline        DateTime?
-
-  attachments     Json        @default("[]") // Array of URLs
-
-  // Assignment
-  assignedToId    String?
-  assignedTo      User?       @relation("AssignedQuotes", fields: [assignedToId], references: [id])
+  // Need & Budget
+  need      String?  @db.Text // placard, cuisine, portes, dressing, etc.
+  budgetMin Decimal? @db.Decimal(12, 2)
+  budgetMax Decimal? @db.Decimal(12, 2)
+  urgency   Urgency  @default(MEDIUM)
 
   // Notes
-  notes           QuoteNote[]
+  notes String? @db.Text
 
-  locale          String      @default("fr")
+  // Conversion
+  convertedToClientId String?    @unique
+  convertedToClient   CRMClient? @relation(fields: [convertedToClientId], references: [id])
+  convertedAt         DateTime?
+  lostReason          String? // If lost
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  // Relations
+  activities   Activity[]
+  appointments Appointment[]
 
-  @@index([reference])
-  @@index([status])
-  @@index([customerEmail])
-  @@index([assignedToId])
-}
-
-model QuoteNote {
-  id        String   @id @default(cuid())
-  quoteId   String
-  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-
-  content   String   @db.Text
-  isPrivate Boolean  @default(true)
-
-  authorId  String?
-  author    User?    @relation(fields: [authorId], references: [id])
+  // Assigned
+  assignedToId String?
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id])
 
   createdAt DateTime @default(now())
-
-  @@index([quoteId])
+  updatedAt DateTime @updatedAt
 }
 
-// ═══════════════════════════════════════════════════════════
-// ORDERS (E-commerce)
-// ═══════════════════════════════════════════════════════════
+// ============================================
+// CRM - CLIENTS
+// ============================================
 
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
+model CRMClient {
+  id           String @id @default(cuid())
+  clientNumber String @unique // CLI-000001
+
+  // Type
+  clientType ClientType @default(INDIVIDUAL)
+
+  // Identity
+  fullName String
+  company  String?
+
+  // Contact
+  phone    String
+  phoneAlt String?
+  email    String?
+
+  // Billing Address
+  billingAddress    String?
+  billingCity       String?
+  billingPostalCode String?
+  billingCountry    String  @default("Maroc")
+
+  // Delivery/Site Address
+  deliveryAddress    String?
+  deliveryCity       String?
+  deliveryPostalCode String?
+
+  // Company Legal Info
+  ice   String? // Identifiant Commun Entreprise
+  taxId String? // IF - Identifiant Fiscal
+  rc    String? // Registre de Commerce
+
+  // Payment Terms
+  paymentTerms    String?  @default("comptant") // comptant, 30j, 60j, acompte
+  defaultDiscount Decimal? @db.Decimal(5, 2) // Default discount %
+  creditLimit     Decimal? @db.Decimal(12, 2) // Max credit allowed
+
+  // Notes & Tags
+  notes String?  @db.Text
+  tags  String[] // VIP, fidèle, problématique, etc.
+
+  // Relations
+  leadOrigin  Lead?
+  projects    CRMProject[]
+  documents   CRMDocument[]
+  payments    CRMPayment[]
+  activities  Activity[]
+  attachments Attachment[]
+
+  // Stats (computed)
+  totalInvoiced Decimal @default(0) @db.Decimal(12, 2)
+  totalPaid     Decimal @default(0) @db.Decimal(12, 2)
+  balance       Decimal @default(0) @db.Decimal(12, 2) // Outstanding
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
-enum PaymentMethod {
-  STRIPE
-  COD
+// ============================================
+// ACTIVITIES & APPOINTMENTS
+// ============================================
+
+enum ActivityType {
+  CALL // Appel
+  WHATSAPP // WhatsApp
+  EMAIL // Email
+  VISIT // Visite
+  MEETING // Réunion
+  NOTE // Note
+  STATUS_CHANGE // Changement statut
 }
 
-enum PaymentStatus {
-  PENDING
-  PAID
-  FAILED
-  REFUNDED
+model Activity {
+  id String @id @default(cuid())
+
+  type        ActivityType
+  title       String?
+  description String       @db.Text
+
+  // Links
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  clientId String?
+  client   CRMClient? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  projectId String?
+  project   CRMProject? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Creator
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
-model Order {
-  id              String        @id @default(cuid())
-  orderNumber     String        @unique // ORD-2025-0001
-  status          OrderStatus   @default(PENDING)
+enum AppointmentType {
+  VISIT // Visite client
+  MEASURE // Prise de mesures
+  DELIVERY // Livraison
+  INSTALLATION // Pose
+  MEETING // Réunion
+  FOLLOW_UP // Suivi
+}
 
-  // Customer
-  userId          String?
-  user            User?         @relation(fields: [userId], references: [id])
-  customerEmail   String
-  customerPhone   String
+enum AppointmentStatus {
+  SCHEDULED // Planifié
+  CONFIRMED // Confirmé
+  IN_PROGRESS // En cours
+  COMPLETED // Terminé
+  CANCELLED // Annulé
+  NO_SHOW // Absent
+}
 
-  // Shipping
-  shippingAddress Json          // Full address object
-  shippingMethod  String?
-  shippingCost    Decimal       @db.Decimal(10, 2) @default(0)
-  trackingNumber  String?
+model Appointment {
+  id String @id @default(cuid())
+
+  title       String
+  description String?           @db.Text
+  type        AppointmentType
+  status      AppointmentStatus @default(SCHEDULED)
+
+  // Date/Time
+  startDate DateTime
+  endDate   DateTime?
+  allDay    Boolean   @default(false)
+
+  // Location
+  location String?
+
+  // Links
+  leadId String?
+  lead   Lead?   @relation(fields: [leadId], references: [id])
+
+  clientId  String?
+  projectId String?
+
+  // Assigned
+  assignedToId String?
+
+  // Reminders
+  reminderSent Boolean   @default(false)
+  reminderAt   DateTime?
+
+  // Result
+  outcome String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// PROJECTS & CHANTIERS
+// ============================================
+
+enum ProjectType {
+  FABRICATION // Fabrication only
+  INSTALLATION // Pose only
+  BOTH // Fabrication + Pose
+}
+
+enum CRMProjectStatus {
+  STUDY // Étude
+  MEASURES // Mesures
+  QUOTE // Devis
+  PENDING // En attente validation
+  PRODUCTION // En production
+  READY // Prêt
+  DELIVERY // En livraison
+  INSTALLATION // En pose
+  COMPLETED // Terminé
+  RECEIVED // Réceptionné (PV signé)
+  CLOSED // Clôturé
+  CANCELLED // Annulé
+}
+
+model CRMProject {
+  id            String @id @default(cuid())
+  projectNumber String @unique // PRJ-2025-000001
+
+  // Client
+  clientId String
+  client   CRMClient @relation(fields: [clientId], references: [id])
+
+  // Project Info
+  name        String // "Dressing Lamhamid – M. X"
+  description String? @db.Text
+
+  // Type & Status
+  type   ProjectType      @default(BOTH)
+  status CRMProjectStatus @default(STUDY)
+
+  // Site Location
+  siteAddress    String?
+  siteCity       String?
+  sitePostalCode String?
+  geoLat         Decimal? @db.Decimal(10, 8)
+  geoLng         Decimal? @db.Decimal(11, 8)
+
+  // Dates
+  startDate       DateTime?
+  expectedEndDate DateTime?
+  actualEndDate   DateTime?
+
+  // Technical Details
+  specifications String? @db.Text // matériaux, finitions, coloris, quincaillerie
+  materials      Json? // Detailed specs as JSON
+
+  // Budget & Costs
+  estimatedBudget Decimal? @db.Decimal(12, 2)
+  materialCost    Decimal? @db.Decimal(12, 2)
+  laborCost       Decimal? @db.Decimal(12, 2)
+  actualCost      Decimal? @db.Decimal(12, 2)
+  margin          Decimal? @db.Decimal(12, 2)
+  marginPercent   Decimal? @db.Decimal(5, 2)
+
+  // Priority
+  priority String @default("medium") // low, medium, high, urgent
+
+  // Assigned
+  assignedToId String?
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id])
+
+  // Relations
+  documents  CRMDocument[]
+  tasks      Task[]
+  journal    ProjectJournal[]
+  media      ProjectMedia[]
+  checklist  ProjectChecklist[]
+  activities Activity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Task {
+  id String @id @default(cuid())
+
+  projectId String
+  project   CRMProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String? @db.Text
+
+  priority String @default("medium") // low, medium, high
+  status   String @default("pending") // pending, in_progress, completed, cancelled
+
+  dueDate     DateTime?
+  completedAt DateTime?
+
+  // Assigned
+  assignedToId String?
+  assignedTo   User?   @relation(fields: [assignedToId], references: [id])
+
+  // Order
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProjectJournal {
+  id String @id @default(cuid())
+
+  projectId String
+  project   CRMProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  date    DateTime @default(now())
+  title   String?
+  content String   @db.Text
+
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+  PLAN
+}
+
+enum MediaTag {
+  BEFORE // Avant
+  DURING // Pendant
+  AFTER // Après
+  PLAN // Plan
+  SIGNATURE // Signature
+  CONTRACT // Contrat
+  OTHER // Autre
+}
+
+model ProjectMedia {
+  id String @id @default(cuid())
+
+  projectId String
+  project   CRMProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  url         String
+  filename    String
+  type        MediaType @default(IMAGE)
+  tag         MediaTag  @default(OTHER)
+  description String?
+
+  createdAt DateTime @default(now())
+}
+
+model ProjectChecklist {
+  id String @id @default(cuid())
+
+  projectId String
+  project   CRMProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  item        String // "Portes alignées", "Charnières OK", etc.
+  checked     Boolean   @default(false)
+  checkedAt   DateTime?
+  checkedById String?
+  notes       String?
+
+  order Int @default(0)
+}
+
+// ============================================
+// CATALOG - PRODUCTS & SERVICES
+// ============================================
+
+enum CatalogItemType {
+  PRODUCT // Produit
+  SERVICE // Service
+}
+
+enum StockUnit {
+  PCS // Pièces
+  M2 // Mètre carré
+  ML // Mètre linéaire
+  M3 // Mètre cube
+  KG // Kilogramme
+  L // Litre
+  H // Heure
+  FORFAIT // Forfait
+  DAY // Jour
+}
+
+model CatalogCategory {
+  id String @id @default(cuid())
+
+  name        String
+  slug        String  @unique
+  description String?
+  icon        String? // Lucide icon name
+
+  // Hierarchy
+  parentId String?
+  parent   CatalogCategory?  @relation("CatalogCategoryHierarchy", fields: [parentId], references: [id])
+  children CatalogCategory[] @relation("CatalogCategoryHierarchy")
+
+  items CatalogItem[]
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+}
+
+model CatalogItem {
+  id String @id @default(cuid())
+
+  // Reference - Format: LTB-MDF-0001, LTB-SERV-0001
+  sku String @unique
+
+  // Type
+  type CatalogItemType @default(PRODUCT)
+
+  // Category
+  categoryId String?
+  category   CatalogCategory? @relation(fields: [categoryId], references: [id])
+
+  // Names
+  name        String // Désignation courte (obligatoire)
+  description String? @db.Text // Description longue
+
+  // Unit
+  unit StockUnit @default(PCS)
+
+  // Pricing (in MAD)
+  purchasePrice  Decimal? @db.Decimal(10, 2) // Prix d'achat
+  sellingPriceHT Decimal  @db.Decimal(10, 2) // Prix de vente HT
+  tvaRate        Decimal  @default(20) @db.Decimal(5, 2)
+
+  // Discount
+  maxDiscount Decimal? @db.Decimal(5, 2) // Remise max autorisée
+
+  // Stock (for products)
+  trackStock    Boolean  @default(false)
+  stockQty      Decimal  @default(0) @db.Decimal(10, 2)
+  stockMin      Decimal? @db.Decimal(10, 2) // Seuil alerte
+  stockMax      Decimal? @db.Decimal(10, 2)
+  stockLocation String? // Emplacement
+
+  // Supplier
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id])
+
+  // Images
+  images String[] // Array of URLs
+
+  // Variants (optional)
+  hasVariants Boolean @default(false)
+  variants    Json? // {color: [...], size: [...], finish: [...]}
+
+  // Bundle/BOM (optional)
+  isBundle    Boolean @default(false)
+  bundleItems Json? // [{itemId, qty}]
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Relations
+  documentItems  CRMDocumentItem[]
+  stockMovements StockMovement[]
+  priceHistory   PriceHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id String @id @default(cuid())
+
+  code        String? @unique // FRN-001
+  name        String
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  city        String?
+  country     String  @default("Maroc")
 
   // Payment
-  paymentMethod   PaymentMethod
-  paymentStatus   PaymentStatus @default(PENDING)
-  stripeSessionId String?
-  stripePaymentId String?
+  paymentTerms String?
+  bankInfo     String?
 
-  // Totals (in MAD)
-  subtotal        Decimal       @db.Decimal(10, 2)
-  total           Decimal       @db.Decimal(10, 2)
+  notes String? @db.Text
+
+  items CatalogItem[]
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model StockMovement {
+  id String @id @default(cuid())
+
+  itemId String
+  item   CatalogItem @relation(fields: [itemId], references: [id])
+
+  type        String // in, out, adjustment, return
+  quantity    Decimal @db.Decimal(10, 2)
+  previousQty Decimal @db.Decimal(10, 2)
+  newQty      Decimal @db.Decimal(10, 2)
+
+  reference String? // BL number, purchase order, etc.
+  reason    String?
+  notes     String?
+
+  // Cost tracking
+  unitCost Decimal? @db.Decimal(10, 2)
+
+  createdById String?
+  createdAt   DateTime @default(now())
+}
+
+model PriceHistory {
+  id String @id @default(cuid())
+
+  itemId String
+  item   CatalogItem @relation(fields: [itemId], references: [id])
+
+  oldPrice Decimal @db.Decimal(10, 2)
+  newPrice Decimal @db.Decimal(10, 2)
+
+  changedById String?
+  changedAt   DateTime @default(now())
+}
+
+// ============================================
+// COMMERCIAL DOCUMENTS
+// ============================================
+
+enum CRMDocumentType {
+  DEVIS // Devis - D-YYYY-000001
+  BON_COMMANDE // Bon de Commande - BC-YYYY-000001
+  BON_LIVRAISON // Bon de Livraison - BL-YYYY-000001
+  PV_RECEPTION // PV Fin Travaux/Réception - PV-YYYY-000001
+  FACTURE // Facture - F-YYYY-000001
+  FACTURE_ACOMPTE // Facture d'acompte - FA-YYYY-000001
+  AVOIR // Avoir (Note de crédit) - A-YYYY-000001
+}
+
+enum CRMDocumentStatus {
+  DRAFT // Brouillon
+  SENT // Envoyé
+  VIEWED // Vu
+  ACCEPTED // Accepté (devis)
+  REJECTED // Refusé (devis)
+  CONFIRMED // Confirmé (BC)
+  PARTIAL // Partiellement livré/payé
+  DELIVERED // Livré (BL)
+  SIGNED // Signé (PV)
+  PAID // Payé (Facture)
+  OVERDUE // En retard (Facture)
+  CANCELLED // Annulé
+}
+
+model CRMDocument {
+  id String @id @default(cuid())
+
+  // Type & Number
+  type    CRMDocumentType
+  number  String          @unique
+  version Int             @default(1) // For revisions
+
+  // Draft vs Official numbering (P0-3 + FIX 2)
+  isDraft     Boolean   @default(true) // true until officially issued
+  draftNumber String? // Temporary number for drafts (e.g., DRAFT-xxx)
+  issuedAt    DateTime? // When document was officially issued (locked)
+  issuedById  String? // User who issued the document
+  isLocked    Boolean   @default(false) // Once issued, cannot be modified
+
+  // Parent/Children (for conversions)
+  parentId String?
+  parent   CRMDocument?  @relation("DocumentConversion", fields: [parentId], references: [id])
+  children CRMDocument[] @relation("DocumentConversion")
+
+  // Acompte (Deposit) Tracking (P0-1 + FIX 4)
+  isDepositInvoice     Boolean       @default(false) // true for FACTURE_ACOMPTE
+  depositInvoiceId     String? // For final invoice: link to deposit invoice
+  depositInvoice       CRMDocument?  @relation("DepositLink", fields: [depositInvoiceId], references: [id])
+  finalInvoices        CRMDocument[] @relation("DepositLink") // For deposit invoice: linked final invoices
+  linkedDevisId        String? // For deposit invoice: link to source devis
+  linkedDevis          CRMDocument?  @relation("DevisDeposit", fields: [linkedDevisId], references: [id])
+  depositInvoices      CRMDocument[] @relation("DevisDeposit") // For devis: linked deposit invoices
+  totalDepositsApplied Decimal       @default(0) @db.Decimal(12, 2) // Sum of deposits applied to final invoice
+
+  // FIX 4: Deposit Deduction Persistence
+  appliedDepositIds    String[] // IDs of deposit invoices applied to this final invoice
+  amountDue            Decimal       @default(0) @db.Decimal(12, 2) // totalTTC - totalDepositsApplied - paidAmount
+
+  // Cross-references
+  devisRef   String? // Référence devis
+  bcRef      String? // Référence BC
+  blRef      String? // Référence BL
+  pvRef      String? // Référence PV
+  factureRef String? // Pour Avoir - ref facture
+
+  // Client
+  clientId String
+  client   CRMClient @relation(fields: [clientId], references: [id])
+
+  // Project (optional)
+  projectId String?
+  project   CRMProject? @relation(fields: [projectId], references: [id])
+
+  // Dates
+  date         DateTime  @default(now())
+  validUntil   DateTime? // Validité devis (ex: 15 jours)
+  dueDate      DateTime? // Échéance facture
+  deliveryDate DateTime? // Date livraison prévue
+
+  // Status
+  status CRMDocumentStatus @default(DRAFT)
+
+  // Client Info Snapshot (at document creation)
+  clientName    String
+  clientAddress String?
+  clientCity    String?
+  clientIce     String?
+  clientPhone   String?
+  clientEmail   String?
+
+  // Delivery Address (for BL)
+  deliveryAddress String?
+  deliveryCity    String?
+  deliveryNotes   String?
 
   // Items
-  items           OrderItem[]
+  items CRMDocumentItem[]
 
-  notes           String?
-  locale          String        @default("fr")
+  // Totals (in MAD)
+  totalHT Decimal @db.Decimal(12, 2)
 
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  // Global Discount
+  discountType   String? // percentage, fixed
+  discountValue  Decimal? @db.Decimal(10, 2)
+  discountAmount Decimal  @default(0) @db.Decimal(12, 2)
 
-  @@index([orderNumber])
-  @@index([userId])
-  @@index([status])
-  @@index([paymentStatus])
-  @@index([customerEmail])
-}
+  // After discount
+  netHT Decimal @db.Decimal(12, 2)
 
-model OrderItem {
-  id        String   @id @default(cuid())
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  // TVA breakdown
+  tvaDetails Json? // [{rate: 20, base: 1000, amount: 200}]
+  totalTVA   Decimal @db.Decimal(12, 2)
 
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  // Final Total
+  totalTTC Decimal @db.Decimal(12, 2)
 
-  quantity  Int
-  priceMAD  Decimal  @db.Decimal(10, 2)
-  total     Decimal  @db.Decimal(10, 2)
+  // Deposit/Acompte (for devis)
+  depositPercent Decimal? @db.Decimal(5, 2)
+  depositAmount  Decimal? @db.Decimal(12, 2)
 
-  // Snapshot of product at order time
-  productName String
-  productImage String?
+  // Payment Info
+  paidAmount Decimal      @default(0) @db.Decimal(12, 2)
+  balance    Decimal      @default(0) @db.Decimal(12, 2) // Remaining to pay
+  payments   CRMPayment[]
 
-  @@unique([orderId, productId])
-  @@index([orderId])
-  @@index([productId])
-}
+  // Conditions (for devis)
+  deliveryTime String? // Délai de réalisation
+  includes     String[] // Ce qui est inclus
+  excludes     String[] // Ce qui est exclu
+  conditions   String?  @db.Text // Conditions générales
 
-// ═══════════════════════════════════════════════════════════
-// CART
-// ═══════════════════════════════════════════════════════════
+  // Payment Terms
+  paymentTerms String? // Mode de paiement
 
-model Cart {
-  id        String     @id @default(cuid())
+  // PV Reception specific
+  workDescription String?   @db.Text // Travaux réalisés
+  hasReserves     Boolean? // Avec réserves
+  reserves        String?   @db.Text // Description réserves
+  reserveDeadline DateTime? // Délai levée réserves
 
-  userId    String?    @unique
-  user      User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Avoir specific
+  avoirReason String? // Motif de l'avoir
 
-  visitorId String?    @unique // For anonymous carts
+  // Reception (for BL)
+  receivedBy String? // Nom du réceptionnaire
+  receivedAt DateTime?
 
-  items     CartItem[]
+  // Notes
+  internalNotes String? @db.Text // Notes internes
+  publicNotes   String? @db.Text // Notes visibles sur document
+  footerText    String? @db.Text // Pied de page personnalisé
 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-}
+  // Signature
+  signatureUrl String? // "Bon pour accord" signature image
+  signedBy     String? // Name of signer
+  signedAt     DateTime?
 
-model CartItem {
-  id        String   @id @default(cuid())
-  cartId    String
-  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  // PDF
+  pdfUrl         String?
+  pdfGeneratedAt DateTime?
 
-  productId String
-  product   Product  @relation(fields: [productId], references: [id])
+  // PDF Archive (P0-4 - Immutability)
+  archivedPdfUrl  String? // Immutable PDF snapshot at issuance
+  archivedPdfHash String? // SHA-256 hash for integrity verification
+  archivedAt      DateTime? // When PDF was archived
 
-  quantity  Int      @default(1)
+  // Email tracking
+  emailSentAt DateTime?
+  emailSentTo String?
+
+  // Creator
+  createdById String?
+  createdBy   User?   @relation("DocumentCreator", fields: [createdById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@unique([cartId, productId])
-  @@index([cartId])
-  @@index([productId])
 }
 
-// ═══════════════════════════════════════════════════════════
-// MESSAGES (Contact Form)
-// ═══════════════════════════════════════════════════════════
+model CRMDocumentItem {
+  id String @id @default(cuid())
 
-model Message {
-  id        String    @id @default(cuid())
+  documentId String
+  document   CRMDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
-  name      String
-  email     String
-  phone     String?
-  subject   String?
-  content   String    @db.Text
+  // Reference to catalog item (optional)
+  catalogItemId String?
+  catalogItem   CatalogItem? @relation(fields: [catalogItemId], references: [id])
 
-  read      Boolean   @default(false)
-  readAt    DateTime?
+  // Item Details
+  reference   String? // SKU
+  designation String // Description
+  description String? @db.Text
 
-  locale    String    @default("fr")
+  // Quantity
+  quantity Decimal @db.Decimal(10, 3)
+  unit     String  @default("pcs")
 
-  createdAt DateTime  @default(now())
+  // For BL - partial delivery (P0-2)
+  orderedQty        Decimal? @db.Decimal(10, 3) // Original qty from BC
+  deliveredQty      Decimal? @db.Decimal(10, 3) // Qty in this BL
+  totalDeliveredQty Decimal? @db.Decimal(10, 3) // Cumulative delivered across all BLs
+  remainingQty      Decimal? @db.Decimal(10, 3) // Remaining to deliver
 
-  @@index([read])
-  @@index([email])
+  // Link to source BC item for tracking partial deliveries
+  sourceBCItemId String?
+  sourceBCItem   CRMDocumentItem?  @relation("BCItemDeliveries", fields: [sourceBCItemId], references: [id])
+  deliveries     CRMDocumentItem[] @relation("BCItemDeliveries")
+
+  // Pricing
+  unitPriceHT Decimal @db.Decimal(10, 2)
+
+  // Line Discount
+  discountPercent Decimal? @db.Decimal(5, 2)
+  discountAmount  Decimal  @default(0) @db.Decimal(10, 2)
+
+  // TVA
+  tvaRate Decimal @default(20) @db.Decimal(5, 2)
+
+  // Calculated Totals
+  totalHT  Decimal @db.Decimal(12, 2)
+  totalTVA Decimal @db.Decimal(12, 2)
+  totalTTC Decimal @db.Decimal(12, 2)
+
+  // Order
+  order Int @default(0)
+
+  createdAt DateTime @default(now())
 }
 
-// ═══════════════════════════════════════════════════════════
-// SETTINGS & CONFIG
-// ═══════════════════════════════════════════════════════════
+// ============================================
+// PAYMENTS
+// ============================================
 
-model Currency {
-  id        String   @id @default(cuid())
-  code      String   @unique // MAD, EUR, USD, GBP
-  symbol    String   // DH, €, $, £
-  name      String
-  rate      Decimal  @db.Decimal(10, 6) // Rate from MAD
-  locale    String   // en-US, fr-FR, etc.
-  position  String   @default("after") // before/after
-  isDefault Boolean  @default(false)
-  isActive  Boolean  @default(true)
+enum CRMPaymentMethod {
+  CASH // Espèces
+  BANK_TRANSFER // Virement bancaire
+  CHECK // Chèque
+  CARD // Carte bancaire
+  MOBILE // Paiement mobile
+  OTHER // Autre
+}
+
+enum CRMPaymentStatus {
+  PENDING // En attente
+  COMPLETED // Effectué
+  FAILED // Échoué
+  REFUNDED // Remboursé
+  CANCELLED // Annulé
+}
+
+model CRMPayment {
+  id String @id @default(cuid())
+
+  paymentNumber String @unique // PAY-2025-000001
+
+  // Date
+  date DateTime @default(now())
+
+  // Client
+  clientId String
+  client   CRMClient @relation(fields: [clientId], references: [id])
+
+  // Document (usually invoice)
+  documentId String?
+  document   CRMDocument? @relation(fields: [documentId], references: [id])
+
+  // Amount
+  amount Decimal @db.Decimal(12, 2)
+
+  // Method
+  method CRMPaymentMethod @default(CASH)
+  status CRMPaymentStatus @default(COMPLETED)
+
+  // Reference
+  reference String? // Check number, transfer ref
+
+  // Bank (for checks/transfers)
+  bankName    String?
+  checkNumber String?
+  checkDate   DateTime?
+
+  // Proof
+  proofUrl String? // Receipt/proof upload
+
+  // Notes
+  notes String? @db.Text
+
+  // Audit
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// VAT BREAKDOWN (P0-5)
+// ============================================
+
+model DocumentVATBreakdown {
+  id String @id @default(cuid())
+
+  documentId String
+
+  rate   Decimal @db.Decimal(5, 2) // 0, 7, 10, 14, 20
+  baseHT Decimal @db.Decimal(12, 2) // Base amount for this rate
+  amount Decimal @db.Decimal(12, 2) // VAT amount (baseHT * rate / 100)
+
+  createdAt DateTime @default(now())
+
+  @@unique([documentId, rate])
+  @@index([documentId])
+}
+
+// ============================================
+// BC DELIVERY TRACKING (P0-2)
+// ============================================
+
+model BCDeliveryLog {
+  id String @id @default(cuid())
+
+  // Source BC
+  bcId     String
+  bcNumber String
+
+  // BL created from this delivery
+  blId     String
+  blNumber String
+
+  // Delivery summary
+  deliveryDate DateTime
+  itemCount    Int // Number of items in this delivery
+  isPartial    Boolean  @default(false) // true if not all items delivered
+  isFinal      Boolean  @default(false) // true if this completes the BC
+
+  // Totals
+  deliveredValue Decimal @db.Decimal(12, 2) // Value of delivered items
+
+  // Notes
+  notes String? @db.Text
+
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([bcId])
+  @@index([blId])
+}
+
+// ============================================
+// ATTACHMENTS (General)
+// ============================================
+
+model Attachment {
+  id String @id @default(cuid())
+
+  // Link to entity
+  clientId String?
+  client   CRMClient? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // File info
+  url      String
+  filename String
+  mimeType String?
+  size     Int?
+
+  // Classification
+  tag         String? // CIN, RC, plan, photo, contrat
+  description String?
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// DOCUMENT SEQUENCES (Auto-numbering)
+// ============================================
+
+model DocumentSequence {
+  id String @id @default(cuid())
+
+  type       String // LEAD, CLIENT, PROJECT, DEVIS, BC, BL, PV, FACTURE, AVOIR, PAYMENT
+  prefix     String // L, CLI, PRJ, D, BC, BL, PV, F, A, PAY
+  year       Int
+  lastNumber Int    @default(0)
+
+  @@unique([type, year])
+}
+
+// ============================================
+// COMPANY SETTINGS
+// ============================================
+
+model CompanySettings {
+  id String @id @default("company")
+
+  // Company Identity
+  companyName String @default("LE TATCHE BOIS S.A.R.L A.U")
+  tagline     String @default("Menuiserie artisanat – Décoration")
+
+  // Logo
+  logoUrl      String?
+  logoLightUrl String? // For dark backgrounds
+  faviconUrl   String?
+
+  // Legal Info (Maroc)
+  rc    String? @default("120511")
+  taxId String? @default("50628346") // IF
+  ice   String? @default("002942117000021")
+  pat   String? @default("64601859")
+  cnss  String?
+
+  // Address
+  address    String? @default("Lot Hamane El Fetouaki N°365, Lamhamid")
+  city       String  @default("Marrakech")
+  postalCode String?
+  country    String  @default("Maroc")
+
+  // Contact
+  phone    String? @default("0687441840")
+  phoneAlt String? @default("0698013468")
+  fax      String?
+  email    String? @default("contact@letatchebois.com")
+  website  String? @default("www.letatchbois.com")
+  whatsapp String? @default("+212687441840")
+
+  // Social Media
+  facebook  String?
+  instagram String?
+  youtube   String?
+
+  // Bank Details
+  bankName    String?
+  bankAgency  String?
+  bankAddress String?
+  rib         String?
+  iban        String?
+  swift       String?
+
+  // TVA Settings
+  defaultTvaRate    Decimal @default(20) @db.Decimal(5, 2)
+  tvaRates          Json? // [0, 7, 10, 14, 20]
+  showPricesWithTva Boolean @default(false)
+
+  // Document Settings
+  defaultPaymentDays    Int      @default(30)
+  quoteValidityDays     Int      @default(15)
+  defaultDepositPercent Decimal? @db.Decimal(5, 2)
+
+  // Document Number Prefixes
+  leadPrefix    String @default("L")
+  clientPrefix  String @default("CLI")
+  projectPrefix String @default("PRJ")
+  devisPrefix   String @default("D")
+  bcPrefix      String @default("BC")
+  blPrefix      String @default("BL")
+  pvPrefix      String @default("PV")
+  facturePrefix String @default("F")
+  avoirPrefix   String @default("A")
+  paymentPrefix String @default("PAY")
+
+  // Document Footer Texts
+  quoteFooter   String? @default("Ce devis est valable 15 jours. Acompte de 50% à la commande, solde à la livraison.")
+  bcFooter      String? @default("Bon de commande valant engagement ferme.")
+  blFooter      String? @default("Marchandise reçue en bon état, sauf réserves mentionnées.")
+  pvFooter      String? @default("Travaux réceptionnés conformes aux spécifications.")
+  invoiceFooter String? @default("Merci pour votre confiance.")
+  avoirFooter   String? @default("Avoir à déduire sur prochaine facture.")
+
+  // Legal Mentions
+  legalMentions String? @db.Text
+
+  // Units
+  availableUnits Json? // [{code: "pcs", label: "Pièces"}, ...]
+
+  // Currency
+  currency         String @default("MAD")
+  currencySymbol   String @default("DH")
+  currencyPosition String @default("after") // before, after
+
+  // Tracking Pixels
+  googleAnalyticsId  String?
+  googleTagManagerId String?
+  facebookPixelId    String?
+  tiktokPixelId      String?
 
   updatedAt DateTime @updatedAt
 }
+
+// ============================================
+// AUDIT LOG (Enhanced for P0-4)
+// ============================================
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  userId    String?
+  user      User?   @relation(fields: [userId], references: [id])
+  userEmail String?
+  userName  String?
+
+  action   String // create, update, delete, view, export, print, email, issue, lock, payment, convert
+  entity   String // Client, Document, Payment, etc.
+  entityId String?
+
+  description String?
+  changes     Json? // {field: {old: x, new: y}}
+
+  // Document-specific audit fields (P0-4)
+  documentNumber String? // Snapshot of document number
+  documentType   String? // DEVIS, FACTURE, etc.
+  documentAmount Decimal? @db.Decimal(12, 2) // Amount at time of action
+  pdfSnapshot    String? // URL to archived PDF if applicable
+
+  // Security & Compliance
+  ipAddress String?
+  userAgent String?
+  sessionId String? // For tracking user sessions
+
+  // Categorization for filtering
+  category String? // financial, document, client, system
+  severity String  @default("info") // info, warning, critical
+
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([documentNumber])
+  @@index([createdAt])
+  @@index([category])
+}
+
+// ============================================
+// NOTIFICATIONS
+// ============================================
+
+model Notification {
+  id String @id @default(cuid())
+
+  type    String // INVOICE_OVERDUE, PAYMENT_RECEIVED, QUOTE_EXPIRING, NEW_CLIENT, NEW_ORDER, DOCUMENT_CREATED, SYSTEM, etc.
+  title   String
+  message String?
+
+  // Link
+  link     String?
+  metadata Json?
+
+  // Target user
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  read   Boolean   @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
+}
+
+// ============================================
+// SETTINGS (General key-value store)
+// ============================================
 
 model Setting {
   id    String @id @default(cuid())
-  group String // contact, social, seo, shipping, payment
+  group String // contact, social, seo, shipping, payment, tracking, etc.
   key   String
   value Json
 
@@ -545,13 +1208,17 @@ model Setting {
   @@index([group])
 }
 
+// ============================================
+// MEDIA LIBRARY
+// ============================================
+
 model Media {
-  id           String   @id @default(cuid())
+  id           String  @id @default(cuid())
   filename     String
   originalName String
   url          String
-  publicId     String?  // Cloudinary public ID
-  type         String   // image, document
+  publicId     String? // Cloudinary public ID
+  type         String // image, document
   mimeType     String
   size         Int
   width        Int?
@@ -559,39 +1226,930 @@ model Media {
   alt          String?
   folder       String?
 
-  createdAt    DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([type])
   @@index([folder])
 }
 
-// ═══════════════════════════════════════════════════════════
-// GDPR & NEWSLETTER
-// ═══════════════════════════════════════════════════════════
+// ============================================
+// CURRENCY (for multi-currency support)
+// ============================================
 
-model ConsentLog {
-  id         String   @id @default(cuid())
-  visitorId  String
-  ipAddress  String?
-  userAgent  String?
+model Currency {
+  id        String  @id @default(cuid())
+  code      String  @unique // MAD, EUR, USD, GBP
+  symbol    String // DH, €, $, £
+  name      String
+  rate      Decimal @db.Decimal(10, 6) // Rate from MAD
+  locale    String // en-US, fr-FR, etc.
+  position  String  @default("after") // before/after
+  isDefault Boolean @default(false)
+  isActive  Boolean @default(true)
 
-  essential  Boolean  @default(true)
-  analytics  Boolean  @default(false)
-  marketing  Boolean  @default(false)
-
-  createdAt  DateTime @default(now())
-
-  @@index([visitorId])
+  updatedAt DateTime @updatedAt
 }
 
-model NewsletterSubscriber {
-  id             String    @id @default(cuid())
-  email          String    @unique
-  locale         String    @default("fr")
-  source         String?   // footer, popup, checkout
+// ============================================
+// MESSAGES (Contact Form)
+// ============================================
 
-  subscribedAt   DateTime  @default(now())
-  unsubscribedAt DateTime?
+model Message {
+  id String @id @default(cuid())
 
+  name    String
+  email   String
+  phone   String?
+  subject String?
+  content String  @db.Text
+
+  read   Boolean   @default(false)
+  readAt DateTime?
+
+  locale String @default("fr")
+
+  createdAt DateTime @default(now())
+
+  @@index([read])
   @@index([email])
+}
+
+// ============================================
+// E-COMMERCE - CATEGORIES
+// ============================================
+
+model Category {
+  id    String  @id @default(cuid())
+  slug  String  @unique
+  image String?
+
+  // Hierarchy
+  parentId String?
+  parent   Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryHierarchy")
+
+  // Relations
+  translations CategoryTranslation[]
+  products     Product[]
+
+  order      Int     @default(0)
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
+  @@index([isActive])
+}
+
+model CategoryTranslation {
+  id String @id @default(cuid())
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  locale          String // fr, en, es, ar
+  name            String
+  description     String? @db.Text
+  metaTitle       String?
+  metaDescription String? @db.Text
+
+  @@unique([categoryId, locale])
+}
+
+// ============================================
+// E-COMMERCE - PRODUCTS
+// ============================================
+
+enum ProductType {
+  SIMPLE
+  VARIABLE
+  BUNDLE
+}
+
+model Product {
+  id   String      @id @default(cuid())
+  sku  String      @unique
+  slug String      @unique
+  type ProductType @default(SIMPLE)
+
+  // Category
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  // Images
+  images    String[]
+  thumbnail String?
+
+  // Pricing (in MAD)
+  price        Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2) // Sale price comparison
+  costPrice    Decimal? @db.Decimal(10, 2)
+
+  // Stock
+  trackStock     Boolean @default(true)
+  stockQty       Int     @default(0)
+  lowStockQty    Int     @default(5)
+  allowBackorder Boolean @default(false)
+
+  // Dimensions (for shipping)
+  weight Decimal? @db.Decimal(8, 2) // kg
+  length Decimal? @db.Decimal(8, 2) // cm
+  width  Decimal? @db.Decimal(8, 2) // cm
+  height Decimal? @db.Decimal(8, 2) // cm
+
+  // SEO
+  metaTitle       String?
+  metaDescription String? @db.Text
+
+  // Status
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
+  isNew      Boolean @default(false)
+
+  // Relations
+  translations ProductTranslation[]
+  variants     ProductVariant[]
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+  quoteItems   EcomQuoteItem[]
+
+  // Stats
+  viewCount Int @default(0)
+  soldCount Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@index([isActive])
+  @@index([isFeatured])
+}
+
+model ProductTranslation {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  locale           String // fr, en, es, ar
+  name             String
+  description      String?  @db.Text
+  shortDescription String?  @db.Text
+  features         String[] // Bullet points
+
+  @@unique([productId, locale])
+}
+
+model ProductVariant {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sku  String @unique
+  name String // e.g., "Chêne - 200x80"
+
+  // Variant attributes
+  attributes Json // {color: "Chêne", size: "200x80", finish: "Mat"}
+
+  // Pricing
+  price        Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2)
+
+  // Stock
+  stockQty Int @default(0)
+
+  // Image
+  image String?
+
+  isActive Boolean @default(true)
+  order    Int     @default(0)
+
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// E-COMMERCE - ORDERS
+// ============================================
+
+enum OrderStatus {
+  PENDING // En attente de paiement
+  PROCESSING // En cours de traitement
+  CONFIRMED // Confirmée
+  PREPARING // En préparation
+  SHIPPED // Expédiée
+  DELIVERED // Livrée
+  COMPLETED // Terminée
+  CANCELLED // Annulée
+  REFUNDED // Remboursée
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  CARD // Carte bancaire
+  COD // Cash on Delivery
+  BANK_TRANSFER // Virement
+  PAYPAL // PayPal
+}
+
+model Order {
+  id          String @id @default(cuid())
+  orderNumber String @unique // ORD-2025-0001
+
+  // Customer (guest or registered)
+  customerId    String?
+  customerEmail String
+  customerPhone String
+  customerName  String
+
+  // Status
+  status        OrderStatus    @default(PENDING)
+  paymentStatus PaymentStatus  @default(PENDING)
+  paymentMethod PaymentMethod?
+
+  // Stripe
+  stripeSessionId String?
+  stripePaymentId String?
+
+  // Addresses
+  billingAddressId  String?
+  billingAddress    Address? @relation("OrderBilling", fields: [billingAddressId], references: [id])
+  shippingAddressId String?
+  shippingAddress   Address? @relation("OrderShipping", fields: [shippingAddressId], references: [id])
+
+  // Items
+  items OrderItem[]
+
+  // Totals (in MAD)
+  subtotal       Decimal @db.Decimal(12, 2)
+  discountAmount Decimal @default(0) @db.Decimal(12, 2)
+  shippingAmount Decimal @default(0) @db.Decimal(12, 2)
+  taxAmount      Decimal @default(0) @db.Decimal(12, 2)
+  total          Decimal @db.Decimal(12, 2)
+
+  // Currency for display
+  currency     String   @default("MAD")
+  currencyRate Decimal  @default(1) @db.Decimal(10, 6)
+  displayTotal Decimal? @db.Decimal(12, 2)
+
+  // Coupon
+  couponCode     String?
+  couponDiscount Decimal? @db.Decimal(12, 2)
+
+  // Shipping
+  shippingMethod String?
+  trackingNumber String?
+  shippedAt      DateTime?
+  deliveredAt    DateTime?
+
+  // Notes
+  customerNote String? @db.Text
+  adminNote    String? @db.Text
+
+  // Locale
+  locale String @default("fr")
+
+  // Timestamps
+  paidAt       DateTime?
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerEmail])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id String @id @default(cuid())
+
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+
+  // Snapshot at purchase time
+  name  String
+  sku   String
+  image String?
+
+  quantity  Int
+  unitPrice Decimal @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(12, 2)
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// E-COMMERCE - CART
+// ============================================
+
+model Cart {
+  id String @id @default(cuid())
+
+  // Session or user
+  sessionId String? @unique
+  userId    String?
+
+  items CartItem[]
+
+  // Coupon
+  couponCode String?
+
+  // Expiry
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model CartItem {
+  id String @id @default(cuid())
+
+  cartId String
+  cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  variantId String?
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+
+  quantity Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId, variantId])
+}
+
+// ============================================
+// E-COMMERCE - ADDRESSES
+// ============================================
+
+model Address {
+  id String @id @default(cuid())
+
+  // Customer
+  customerId String?
+
+  // Type
+  type      String  @default("shipping") // billing, shipping
+  isDefault Boolean @default(false)
+
+  // Details
+  firstName  String
+  lastName   String
+  company    String?
+  address1   String
+  address2   String?
+  city       String
+  postalCode String?
+  region     String? // State/Province
+  country    String  @default("Maroc")
+
+  phone String?
+
+  // Relations
+  billingOrders  Order[] @relation("OrderBilling")
+  shippingOrders Order[] @relation("OrderShipping")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([customerId])
+}
+
+// ============================================
+// E-COMMERCE - QUOTES (Website Quote Requests)
+// ============================================
+
+enum EcomQuoteStatus {
+  PENDING // En attente
+  REVIEWING // En cours de traitement
+  QUOTED // Devis envoyé
+  ACCEPTED // Accepté
+  REJECTED // Refusé
+  EXPIRED // Expiré
+  CONVERTED // Converti en commande
+}
+
+model EcomQuote {
+  id          String @id @default(cuid())
+  quoteNumber String @unique // QT-2025-0001
+
+  // Customer Info
+  customerName  String
+  customerEmail String
+  customerPhone String
+  company       String?
+
+  // Address
+  city    String?
+  address String?
+
+  // Request Details
+  projectType String? // Cuisine, Dressing, Portes, etc.
+  description String  @db.Text
+  budget      String? // Range: "5000-10000", "10000-20000", etc.
+  timeline    String? // Urgent, 1 mois, 3 mois, flexible
+
+  // Attachments
+  attachments String[] // URLs to uploaded files/images
+
+  // Items (optional - products from catalog)
+  items EcomQuoteItem[]
+
+  // Response
+  status      EcomQuoteStatus @default(PENDING)
+  response    String?         @db.Text
+  quotedPrice Decimal?        @db.Decimal(12, 2)
+  validUntil  DateTime?
+
+  // Notes
+  notes        EcomQuoteNote[]
+  internalNote String?         @db.Text
+
+  // Conversion
+  convertedToLeadId  String? @unique
+  convertedToOrderId String?
+
+  // Tracking
+  locale String  @default("fr")
+  source String? // website, whatsapp, phone
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  respondedAt DateTime?
+
+  @@index([customerEmail])
+  @@index([status])
+}
+
+model EcomQuoteItem {
+  id String @id @default(cuid())
+
+  quoteId String
+  quote   EcomQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+
+  // Custom item if not from catalog
+  name        String
+  description String?
+  quantity    Int     @default(1)
+
+  // Dimensions (for custom items)
+  dimensions String? // "200x80x60"
+
+  createdAt DateTime @default(now())
+}
+
+model EcomQuoteNote {
+  id String @id @default(cuid())
+
+  quoteId String
+  quote   EcomQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  content    String  @db.Text
+  isInternal Boolean @default(true) // Internal note or customer visible
+
+  createdById String?
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// CRM DOCUMENT SEQUENCES (New B2B Numbering)
+// ============================================
+
+enum SequenceResetType {
+  DAILY // FTB: reset every day
+  MONTHLY // D, BC, BL, RFT, AVOIR: reset every month
+  YEARLY // PROJECT: reset every year
+  CONTINUOUS // CLIENT: never reset
+}
+
+model CRMDocumentSequence {
+  id String @id @default(cuid())
+
+  type      String // FACTURE, DEVIS, BC, BL, RFT, AVOIR, CLIENT, LEAD, PROJECT
+  prefix    String // FTB, D, BC, BL, RFT, AV, CLI, L, PRJ
+  resetType SequenceResetType
+
+  // Period tracking
+  year  Int // 2025, 2026, etc.
+  month Int? // 1-12 (for monthly reset)
+  day   Int? // 1-31 (for daily reset)
+
+  // Current sequence number
+  lastNumber Int @default(0)
+
+  // Draft sequence (P0-3) - separate counter for drafts
+  lastDraftNumber Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([type, year, month, day])
+  @@index([type])
+}
+
+// ============================================
+// ACCOUNTING EXPORT TRACKING (P1)
+// ============================================
+
+model AccountingExport {
+  id String @id @default(cuid())
+
+  exportType String // sales_ledger, payments_ledger, client_balances, vat_summary
+  period     String // YYYY-MM or YYYY-Q1, etc.
+
+  dateFrom DateTime
+  dateTo   DateTime
+
+  // Export details
+  filename    String
+  fileUrl     String?
+  format      String  @default("csv") // csv, xlsx, pdf
+  recordCount Int
+
+  // Filters applied
+  filters Json? // {clientId, documentType, etc.}
+
+  // Generated by
+  createdById String?
+  createdAt   DateTime @default(now())
+
+  @@index([exportType])
+  @@index([period])
+}
+
+// ============================================
+// CMS - NAVIGATION MENU
+// ============================================
+
+model NavigationItem {
+  id String @id @default(cuid())
+
+  location String // 'header', 'footer-quick', 'footer-services'
+
+  labelFr String
+  labelEn String?
+  labelEs String?
+  labelAr String?
+
+  url    String // '/services', '/contact', etc.
+  target String @default("_self") // '_self' or '_blank'
+
+  // Nested menu support
+  parentId String?
+  parent   NavigationItem?  @relation("NavChildren", fields: [parentId], references: [id])
+  children NavigationItem[] @relation("NavChildren")
+
+  icon String? // Icon name for mobile/footer
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([location])
+}
+
+// ============================================
+// CMS - SITE SETTINGS (Header, Footer, General)
+// ============================================
+
+model SiteSetting {
+  id String @id @default(cuid())
+
+  key String @unique // 'footer_description', 'footer_address', etc.
+
+  valueFr String? @db.Text
+  valueEn String? @db.Text
+  valueEs String? @db.Text
+  valueAr String? @db.Text
+
+  // For non-text values
+  valueJson Json? // For arrays, objects
+
+  group String @default("general") // 'general', 'header', 'footer', 'social'
+
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// CMS - PAGE CONTENT (Hero, Sections, CTA)
+// ============================================
+
+model PageSection {
+  id String @id @default(cuid())
+
+  // Which page
+  pageSlug String // 'home', 'services', 'portfolio', 'workshop', 'shop', 'contact'
+
+  // Which section
+  sectionType String // 'hero', 'intro', 'stats', 'features', 'cta', 'content'
+  sectionKey  String // Unique identifier within page
+
+  // Content (multilingual)
+  titleFr String?
+  titleEn String?
+  titleEs String?
+  titleAr String?
+
+  subtitleFr String?
+  subtitleEn String?
+  subtitleEs String?
+  subtitleAr String?
+
+  contentFr String? @db.Text
+  contentEn String? @db.Text
+  contentEs String? @db.Text
+  contentAr String? @db.Text
+
+  // Media
+  imageUrl String?
+  videoUrl String?
+
+  // Background
+  bgColor   String? // 'amber-900', 'white', etc.
+  bgImage   String?
+  bgOverlay Float?  @default(0.5) // Opacity
+
+  // CTA Button
+  ctaTextFr String?
+  ctaTextEn String?
+  ctaUrl    String?
+  ctaStyle  String? @default("primary") // 'primary', 'secondary', 'outline'
+
+  // Secondary CTA
+  cta2TextFr String?
+  cta2TextEn String?
+  cta2Url    String?
+
+  // Settings
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pageSlug, sectionKey])
+  @@index([pageSlug])
+}
+
+// ============================================
+// CMS - STATS/COUNTERS (500+ Projets, etc.)
+// ============================================
+
+model StatCounter {
+  id String @id @default(cuid())
+
+  pageSlug String? // null = global (show on all pages)
+
+  value String // '500+', '30+', '100%'
+
+  labelFr String // 'Projets', 'Années', 'Sur Mesure'
+  labelEn String?
+  labelEs String?
+  labelAr String?
+
+  icon String? // Icon or emoji
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  @@index([pageSlug])
+}
+
+// ============================================
+// CMS - PORTFOLIO CATEGORIES
+// ============================================
+
+model PortfolioCategory {
+  id String @id @default(cuid())
+
+  slug String @unique // 'cuisines', 'placards', 'portes'
+
+  nameFr String // 'Cuisines', 'Placards', 'Portes'
+  nameEn String?
+  nameEs String?
+  nameAr String?
+
+  icon String? // '🍳', '🚪', etc.
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  projects PortfolioProject[]
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// CMS - PORTFOLIO PROJECTS
+// ============================================
+
+model PortfolioProject {
+  id String @id @default(cuid())
+
+  // Basic info
+  titleFr String
+  titleEn String?
+  titleEs String?
+  titleAr String?
+
+  descriptionFr String? @db.Text
+  descriptionEn String? @db.Text
+  descriptionEs String? @db.Text
+  descriptionAr String? @db.Text
+
+  // ═══════════════════════════════════════════════════════════
+  // BEFORE GALLERY (Work in Progress / Travaux)
+  // ═══════════════════════════════════════════════════════════
+  beforeDescFr String? @db.Text // Description of initial state
+  beforeDescEn String? @db.Text
+  beforeDescEs String? @db.Text
+  beforeDescAr String? @db.Text
+  beforeImages String[] // Array of BEFORE image URLs
+
+  // ═══════════════════════════════════════════════════════════
+  // AFTER GALLERY (Final Result / Résultat)
+  // ═══════════════════════════════════════════════════════════
+  afterDescFr String? @db.Text // Description of final result
+  afterDescEn String? @db.Text
+  afterDescEs String? @db.Text
+  afterDescAr String? @db.Text
+  afterImages String[] // Array of AFTER image URLs
+
+  // Category
+  categoryId String?
+  category   PortfolioCategory? @relation(fields: [categoryId], references: [id])
+
+  // Location & Date
+  location String? // 'Marrakech', 'Casablanca'
+  year     Int? // 2024
+  duration String? // '3 semaines'
+  client   String? // Client name (optional)
+
+  // Images
+  coverImage String? // Main image URL
+  images     String[] // Legacy gallery images
+
+  // SEO
+  slug String @unique
+
+  // Settings
+  order      Int     @default(0)
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+}
+
+// ============================================
+// CMS - SITE SERVICES (Public services page)
+// ============================================
+
+model SiteService {
+  id String @id @default(cuid())
+
+  titleFr String
+  titleEn String?
+  titleEs String?
+  titleAr String?
+
+  shortDescFr String?
+  shortDescEn String?
+
+  descriptionFr String? @db.Text
+  descriptionEn String? @db.Text
+  descriptionEs String? @db.Text
+  descriptionAr String? @db.Text
+
+  icon   String?   // Emoji or icon name
+  image  String?   // Service cover image
+  images String[]  // Gallery images (up to 100)
+
+  // Link to detail page
+  slug          String?  @unique
+  hasDetailPage Boolean @default(false)
+
+  order      Int     @default(0)
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false) // Show on homepage
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// CMS - SOCIAL MEDIA LINKS
+// ============================================
+
+model SocialLink {
+  id String @id @default(cuid())
+
+  platform String // 'facebook', 'instagram', 'whatsapp', 'youtube'
+  url      String
+  icon     String? // Icon name
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+}
+
+// ============================================
+// CMS - TESTIMONIALS
+// ============================================
+
+model Testimonial {
+  id String @id @default(cuid())
+
+  clientName String
+  clientRole String? // 'Architecte', 'Propriétaire'
+  company    String?
+  avatar     String?
+
+  contentFr String  @db.Text
+  contentEn String? @db.Text
+
+  rating Int @default(5)
+
+  projectId String? // Link to portfolio project
+
+  order      Int     @default(0)
+  isActive   Boolean @default(true)
+  isFeatured Boolean @default(false)
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// CMS - HERO SLIDES (Homepage, Services, Portfolio)
+// ============================================
+
+model HeroSlide {
+  id String @id @default(cuid())
+
+  targetPage String // 'home', 'services', 'portfolio'
+
+  mediaType  String  @default("image") // "image" or "video"
+  imageUrl   String?
+  videoUrl   String?
+  videoPoster String?
+
+  titleFr String
+  titleEn String?
+  titleEs String?
+  titleAr String?
+
+  subtitleFr String?
+  subtitleEn String?
+  subtitleEs String?
+  subtitleAr String?
+
+  ctaTextFr String?
+  ctaTextEn String?
+  ctaUrl    String?
+
+  cta2TextFr String?
+  cta2TextEn String?
+  cta2Url    String?
+
+  order    Int     @default(0)
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([targetPage])
 }

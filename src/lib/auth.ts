@@ -38,43 +38,61 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required");
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            console.log("[Auth] Missing email or password");
+            return null;
+          }
+
+          const email = credentials.email as string;
+          const password = credentials.password as string;
+
+          console.log("[Auth] Attempting login for:", email);
+
+          const user = await prisma.user.findUnique({
+            where: { email },
+          });
+
+          if (!user) {
+            console.log("[Auth] User not found:", email);
+            return null;
+          }
+
+          if (!user.isActive) {
+            console.log("[Auth] Account disabled:", email);
+            return null;
+          }
+
+          if (!user.password) {
+            console.log("[Auth] No password set for user:", email);
+            return null;
+          }
+
+          const isPasswordValid = await compare(password, user.password);
+
+          if (!isPasswordValid) {
+            console.log("[Auth] Invalid password for:", email);
+            return null;
+          }
+
+          // Update last login
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { lastLogin: new Date() },
+          });
+
+          console.log("[Auth] Login successful for:", email);
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error("[Auth] Error during authentication:", error);
+          return null;
         }
-
-        const email = credentials.email as string;
-        const password = credentials.password as string;
-
-        const user = await prisma.user.findUnique({
-          where: { email },
-        });
-
-        if (!user) {
-          throw new Error("Invalid email or password");
-        }
-
-        if (!user.isActive) {
-          throw new Error("Account is disabled");
-        }
-
-        const isPasswordValid = await compare(password, user.password);
-
-        if (!isPasswordValid) {
-          throw new Error("Invalid email or password");
-        }
-
-        // Update last login
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { lastLogin: new Date() },
-        });
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
       },
     }),
   ],
@@ -103,4 +121,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     maxAge: 24 * 60 * 60, // 24 hours
   },
   secret: process.env.NEXTAUTH_SECRET,
+  trustHost: true,
+  debug: process.env.NODE_ENV === "development",
 });

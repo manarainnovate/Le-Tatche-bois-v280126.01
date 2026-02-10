@@ -60,3 +60,7 @@ prisma/.db-journal
 
 # OS
 Thumbs.db
+
+# Uploaded files (keep structure, ignore content)
+/public/uploads/*
+!/public/uploads/.gitkeep

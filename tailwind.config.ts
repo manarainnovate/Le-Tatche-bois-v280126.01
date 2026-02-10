@@ -140,6 +140,52 @@ const config: Config = {
     require("@tailwindcss/forms"),
     require("@tailwindcss/typography"),
     require("@tailwindcss/aspect-ratio"),
+    // RTL utilities plugin
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function ({ addUtilities }: any) {
+      addUtilities({
+        // Keep LTR direction even in RTL context (for code, numbers)
+        ".ltr-force": {
+          direction: "ltr",
+        },
+        // Text alignment that respects RTL
+        ".text-start": {
+          "text-align": "start",
+        },
+        ".text-end": {
+          "text-align": "end",
+        },
+        // Margin/padding that respect RTL using logical properties
+        ".ms-auto": {
+          "margin-inline-start": "auto",
+        },
+        ".me-auto": {
+          "margin-inline-end": "auto",
+        },
+        ".ps-4": {
+          "padding-inline-start": "1rem",
+        },
+        ".pe-4": {
+          "padding-inline-end": "1rem",
+        },
+        // Border that respects RTL
+        ".border-s": {
+          "border-inline-start-width": "1px",
+        },
+        ".border-e": {
+          "border-inline-end-width": "1px",
+        },
+        // Rounded corners that respect RTL
+        ".rounded-s": {
+          "border-start-start-radius": "0.5rem",
+          "border-end-start-radius": "0.5rem",
+        },
+        ".rounded-e": {
+          "border-start-end-radius": "0.5rem",
+          "border-end-end-radius": "0.5rem",
+        },
+      });
+    },
   ],
 };
 

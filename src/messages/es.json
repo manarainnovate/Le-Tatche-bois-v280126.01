@@ -1,250 +1,1446 @@
 {
+  "metadata": {
+    "title": "LE TATCHE BOIS - Taller de Carpintería Artesanal en Marruecos",
+    "description": "Taller de carpintería artesanal marroquí. Puertas, ventanas, muebles a medida en maderas nobles. Envío a todo Marruecos.",
+    "keywords": "carpintería marruecos, madera artesanal, puertas de madera, muebles a medida"
+  },
+
   "common": {
     "readMore": "Leer más",
     "viewAll": "Ver todo",
+    "viewDetails": "Ver detalles",
     "contactUs": "Contáctenos",
     "requestQuote": "Solicitar presupuesto",
+    "getQuote": "Obtener presupuesto",
     "loading": "Cargando...",
     "error": "Ha ocurrido un error",
     "success": "Éxito",
-    "cancel": "Cancelar",
-    "save": "Guardar",
-    "delete": "Eliminar",
-    "edit": "Editar",
-    "add": "Añadir",
+    "addToCart": "Añadir al carrito",
+    "buyNow": "Comprar ahora",
+    "outOfStock": "Agotado",
+    "inStock": "En stock",
+    "lowStock": "Stock limitado",
     "search": "Buscar",
     "filter": "Filtrar",
     "sort": "Ordenar",
-    "noResults": "Sin resultados",
-    "yes": "Sí",
-    "no": "No",
-    "confirm": "Confirmar",
+    "close": "Cerrar",
+    "open": "Abrir",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
     "back": "Volver",
     "next": "Siguiente",
     "previous": "Anterior",
-    "close": "Cerrar"
+    "submit": "Enviar",
+    "send": "Enviar",
+    "download": "Descargar",
+    "upload": "Subir",
+    "share": "Compartir",
+    "print": "Imprimir",
+    "yes": "Sí",
+    "no": "No",
+    "all": "Todos",
+    "none": "Ninguno",
+    "or": "o",
+    "and": "y",
+    "from": "Desde",
+    "to": "hasta",
+    "by": "por",
+    "at": "a",
+    "in": "en",
+    "of": "de",
+    "the": "el/la",
+    "new": "Nuevo",
+    "featured": "Destacado",
+    "popular": "Popular",
+    "recommended": "Recomendado",
+    "sale": "Oferta",
+    "free": "Gratis",
+    "currency": "MAD",
+    "language": "Español"
   },
+
   "nav": {
     "home": "Inicio",
-    "about": "Taller",
+    "about": "El Taller",
     "services": "Servicios",
     "projects": "Proyectos",
     "shop": "Tienda",
     "cart": "Carrito",
     "quote": "Presupuesto",
-    "contact": "Contacto"
+    "contact": "Contacto",
+    "admin": "Administración",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "account": "Mi cuenta",
+    "orders": "Mis pedidos",
+    "wishlist": "Favoritos",
+    "purchaseOrders": "Órdenes de compra",
+    "deliveryNotes": "Albaranes de entrega",
+    "receptionReports": "Actas de recepción",
+    "billableServices": "Servicios (facturables)",
+    "siteServices": "Servicios del sitio (páginas)",
+    "b2bClients": "Clientes (B2B)"
   },
-  "home": {
-    "hero": {
+
+  "hero": {
+    "slide1": {
       "title": "El Arte de la Madera Marroquí",
-      "subtitle": "Creaciones a medida por artesanos apasionados. Carpintería tradicional y moderna para sus espacios.",
-      "cta": "Solicitar Presupuesto",
-      "ctaSecondary": "Ver Proyectos"
+      "subtitle": "Creaciones artesanales excepcionales desde 1995"
     },
-    "services": {
-      "title": "Nuestros Servicios",
-      "subtitle": "Artesanía al servicio de sus proyectos"
+    "slide2": {
+      "title": "Muebles a Medida",
+      "subtitle": "Cada pieza cuenta una historia única"
     },
-    "projects": {
-      "title": "Nuestros Proyectos",
-      "subtitle": "Descubra nuestras creaciones a medida"
-    },
-    "products": {
-      "title": "Nuestra Tienda",
-      "subtitle": "Piezas únicas y accesorios de madera"
-    },
-    "about": {
-      "title": "Nuestro Taller",
-      "subtitle": "Más de 20 años de experiencia en carpintería tradicional marroquí"
+    "slide3": {
+      "title": "Tradición y Excelencia",
+      "subtitle": "Artesanía ancestral a tu servicio"
     },
     "cta": {
-      "title": "¿Proyecto a Medida?",
-      "subtitle": "Contáctenos para discutir su proyecto y obtener un presupuesto gratuito.",
-      "button": "Solicitar Presupuesto Gratuito"
+      "projects": "Ver Nuestros Proyectos",
+      "quote": "Solicitar Presupuesto"
+    },
+    "scroll": "Desplazar"
+  },
+
+  "stats": {
+    "title": "LE TATCHE BOIS en Cifras",
+    "subtitle": "Más de 25 años de excelencia artesanal",
+    "years": "Años de experiencia",
+    "projects": "Proyectos realizados",
+    "clients": "Clientes satisfechos",
+    "area": "Superficie amueblada"
+  },
+
+  "home": {
+    "cta": {
+      "badge": "Proyecto a medida",
+      "title": "Da vida a tus ideas en madera",
+      "description": "Nuestro equipo de artesanos cualificados está listo para crear la pieza perfecta para tu espacio. Del diseño a la instalación, te acompañamos en cada paso.",
+      "ctaQuote": "Solicitar presupuesto gratis",
+      "ctaContact": "Contáctenos",
+      "trustYears": "Años de experiencia",
+      "trustProjects": "Proyectos entregados",
+      "trustSatisfaction": "Satisfacción del cliente"
+    },
+    "about": {
+      "badge": "Sobre nosotros",
+      "title": "El Arte de la Carpintería Marroquí",
+      "imageAlt": "Taller de carpintería LE TATCHE BOIS",
+      "since": "Desde",
+      "description": "Desde 1995, LE TATCHE BOIS perpetúa las tradiciones ancestrales de la artesanía marroquí mientras abraza la innovación.",
+      "description1": "Desde 1995, LE TATCHE BOIS perpetúa las tradiciones ancestrales de la artesanía marroquí mientras abraza la innovación. Nuestro taller familiar reúne a maestros artesanos apasionados por su oficio.",
+      "description2": "Cada pieza que creamos es única, moldeada con amor y respeto por las técnicas tradicionales, mientras cumple con los estándares modernos de calidad y durabilidad.",
+      "features": {
+        "feature1": "Artesanos cualificados con más de 25 años de experiencia",
+        "feature2": "Maderas nobles seleccionadas con el mayor cuidado",
+        "feature3": "Técnicas tradicionales marroquíes auténticas",
+        "feature4": "Garantía de satisfacción y seguimiento personalizado",
+        "quality": "Calidad Premium",
+        "qualityDesc": "Maderas nobles seleccionadas con cuidado",
+        "expertise": "Experiencia Artesanal",
+        "expertiseDesc": "Conocimientos transmitidos de generación en generación",
+        "custom": "A Medida",
+        "customDesc": "Cada proyecto es único como tú"
+      },
+      "cta": "Descubrir nuestro taller"
+    },
+    "featuredProjects": {
+      "badge": "Nuestros Proyectos",
+      "title": "Proyectos Recientes",
+      "subtitle": "Descubre nuestras últimas creaciones artesanales",
+      "viewAll": "Ver todos los proyectos",
+      "viewProject": "Ver proyecto",
+      "categories": {
+        "all": "Todos",
+        "doors": "Puertas",
+        "furniture": "Mobiliario",
+        "stairs": "Escaleras",
+        "ceilings": "Techos",
+        "restoration": "Restauración"
+      },
+      "project1": { "title": "Puertas Talladas Villa Marrakech" },
+      "project2": { "title": "Mobiliario Riad Tradicional Fez" },
+      "project3": { "title": "Escalera Helicoidal Hotel Agadir" },
+      "project4": { "title": "Techo Tallado Palacio Rabat" },
+      "project5": { "title": "Restauración Mezquita Casablanca" },
+      "project6": { "title": "Puertas de Entrada Villa Tánger" }
+    },
+    "featuredProducts": {
+      "badge": "Nuestra Tienda",
+      "title": "Productos Destacados",
+      "subtitle": "Piezas artesanales listas para realzar tu interior",
+      "viewAll": "Ver tienda completa",
+      "addToCart": "Añadir al carrito",
+      "outOfStock": "Agotado",
+      "lowStock": "Solo quedan {count} en stock",
+      "wishlist": "Añadir a favoritos",
+      "quickView": "Vista rápida",
+      "badges": {
+        "new": "Nuevo",
+        "sale": "Oferta",
+        "featured": "Destacado",
+        "handcrafted": "Artesanal"
+      },
+      "categories": {
+        "tables": "Mesas",
+        "furniture": "Mobiliario",
+        "doors": "Puertas",
+        "accessories": "Accesorios",
+        "decor": "Decoración"
+      },
+      "products": {
+        "product1": { "name": "Mesa de Centro Artesanal", "description": "Mesa de cedro tallado" },
+        "product2": { "name": "Espejo de Pared Dorado", "description": "Marco de madera dorada" },
+        "product3": { "name": "Estante de Pared", "description": "Estante de madera de tuya" },
+        "product4": { "name": "Cofre Tradicional", "description": "Cofre de madera tallada" }
+      }
+    },
+    "servicesPreview": {
+      "badge": "Nuestros Servicios",
+      "title": "Lo Que Ofrecemos",
+      "subtitle": "Soluciones a medida para todas tus necesidades de carpintería",
+      "viewAll": "Todos los servicios",
+      "learnMore": "Saber más",
+      "priceFrom": "Desde",
+      "services": {
+        "doors": {
+          "title": "Puertas",
+          "description": "Puertas de entrada, interiores y tradicionales marroquíes"
+        },
+        "windows": {
+          "title": "Ventanas",
+          "description": "Ventanas de madera maciza, celosías"
+        },
+        "furniture": {
+          "title": "Mobiliario",
+          "description": "Muebles a medida, salones marroquíes"
+        },
+        "stairs": {
+          "title": "Escaleras",
+          "description": "Escaleras rectas, curvas, helicoidales"
+        },
+        "ceilings": {
+          "title": "Techos",
+          "description": "Techos tallados tradicionales"
+        },
+        "restoration": {
+          "title": "Restauración",
+          "description": "Restauración de piezas antiguas"
+        }
+      }
+    },
+    "testimonials": {
+      "badge": "Testimonios",
+      "title": "Lo Que Dicen Nuestros Clientes",
+      "subtitle": "La satisfacción de nuestros clientes es nuestro mayor orgullo",
+      "testimonials": {
+        "testimonial1": "¡Un trabajo excepcional! Las puertas de nuestro riad son verdaderas obras de arte. El equipo supo capturar la esencia de la artesanía marroquí tradicional.",
+        "testimonial2": "Profesionalismo y creatividad en cada detalle. El mobiliario a medida supera todas nuestras expectativas. Recomiendo encarecidamente LE TATCHE BOIS.",
+        "testimonial3": "Un socio de confianza para nuestros proyectos hoteleros. Calidad impecable y respeto de los plazos. Una colaboración que renovamos con gusto.",
+        "testimonial4": "Artesanos apasionados que supieron transformar nuestras ideas en realidad. El techo tallado es magnífico, nuestros clientes están maravillados."
+      }
     }
   },
+
+  "about": {
+    "title": "Nuestro Taller",
+    "subtitle": "Una pasión transmitida de generación en generación",
+    "hero": {
+      "badge": "Nuestro Taller",
+      "title": "El Arte de la Carpintería Marroquí",
+      "subtitle": "Descubra la historia y artesanía de LE TATCHE BOIS"
+    },
+    "story": {
+      "badge": "Nuestra Historia",
+      "title": "Una Pasión Familiar",
+      "imageAlt": "Fundador de LE TATCHE BOIS en su taller",
+      "since": "Desde",
+      "content1": "Fundada en 1995 por Mohammed El Amrani, LE TATCHE BOIS nació de una profunda pasión por la carpintería y la artesanía marroquí. Lo que comenzó como un pequeño taller familiar se ha convertido hoy en una referencia en carpintería artesanal en Marruecos.",
+      "content2": "Cada pieza que creamos cuenta una historia, la de un saber hacer transmitido de generación en generación, enriquecido por innovaciones modernas mientras preserva la autenticidad de las técnicas tradicionales marroquíes."
+    },
+    "mission": {
+      "title": "Nuestra Misión",
+      "content": "Crear obras de madera excepcionales que combinen la elegancia del diseño contemporáneo con la riqueza de la artesanía tradicional marroquí, respetando el medio ambiente y valorando el trabajo de nuestros artesanos."
+    },
+    "history": {
+      "badge": "Nuestro Recorrido",
+      "title": "30 Años de Excelencia",
+      "founding": {
+        "title": "Fundación del Taller",
+        "description": "Mohammed El Amrani fundó LE TATCHE BOIS con una visión: perpetuar el arte de la carpintería marroquí."
+      },
+      "firstBigProject": {
+        "title": "Primer Gran Proyecto",
+        "description": "Realización de carpintería para un riad histórico en Marrakech, marcando nuestra entrada en proyectos de envergadura."
+      },
+      "expansion": {
+        "title": "Expansión del Taller",
+        "description": "Ampliación del taller e integración de nuevas tecnologías preservando nuestros métodos artesanales."
+      },
+      "anniversary": {
+        "title": "25 Años de Excelencia",
+        "description": "Celebración de nuestro jubileo con más de 500 proyectos completados y un equipo de 15 artesanos cualificados."
+      },
+      "today": {
+        "title": "Hoy",
+        "description": "LE TATCHE BOIS sigue innovando, combinando tradición y modernidad para creaciones únicas."
+      }
+    },
+    "values": {
+      "badge": "Lo Que Nos Guía",
+      "title": "Nuestros Valores",
+      "subtitle": "Los principios que guían cada creación",
+      "quality": {
+        "title": "Calidad",
+        "description": "Selección rigurosa de las mejores maderas y acabados impecables para creaciones duraderas."
+      },
+      "craftsmanship": {
+        "title": "Artesanía",
+        "description": "Técnicas artesanales transmitidas durante generaciones, enriquecidas por la experiencia."
+      },
+      "innovation": {
+        "title": "Innovación",
+        "description": "Diseño contemporáneo que integra las últimas tecnologías respetando la tradición."
+      },
+      "sustainability": {
+        "title": "Sostenibilidad",
+        "description": "Compromiso con prácticas ecológicas y uso de maderas certificadas."
+      }
+    },
+    "team": {
+      "badge": "Nuestro Equipo",
+      "title": "Artesanos Apasionados",
+      "subtitle": "Un equipo dedicado a la excelencia y la satisfacción del cliente",
+      "roles": {
+        "founder": "Fundador y Maestro Artesano",
+        "workshopChief": "Jefe de Taller",
+        "designer": "Diseñador y Conceptor",
+        "seniorArtisan": "Artesano Senior"
+      }
+    },
+    "workshop": {
+      "badge": "Nuestro Espacio",
+      "title": "El Taller",
+      "subtitle": "Donde ocurre la magia, entre tradición y modernidad",
+      "tour": "Visitar el taller"
+    },
+    "cta": {
+      "title": "¿Quiere Descubrir Nuestro Taller?",
+      "description": "Venga a visitarnos y descubra nuestra artesanía en acción. Nuestros artesanos estarán encantados de recibirle.",
+      "visit": "Visitarnos",
+      "quote": "Solicitar Presupuesto"
+    }
+  },
+
   "services": {
+    "hero": {
+      "badge": "Artesanos desde 1995",
+      "title": "Nuestros Servicios de Carpintería",
+      "subtitle": "Desde muebles a medida hasta puertas tradicionales, creamos piezas únicas que combinan artesanía ancestral con diseño contemporáneo."
+    },
+    "services": {
+      "title": "Lo Que Hacemos",
+      "subtitle": "Soluciones completas en carpintería para todos sus proyectos",
+      "requestQuote": "Solicitar Presupuesto"
+    },
     "title": "Nuestros Servicios",
-    "subtitle": "Soluciones completas en carpintería",
+    "subtitle": "Soluciones a medida para todos sus proyectos",
     "priceFrom": "Desde",
     "requestQuote": "Solicitar presupuesto",
-    "viewDetails": "Ver detalles"
+    "viewDetails": "Ver detalles",
+    "backToServices": "Volver a Servicios",
+    "included": "Qué incluye",
+    "duration": "Plazo estimado",
+    "categories": {
+      "portes": {
+        "title": "Puertas de Madera",
+        "description": "Puertas de entrada, puertas interiores, puertas de armario. Madera maciza tallada a mano con motivos marroquíes tradicionales o diseño moderno."
+      },
+      "fenetres": {
+        "title": "Ventanas y Persianas",
+        "description": "Ventanas de madera con doble acristalamiento, persianas batientes o correderas, celosías tradicionales. Aislamiento térmico y acústico óptimo."
+      },
+      "mobilier": {
+        "title": "Muebles a Medida",
+        "description": "Mesas, sillas, armarios, estanterías, camas. Muebles únicos creados según sus dimensiones y estilo. Maderas nobles y acabados cuidados."
+      },
+      "escaliers": {
+        "title": "Escaleras y Barandillas",
+        "description": "Escaleras rectas, giratorias o helicoidales. Barandillas talladas, balaustres de madera maciza. Diseño clásico o contemporáneo."
+      },
+      "plafonds": {
+        "title": "Techos de Madera",
+        "description": "Techos tradicionales marroquíes en cedro tallado, falsos techos de madera, vigas decorativas. Ambiente cálido garantizado."
+      },
+      "restauration": {
+        "title": "Restauración y Reparación",
+        "description": "Restauración de muebles antiguos, reparación de puertas y ventanas, tratamiento de la madera contra insectos y humedad."
+      },
+      "doors": {
+        "title": "Puertas",
+        "description": "Puertas de entrada, interiores y tradicionales marroquíes"
+      },
+      "windows": {
+        "title": "Ventanas",
+        "description": "Ventanas de madera maciza, celosías"
+      },
+      "furniture": {
+        "title": "Mobiliario",
+        "description": "Muebles a medida, salones marroquíes"
+      },
+      "stairs": {
+        "title": "Escaleras",
+        "description": "Escaleras rectas, curvas, helicoidales"
+      },
+      "ceilings": {
+        "title": "Techos",
+        "description": "Techos tallados tradicionales"
+      },
+      "restoration": {
+        "title": "Restauración",
+        "description": "Restauración de piezas antiguas"
+      }
+    },
+    "process": {
+      "title": "Nuestro Proceso",
+      "subtitle": "Desde el diseño hasta la instalación, le acompañamos en cada paso",
+      "stepLabel": "Paso",
+      "consultation": {
+        "title": "Consulta Gratuita",
+        "description": "Discutimos su proyecto, tomamos medidas in situ y escuchamos sus necesidades para crear la solución perfecta."
+      },
+      "design": {
+        "title": "Diseño y Presupuesto",
+        "description": "Nuestros artesanos crean planos detallados con selección de maderas y acabados. Recibe un presupuesto transparente sin sorpresas."
+      },
+      "fabrication": {
+        "title": "Fabricación Artesanal",
+        "description": "Cada pieza es elaborada a mano en nuestro taller por maestros carpinteros con más de 30 años de experiencia."
+      },
+      "installation": {
+        "title": "Entrega e Instalación",
+        "description": "Entregamos e instalamos su creación con cuidado. Acabados in situ y limpieza incluidos. Garantía de 2 años."
+      },
+      "step1": {
+        "title": "Consulta",
+        "description": "Diálogo sobre sus necesidades y deseos"
+      },
+      "step2": {
+        "title": "Diseño",
+        "description": "Planos y visualización 3D"
+      },
+      "step3": {
+        "title": "Fabricación",
+        "description": "Realización artesanal en nuestro taller"
+      },
+      "step4": {
+        "title": "Instalación",
+        "description": "Montaje y acabados por nuestro equipo"
+      }
+    },
+    "faq": {
+      "title": "Preguntas Frecuentes",
+      "subtitle": "Todo lo que necesita saber sobre nuestros servicios",
+      "delays": {
+        "question": "¿Cuáles son los plazos de fabricación?",
+        "answer": "Los plazos varían según la complejidad del proyecto. Cuente con 2-3 semanas para una puerta simple, 4-6 semanas para un mueble a medida y 2-3 meses para una cocina completa."
+      },
+      "woodTypes": {
+        "question": "¿Qué tipos de madera utilizan?",
+        "answer": "Trabajamos principalmente con cedro del Atlas, roble, nogal, caoba y tuya. Cada madera tiene sus características: el cedro por su aroma y resistencia, el roble por su durabilidad, el nogal por su elegancia."
+      },
+      "deliveryZone": {
+        "question": "¿Entregan en todo Marruecos?",
+        "answer": "Sí, entregamos en todo Marruecos. La entrega es gratuita en Fez y alrededores. Para otras ciudades, se aplican gastos de transporte según la distancia."
+      },
+      "howToQuote": {
+        "question": "¿Cómo solicitar un presupuesto?",
+        "answer": "Puede solicitar un presupuesto gratuito a través de nuestro formulario online, por teléfono o visitando nuestro showroom. Envíenos sus medidas y fotos para un presupuesto más preciso."
+      },
+      "warranty": {
+        "question": "¿Qué garantía ofrecen?",
+        "answer": "Todos nuestros trabajos tienen garantía de 2 años en piezas y mano de obra. Esta garantía cubre defectos de fabricación y problemas relacionados con la madera."
+      },
+      "customDesign": {
+        "question": "¿Pueden reproducir un modelo existente?",
+        "answer": "¡Por supuesto! Envíenos fotos del modelo que le gusta y lo reproduciremos fielmente o lo adaptaremos según sus deseos. También creamos diseños 100% originales."
+      },
+      "payment": {
+        "question": "¿Cuáles son las condiciones de pago?",
+        "answer": "Solicitamos un anticipo del 40% al pedido, 40% a mitad de fabricación y el saldo del 20% a la entrega. Aceptamos transferencias bancarias y pago en efectivo."
+      }
+    },
+    "cta": {
+      "title": "¿Listo para Transformar su Espacio?",
+      "description": "Contáctenos para una consulta gratuita. Nuestros artesanos están aquí para dar vida a sus proyectos en madera.",
+      "button": "Solicitar Presupuesto Gratuito"
+    },
+    "whyUs": {
+      "title": "Por Qué Elegirnos",
+      "experience": {
+        "title": "30 Años de Experiencia",
+        "description": "Saber hacer transmitido de generación en generación"
+      },
+      "quality": {
+        "title": "Maderas Nobles Seleccionadas",
+        "description": "Materiales de primera calidad certificados"
+      },
+      "custom": {
+        "title": "100% A Medida",
+        "description": "Cada creación es única y personalizada"
+      },
+      "warranty": {
+        "title": "Garantía 2 Años",
+        "description": "Servicio postventa reactivo y profesional"
+      }
+    },
+    "galleryTitle": "Galería",
+    "relatedProjectsTitle": "Proyectos Realizados"
   },
+
   "projects": {
     "title": "Nuestros Proyectos",
-    "subtitle": "Descubra nuestro portfolio",
+    "subtitle": "Descubra nuestras creaciones",
     "viewProject": "Ver proyecto",
-    "client": "Cliente",
+    "viewGallery": "Ver galería",
+    "viewAll": "Ver todos los proyectos",
+    "backToProjects": "Volver a proyectos",
+    "filterAll": "Todos",
+    "filterByCategory": "Filtrar por categoría",
+    "filterByYear": "Filtrar por año",
     "location": "Ubicación",
     "year": "Año",
     "duration": "Duración",
-    "surface": "Superficie",
-    "woodType": "Tipo de madera",
-    "challenge": "El Desafío",
-    "solution": "Nuestra Solución",
-    "relatedProjects": "Proyectos Relacionados"
+    "materials": "Materiales",
+    "description": "Descripción",
+    "challenge": "El desafío",
+    "solution": "Nuestra solución",
+    "result": "El resultado",
+    "testimonial": "Testimonio del cliente",
+    "relatedProjects": "Proyectos similares",
+    "noProjects": "No se encontraron proyectos",
+    "detail": {
+      "challenge": "El Desafío",
+      "solution": "Nuestra Solución",
+      "result": "El Resultado",
+      "gallery": "Galería de Fotos",
+      "materials": "Materiales Utilizados",
+      "specifications": "Especificaciones Técnicas",
+      "testimonialTitle": "Testimonio del Cliente",
+      "similarProjectCTA": "¿Tiene un proyecto similar?",
+      "relatedProjects": "Proyectos Similares"
+    }
   },
+
   "products": {
-    "title": "Tienda",
-    "subtitle": "Piezas únicas artesanales",
-    "addToCart": "Añadir al carrito",
-    "buyNow": "Comprar ahora",
+    "title": "Nuestra Tienda",
+    "subtitle": "Piezas artesanales listas para usar",
+    "hero": {
+      "badge": "Tienda Artesanal",
+      "title": "Nuestra Tienda",
+      "subtitle": "Descubra nuestra colección de piezas artesanales únicas, creadas con pasión por nuestros maestros carpinteros"
+    },
+    "filters": {
+      "search": "Buscar un producto...",
+      "category": "Categoría",
+      "sortBy": "Ordenar por",
+      "title": "Filtros"
+    },
+    "categories": {
+      "all": "Todos los productos",
+      "decoration": "Decoración",
+      "mobilier": "Mobiliario",
+      "accessoires": "Accesorios",
+      "textile": "Textil"
+    },
+    "sort": {
+      "newest": "Más reciente",
+      "priceAsc": "Precio ascendente",
+      "priceDesc": "Precio descendente",
+      "popular": "Popular"
+    },
+    "productsFound": "productos encontrados",
+    "noProducts": "Ningún producto coincide con sus criterios",
+    "resetFilters": "Restablecer filtros",
+    "backToBoutique": "Volver a la tienda",
+    "viewProduct": "Ver producto",
+    "filterByCategory": "Categoría",
+    "filterByPrice": "Precio",
+    "filterByMaterial": "Material",
+    "sortBy": "Ordenar por",
+    "sortOptions": {
+      "newest": "Más reciente",
+      "priceAsc": "Precio ascendente",
+      "priceDesc": "Precio descendente",
+      "nameAsc": "Nombre A-Z",
+      "nameDesc": "Nombre Z-A",
+      "popular": "Popularidad"
+    },
     "inStock": "En stock",
-    "lowStock": "Stock limitado",
     "outOfStock": "Agotado",
-    "onOrder": "Bajo pedido",
-    "specifications": "Especificaciones",
+    "lowStock": "Stock limitado ({count} restantes)",
+    "addToCart": "Añadir al carrito",
+    "addedToCart": "Añadido al carrito",
+    "addToWishlist": "Añadir a favoritos",
+    "removeFromWishlist": "Quitar de favoritos",
+    "buyNow": "Comprar ahora",
+    "specifications": "Características",
     "dimensions": "Dimensiones",
     "weight": "Peso",
     "material": "Material",
     "finish": "Acabado",
-    "relatedProducts": "Productos Relacionados"
+    "color": "Color",
+    "care": "Cuidados",
+    "warranty": "Garantía",
+    "shipping": "Envío",
+    "returns": "Devoluciones",
+    "reviews": "Opiniones",
+    "writeReview": "Escribir una opinión",
+    "noReviews": "No hay opiniones para este producto",
+    "trustBadges": {
+      "freeShipping": "Envío gratis desde 3000 MAD",
+      "warranty": "2 años de garantía",
+      "returns": "Devolución en 14 días"
+    },
+    "tabs": {
+      "description": "Descripción",
+      "specifications": "Características",
+      "shipping": "Envío"
+    },
+    "specs": {
+      "dimensions": "Dimensiones",
+      "material": "Material",
+      "finish": "Acabado",
+      "weight": "Peso",
+      "origin": "Origen"
+    },
+    "shippingOptions": {
+      "standard": "Envío estándar (5-7 días)",
+      "express": "Envío exprés (2-3 días)",
+      "pickup": "Recogida en taller (gratis)"
+    },
+    "relatedProducts": "Productos similares",
+    "recentlyViewed": "Vistos recientemente"
   },
+
   "cart": {
     "title": "Su Carrito",
     "empty": "Su carrito está vacío",
+    "emptyDescription": "Descubra nuestra tienda y añada artículos",
     "continueShopping": "Continuar comprando",
+    "item": "Artículo",
+    "items": "Artículos",
+    "quantity": "Cantidad",
+    "price": "Precio",
+    "total": "Total",
     "subtotal": "Subtotal",
     "shipping": "Envío",
     "shippingCalculated": "Calculado en el siguiente paso",
-    "total": "Total",
-    "checkout": "Finalizar compra",
-    "remove": "Eliminar",
-    "quantity": "Cantidad"
+    "tax": "IVA",
+    "discount": "Descuento",
+    "promoCode": "Código promocional",
+    "applyCode": "Aplicar",
+    "removeItem": "Eliminar",
+    "updateCart": "Actualizar carrito",
+    "checkout": "Realizar pedido",
+    "secureCheckout": "Pago seguro",
+    "estimatedDelivery": "Entrega estimada",
+    "clearCart": "Vaciar carrito",
+    "orderSummary": "Resumen del pedido",
+    "freeShippingThreshold": "Envío gratis en pedidos de más de {amount}",
+    "freeShippingBadge": "Envío gratis",
+    "promoApplied": "Código promocional aplicado",
+    "promoInvalid": "Código promocional inválido"
   },
+
   "checkout": {
-    "title": "Pedido",
-    "shipping": {
-      "title": "Dirección de Envío",
-      "fullName": "Nombre completo",
+    "title": "Pago",
+    "steps": {
+      "information": "Información",
+      "shipping": "Envío",
+      "payment": "Pago",
+      "confirmation": "Confirmación"
+    },
+    "contact": {
+      "title": "Datos de contacto",
       "email": "Email",
-      "phone": "Teléfono",
+      "phone": "Teléfono"
+    },
+    "shipping": {
+      "title": "Dirección de envío",
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
       "address": "Dirección",
+      "addressLine2": "Piso, puerta, etc.",
       "city": "Ciudad",
-      "postalCode": "Código postal"
+      "postalCode": "Código postal",
+      "country": "País",
+      "saveAddress": "Guardar esta dirección"
+    },
+    "shippingMethod": {
+      "title": "Método de envío",
+      "standard": "Envío estándar",
+      "standardDesc": "5-7 días laborables",
+      "express": "Envío exprés",
+      "expressDesc": "2-3 días laborables",
+      "pickup": "Recogida en taller",
+      "pickupDesc": "Gratis - Listo en 24h"
     },
     "payment": {
-      "title": "Método de Pago",
-      "stripe": "Tarjeta de crédito (Stripe)",
+      "title": "Método de pago",
+      "card": "Tarjeta de crédito",
+      "cardSecure": "Pago seguro con Stripe",
       "cod": "Pago contra reembolso",
-      "codNote": "Pague en efectivo al recibir su pedido"
+      "codDesc": "Pague en efectivo a la entrega",
+      "bank": "Transferencia bancaria",
+      "bankDesc": "Detalles enviados por email"
     },
-    "summary": "Resumen del Pedido",
-    "placeOrder": "Realizar Pedido"
+    "cardDetails": {
+      "number": "Número de tarjeta",
+      "expiry": "Fecha de caducidad",
+      "cvc": "CVC",
+      "name": "Nombre en la tarjeta"
+    },
+    "summary": {
+      "title": "Resumen del pedido",
+      "edit": "Editar"
+    },
+    "placeOrder": "Confirmar pedido",
+    "processing": "Procesando...",
+    "terms": "Al realizar su pedido, acepta nuestras",
+    "termsLink": "condiciones generales de venta",
+    "privacyLink": "política de privacidad"
   },
+
   "order": {
     "confirmation": {
-      "title": "¡Pedido Confirmado!",
-      "thankYou": "Gracias por su pedido",
+      "title": "¡Pedido confirmado!",
+      "subtitle": "Gracias por su pedido",
       "orderNumber": "Número de pedido",
-      "emailSent": "Se ha enviado un email de confirmación a",
-      "whatNext": "¿Qué sigue?",
+      "whatsNext": "¿Y ahora qué?",
+      "emailSent": "Email de confirmación enviado",
+      "emailSentDesc": "Recibirá un email con los detalles de su pedido.",
+      "preparation": "Preparación en curso",
+      "preparationDesc": "Su pedido será preparado en 24-48h.",
+      "delivery": "Entrega estimada",
+      "deliveryDesc": "5-7 días hábiles después del envío.",
+      "continueShopping": "Continuar comprando",
       "trackOrder": "Seguir mi pedido",
-      "continueShopping": "Continuar comprando"
+      "needHelp": "¿Necesita ayuda?"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "confirmed": "Confirmado",
+      "processing": "En preparación",
+      "shipped": "Enviado",
+      "delivered": "Entregado",
+      "cancelled": "Cancelado",
+      "refunded": "Reembolsado"
     },
     "tracking": {
-      "title": "Seguimiento de Pedido",
-      "enterOrder": "Introduzca su número de pedido",
+      "title": "Seguimiento del pedido",
+      "description": "Siga el estado de su pedido en tiempo real",
+      "searchTitle": "Buscar su pedido",
       "orderNumber": "Número de pedido",
-      "email": "Email",
-      "track": "Seguir",
-      "status": {
-        "pending": "Pendiente",
-        "confirmed": "Confirmado",
-        "processing": "En preparación",
-        "shipped": "Enviado",
-        "delivered": "Entregado",
-        "cancelled": "Cancelado"
-      }
+      "email": "Email utilizado para el pedido",
+      "search": "Buscar",
+      "searching": "Buscando...",
+      "orderDate": "Fecha del pedido",
+      "statusTitle": "Estado del pedido",
+      "estimatedDelivery": "Entrega estimada",
+      "shippingAddress": "Dirección de envío",
+      "orderItems": "Artículos pedidos",
+      "total": "Total",
+      "searchAnother": "Buscar otro pedido",
+      "trackingNumber": "Número de seguimiento",
+      "notFound": "Pedido no encontrado",
+      "notFoundDesc": "Verifique el número de pedido y el email introducidos.",
+      "needHelp": "¿Necesita ayuda?",
+      "whatsapp": "WhatsApp"
     }
   },
+
   "quote": {
     "title": "Solicitud de Presupuesto",
-    "subtitle": "Describa su proyecto y reciba un presupuesto personalizado",
+    "subtitle": "Describa su proyecto, le respondemos en 24 horas",
+    "free": "Gratuito y sin compromiso",
     "steps": {
-      "service": "Tipo de servicio",
-      "details": "Detalles del proyecto",
-      "contact": "Sus datos de contacto",
-      "review": "Resumen"
+      "service": "Servicio",
+      "details": "Detalles",
+      "dimensions": "Dimensiones",
+      "contact": "Contacto"
     },
-    "form": {
-      "serviceType": "Tipo de servicio",
-      "selectService": "Seleccione un servicio",
+    "step1": {
+      "title": "¿Qué servicio le interesa?",
+      "subtitle": "Seleccione una categoría"
+    },
+    "step2": {
+      "title": "Describa su proyecto",
+      "subtitle": "Más detalles nos ayudan a asesorarle mejor",
+      "projectType": "Tipo de proyecto",
+      "woodType": "Tipo de madera deseada",
+      "style": "Estilo",
+      "styleOptions": {
+        "traditional": "Tradicional marroquí",
+        "modern": "Moderno",
+        "mixed": "Mixto"
+      },
       "description": "Descripción del proyecto",
       "descriptionPlaceholder": "Describa su proyecto en detalle...",
-      "dimensions": "Dimensiones aproximadas",
-      "dimensionsPlaceholder": "Ej: 3m x 2m",
-      "budget": "Presupuesto estimado",
-      "deadline": "Fecha deseada",
       "attachments": "Fotos o planos (opcional)",
-      "name": "Nombre completo",
+      "uploadHint": "Arrastre sus archivos aquí o haga clic para explorar"
+    },
+    "step3": {
+      "title": "Dimensiones aproximadas",
+      "subtitle": "Ayúdenos a estimar",
+      "width": "Ancho (cm)",
+      "height": "Alto (cm)",
+      "depth": "Profundidad (cm)",
+      "quantity": "Cantidad",
+      "budget": "Presupuesto estimado",
+      "budgetOptions": {
+        "under5k": "Menos de 5.000 MAD",
+        "5to10k": "5.000 - 10.000 MAD",
+        "10to25k": "10.000 - 25.000 MAD",
+        "25to50k": "25.000 - 50.000 MAD",
+        "over50k": "Más de 50.000 MAD"
+      },
+      "deadline": "Plazo deseado"
+    },
+    "step4": {
+      "title": "Sus datos de contacto",
+      "subtitle": "¿Cómo podemos contactarle?",
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
       "email": "Email",
       "phone": "Teléfono",
       "city": "Ciudad",
-      "company": "Empresa (opcional)"
+      "preferredContact": "Contacto preferido",
+      "contactOptions": {
+        "email": "Email",
+        "phone": "Teléfono",
+        "whatsapp": "WhatsApp"
+      },
+      "newsletter": "Recibir nuestras novedades y ofertas"
     },
     "submit": "Enviar mi solicitud",
+    "submitting": "Enviando...",
     "success": {
-      "title": "¡Solicitud Enviada!",
-      "message": "Hemos recibido su solicitud. Nuestro equipo le contactará en 24-48 horas.",
-      "reference": "Referencia"
-    }
-  },
-  "contact": {
-    "title": "Contacto",
-    "subtitle": "¿Tiene alguna pregunta? No dude en contactarnos",
-    "form": {
-      "name": "Nombre",
-      "email": "Email",
-      "phone": "Teléfono",
-      "subject": "Asunto",
-      "message": "Mensaje",
-      "send": "Enviar"
-    },
-    "info": {
-      "address": "Dirección",
-      "phone": "Teléfono",
-      "email": "Email",
-      "hours": "Horario"
-    },
-    "success": "¡Mensaje enviado con éxito!",
-    "whatsapp": "Chatear en WhatsApp"
-  },
-  "footer": {
-    "about": "Taller de carpintería artesanal especializado en creaciones a medida con maderas nobles.",
-    "quickLinks": "Enlaces Rápidos",
-    "contact": "Contacto",
-    "newsletter": {
-      "title": "Newsletter",
-      "subtitle": "Reciba nuestras novedades y ofertas",
-      "placeholder": "Su email",
-      "subscribe": "Suscribirse"
-    },
-    "legal": {
-      "privacy": "Política de Privacidad",
-      "terms": "Términos y Condiciones",
-      "cookies": "Política de Cookies",
-      "shipping": "Envío y Devoluciones"
-    },
-    "copyright": "© {year} LE TATCHE BOIS. Todos los derechos reservados.",
-    "paymentMethods": "Métodos de pago"
-  },
-  "validation": {
-    "required": "Este campo es obligatorio",
-    "email": "Email inválido",
-    "phone": "Número de teléfono inválido",
-    "minLength": "Mínimo {min} caracteres",
-    "maxLength": "Máximo {max} caracteres"
-  },
-  "errors": {
-    "notFound": {
-      "title": "Página no encontrada",
-      "message": "La página que busca no existe.",
+      "title": "¡Solicitud enviada!",
+      "message": "Le responderemos en 24 horas laborables.",
+      "reference": "Su referencia",
       "backHome": "Volver al inicio"
     },
-    "serverError": {
+    "error": {
+      "title": "Error",
+      "message": "Ha ocurrido un error. Por favor, inténtelo de nuevo."
+    }
+  },
+
+  "contact": {
+    "title": "Contáctenos",
+    "subtitle": "¿Tiene alguna pregunta? Estamos aquí para ayudarle",
+    "form": {
+      "title": "Envíenos un mensaje",
+      "name": "Nombre completo",
+      "namePlaceholder": "Su nombre completo",
+      "email": "Email",
+      "emailPlaceholder": "su@email.com",
+      "phone": "Teléfono (opcional)",
+      "phonePlaceholder": "+212 6XX XX XX XX",
+      "subject": "Asunto",
+      "subjectPlaceholder": "Seleccione un asunto",
+      "subjectOptions": {
+        "general": "Consulta general",
+        "quote": "Solicitud de presupuesto",
+        "order": "Seguimiento de pedido",
+        "partnership": "Colaboración",
+        "other": "Otro"
+      },
+      "message": "Mensaje",
+      "messagePlaceholder": "¿En qué podemos ayudarle?",
+      "submit": "Enviar mensaje",
+      "submitting": "Enviando...",
+      "success": "¡Mensaje enviado!",
+      "successMessage": "Le responderemos lo antes posible.",
+      "error": "Error de envío",
+      "errorMessage": "Ha ocurrido un error. Por favor, inténtelo de nuevo."
+    },
+    "info": {
+      "title": "Nuestros datos de contacto",
+      "address": {
+        "label": "Dirección",
+        "value": "Lot Hamane El Fetouaki N°365, Lamhamid",
+        "city": "Marrakech, Marruecos",
+        "viewOnMap": "Ver en el mapa"
+      },
+      "phone": {
+        "label": "Teléfono",
+        "value": "+212 698 013 468",
+        "whatsapp": "Contactar por WhatsApp"
+      },
+      "email": {
+        "label": "Email",
+        "value": "contact@letatchebois.com"
+      },
+      "hours": {
+        "label": "Horario de atención",
+        "weekdays": "Lunes - Sábado: 09:00 - 18:00",
+        "saturday": "",
+        "sunday": "Domingo: Cerrado"
+      }
+    },
+    "map": {
+      "title": "Nuestra ubicación"
+    },
+    "social": {
+      "title": "Síganos",
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "youtube": "YouTube"
+    },
+    "whatsapp": {
+      "button": "Chatear en WhatsApp",
+      "message": "Hola, me gustaría saber más sobre sus servicios."
+    }
+  },
+
+  "footer": {
+    "about": {
+      "title": "Sobre nosotros",
+      "description": "LE TATCHE BOIS perpetúa el arte de la carpintería marroquí desde 1995. Cada creación es una pieza única, elaborada con pasión."
+    },
+    "quickLinks": {
+      "title": "Enlaces rápidos",
+      "home": "Inicio",
+      "about": "El taller",
+      "services": "Servicios",
+      "projects": "Proyectos",
+      "shop": "Tienda",
+      "contact": "Contacto"
+    },
+    "services": {
+      "title": "Nuestros servicios",
+      "doors": "Puertas",
+      "windows": "Ventanas",
+      "furniture": "Mobiliario",
+      "stairs": "Escaleras",
+      "ceilings": "Techos",
+      "restoration": "Restauración"
+    },
+    "contact": {
+      "title": "Contacto",
+      "address": "Lot Hamane El Fetouaki N°365, Lamhamid, Marrakech",
+      "phone": "+212 698 013 468",
+      "email": "contact@letatchebois.com"
+    },
+    "newsletter": {
+      "title": "Newsletter",
+      "description": "Reciba nuestras novedades y ofertas exclusivas",
+      "placeholder": "Su email",
+      "subscribe": "Suscribirse",
+      "success": "¡Gracias por suscribirse!",
+      "error": "Error al suscribirse"
+    },
+    "payment": {
+      "title": "Pago seguro",
+      "methods": "Aceptamos"
+    },
+    "copyright": "© {year} LE TATCHE BOIS. Todos los derechos reservados.",
+    "legal": {
+      "privacy": "Política de privacidad",
+      "terms": "Condiciones generales",
+      "cookies": "Cookies",
+      "legal": "Aviso legal"
+    }
+  },
+
+  "validation": {
+    "required": "Este campo es obligatorio",
+    "email": "Email no válido",
+    "phone": "Número de teléfono no válido",
+    "minLength": "Mínimo {min} caracteres",
+    "maxLength": "Máximo {max} caracteres",
+    "min": "Mínimo {min}",
+    "max": "Máximo {max}",
+    "number": "Debe ser un número",
+    "positive": "Debe ser positivo",
+    "integer": "Debe ser un número entero",
+    "url": "URL no válida",
+    "date": "Fecha no válida",
+    "passwordMatch": "Las contraseñas no coinciden",
+    "passwordStrength": "La contraseña debe contener al menos 8 caracteres, una mayúscula, una minúscula y un número"
+  },
+
+  "errors": {
+    "404": {
+      "title": "Página no encontrada",
+      "description": "La página que busca no existe o ha sido movida.",
+      "backHome": "Volver al inicio"
+    },
+    "500": {
       "title": "Error del servidor",
-      "message": "Ha ocurrido un error. Por favor, inténtelo de nuevo más tarde."
+      "description": "Ha ocurrido un error inesperado. Por favor, inténtelo más tarde.",
+      "retry": "Reintentar"
+    },
+    "network": {
+      "title": "Error de conexión",
+      "description": "Compruebe su conexión a internet e inténtelo de nuevo."
+    },
+    "generic": "Ha ocurrido un error"
+  },
+
+  "admin": {
+    "dashboard": {
+      "title": "Panel de control",
+      "welcome": "Bienvenido,",
+      "overview": "Resumen",
+      "recentOrders": "Pedidos recientes",
+      "recentQuotes": "Presupuestos recientes",
+      "recentMessages": "Mensajes recientes",
+      "stats": {
+        "totalOrders": "Pedidos",
+        "totalRevenue": "Facturación",
+        "pendingQuotes": "Presupuestos pendientes",
+        "newMessages": "Nuevos mensajes"
+      }
+    },
+    "nav": {
+      "dashboard": "Panel de control",
+      "orders": "Pedidos",
+      "quotes": "Presupuestos",
+      "messages": "Mensajes",
+      "products": "Productos",
+      "projects": "Proyectos",
+      "services": "Servicios",
+      "categories": "Categorías",
+      "customers": "Clientes",
+      "settings": "Ajustes",
+      "logout": "Cerrar sesión"
+    },
+    "common": {
+      "add": "Añadir",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "search": "Buscar",
+      "filter": "Filtrar",
+      "export": "Exportar",
+      "import": "Importar",
+      "actions": "Acciones",
+      "status": "Estado",
+      "date": "Fecha",
+      "confirmDelete": "¿Está seguro de que desea eliminar?",
+      "deleteSuccess": "Eliminado correctamente",
+      "saveSuccess": "Guardado correctamente",
+      "error": "Ha ocurrido un error"
+    },
+    "orders": {
+      "title": "Gestión de pedidos",
+      "orderNumber": "Nº pedido",
+      "customer": "Cliente",
+      "total": "Total",
+      "status": "Estado",
+      "date": "Fecha",
+      "updateStatus": "Actualizar estado",
+      "viewDetails": "Ver detalles",
+      "printInvoice": "Imprimir factura"
+    },
+    "quotes": {
+      "title": "Gestión de presupuestos",
+      "reference": "Referencia",
+      "customer": "Cliente",
+      "service": "Servicio",
+      "status": "Estado",
+      "date": "Fecha",
+      "respond": "Responder",
+      "markAsRead": "Marcar como leído",
+      "archive": "Archivar",
+      "statuses": {
+        "new": "Nuevo",
+        "read": "Leído",
+        "responded": "Respondido",
+        "converted": "Convertido",
+        "archived": "Archivado"
+      }
+    },
+    "messages": {
+      "title": "Mensajes",
+      "from": "De",
+      "subject": "Asunto",
+      "date": "Fecha",
+      "reply": "Responder",
+      "markAsRead": "Marcar como leído",
+      "archive": "Archivar"
+    },
+    "products": {
+      "title": "Gestión de productos",
+      "addProduct": "Añadir producto",
+      "editProduct": "Editar producto",
+      "name": "Nombre",
+      "category": "Categoría",
+      "price": "Precio",
+      "stock": "Stock",
+      "status": "Estado",
+      "featured": "Destacado",
+      "images": "Imágenes",
+      "description": "Descripción"
+    },
+    "projects": {
+      "title": "Gestión de proyectos",
+      "addProject": "Añadir proyecto",
+      "editProject": "Editar proyecto"
+    },
+    "services": {
+      "title": "Gestión de servicios",
+      "addService": "Añadir servicio",
+      "editService": "Editar servicio"
+    },
+    "categories": {
+      "title": "Gestión de categorías",
+      "addCategory": "Añadir categoría",
+      "editCategory": "Editar categoría"
+    },
+    "settings": {
+      "title": "Ajustes",
+      "general": "General",
+      "appearance": "Apariencia",
+      "notifications": "Notificaciones",
+      "security": "Seguridad",
+      "backup": "Copia de seguridad"
+    }
+  },
+
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "email": "Email",
+      "password": "Contraseña",
+      "remember": "Recordarme",
+      "forgot": "¿Ha olvidado su contraseña?",
+      "submit": "Iniciar sesión",
+      "noAccount": "¿No tiene cuenta?",
+      "register": "Registrarse",
+      "error": "Email o contraseña incorrectos"
+    },
+    "register": {
+      "title": "Registro",
+      "firstName": "Nombre",
+      "lastName": "Apellidos",
+      "email": "Email",
+      "password": "Contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "terms": "Acepto las",
+      "termsLink": "condiciones generales",
+      "submit": "Registrarse",
+      "hasAccount": "¿Ya tiene cuenta?",
+      "login": "Iniciar sesión"
+    },
+    "forgot": {
+      "title": "¿Ha olvidado su contraseña?",
+      "description": "Introduzca su email para recibir un enlace de restablecimiento",
+      "email": "Email",
+      "submit": "Enviar",
+      "success": "¡Email enviado! Compruebe su bandeja de entrada.",
+      "backToLogin": "Volver al inicio de sesión"
+    },
+    "reset": {
+      "title": "Restablecer contraseña",
+      "password": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "submit": "Restablecer",
+      "success": "Contraseña restablecida correctamente"
+    }
+  },
+
+  "accessibility": {
+    "skipToContent": "Ir al contenido",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú",
+    "openCart": "Abrir carrito",
+    "closeCart": "Cerrar carrito",
+    "previousSlide": "Diapositiva anterior",
+    "nextSlide": "Diapositiva siguiente",
+    "expandImage": "Ampliar imagen",
+    "closeImage": "Cerrar imagen",
+    "loading": "Cargando",
+    "required": "obligatorio"
+  },
+
+  "cookieBanner": {
+    "banner": {
+      "title": "Utilizamos cookies",
+      "description": "Este sitio utiliza cookies para mejorar su experiencia de navegación, analizar el tráfico y personalizar el contenido.",
+      "acceptAll": "Aceptar todo",
+      "rejectAll": "Rechazar todo",
+      "customize": "Personalizar",
+      "learnMore": "Saber más"
+    },
+    "modal": {
+      "title": "Configuración de cookies",
+      "description": "Elija qué cookies desea aceptar. Las cookies necesarias siempre están activas ya que son esenciales para el funcionamiento del sitio.",
+      "necessary": {
+        "title": "Cookies necesarias",
+        "description": "Esenciales para el buen funcionamiento del sitio. Permiten la navegación, el acceso a áreas seguras y el carrito de compras."
+      },
+      "analytics": {
+        "title": "Cookies analíticas",
+        "description": "Nos ayudan a entender cómo los visitantes utilizan el sitio recopilando datos anónimos para mejorar nuestros servicios."
+      },
+      "marketing": {
+        "title": "Cookies de marketing",
+        "description": "Se utilizan para mostrar anuncios relevantes y medir la eficacia de nuestras campañas publicitarias."
+      },
+      "savePreferences": "Guardar preferencias",
+      "close": "Cerrar"
+    },
+    "footer": {
+      "managePreferences": "Gestionar cookies"
+    }
+  },
+
+  "legal": {
+    "common": {
+      "lastUpdated": "Última actualización",
+      "tableOfContents": "Índice",
+      "backToTop": "Volver arriba"
+    },
+    "privacy": {
+      "title": "Política de Privacidad",
+      "description": "Cómo recopilamos, usamos y protegemos sus datos personales",
+      "lastUpdated": "15 de enero de 2025",
+      "sections": {
+        "introduction": {
+          "title": "Introducción",
+          "content": "LE TATCHE BOIS se compromete a proteger la privacidad de sus clientes y visitantes. Esta política de privacidad explica cómo recopilamos, usamos, almacenamos y protegemos su información personal cuando utiliza nuestro sitio web y servicios."
+        },
+        "dataCollection": {
+          "title": "Recopilación de datos",
+          "content": "Recopilamos diferentes tipos de información para proporcionarle y mejorar nuestros servicios.",
+          "personal": {
+            "title": "Datos personales",
+            "content": "Nombre, dirección de correo electrónico, número de teléfono, dirección postal, información de pago cuando realiza un pedido o solicita un presupuesto."
+          },
+          "automatic": {
+            "title": "Datos recopilados automáticamente",
+            "content": "Dirección IP, tipo de navegador, páginas visitadas, duración de las visitas, datos de cookies y tecnologías similares."
+          }
+        },
+        "dataUsage": {
+          "title": "Uso de los datos",
+          "content": "Sus datos personales se utilizan para los siguientes fines:",
+          "purposes": "Procesamiento y entrega de sus pedidos • Respuesta a sus solicitudes de presupuesto • Comunicación sobre su pedido • Mejora de nuestros servicios • Envío de newsletters (con su consentimiento) • Cumplimiento de obligaciones legales"
+        },
+        "dataSharing": {
+          "title": "Compartir datos",
+          "content": "Nunca vendemos sus datos personales. Podemos compartirlos con socios de confianza (transportistas, procesadores de pago) solo como parte de la prestación de nuestros servicios. Estos socios están obligados contractualmente a proteger sus datos."
+        },
+        "dataSecurity": {
+          "title": "Seguridad de los datos",
+          "content": "Implementamos medidas de seguridad técnicas y organizativas apropiadas para proteger sus datos contra acceso no autorizado, modificación, divulgación o destrucción. Los pagos están protegidos a través de Stripe con encriptación SSL."
+        },
+        "yourRights": {
+          "title": "Sus derechos",
+          "content": "De acuerdo con el RGPD y la ley marroquí 09-08, usted tiene los siguientes derechos:",
+          "rights": "Derecho de acceso a sus datos • Derecho de rectificación • Derecho de supresión • Derecho a la limitación del tratamiento • Derecho a la portabilidad • Derecho de oposición"
+        },
+        "cookies": {
+          "title": "Cookies",
+          "content": "Utilizamos cookies para mejorar su experiencia. Consulte nuestra Política de Cookies para más detalles sobre los tipos de cookies utilizados y cómo gestionarlos."
+        },
+        "contact": {
+          "title": "Contacto",
+          "content": "Para cualquier pregunta sobre esta política o para ejercer sus derechos, contáctenos en: contact@letatchebois.com o por correo a: LE TATCHE BOIS, Lot Hamane El Fetouaki N°365, Lamhamid, Marrakech, Marruecos. Teléfono: +212 698 013 468"
+        }
+      }
+    },
+    "terms": {
+      "title": "Términos y Condiciones",
+      "description": "Los términos y condiciones que rigen el uso de nuestros servicios y la compra de nuestros productos",
+      "lastUpdated": "15 de enero de 2025",
+      "sections": {
+        "acceptance": {
+          "title": "Aceptación de los términos",
+          "content": "Al realizar un pedido en letatchebois.com, acepta sin reservas estas condiciones generales de venta. Estas condiciones rigen todas las relaciones entre LE TATCHE BOIS y sus clientes."
+        },
+        "definitions": {
+          "title": "Definiciones",
+          "content": "\"El Vendedor\" se refiere a LE TATCHE BOIS, empresa de carpintería artesanal. \"El Cliente\" se refiere a cualquier persona física o jurídica que realice un pedido. \"El Sitio\" se refiere al sitio web letatchebois.com. \"Los Productos\" se refieren a los artículos ofrecidos a la venta."
+        },
+        "products": {
+          "title": "Productos",
+          "content": "Nuestros productos son fabricados artesanalmente en Marruecos con maderas de calidad.",
+          "description": {
+            "title": "Descripción de productos",
+            "content": "Las fotos y descripciones son lo más precisas posible. Sin embargo, al ser la madera un material natural, pueden existir ligeras variaciones de color o veta."
+          },
+          "pricing": {
+            "title": "Precios",
+            "content": "Los precios se muestran en dirhams marroquíes (MAD) con impuestos incluidos. Nos reservamos el derecho de modificar los precios en cualquier momento, pero los productos se facturarán al precio vigente en el momento de la validación del pedido."
+          }
+        },
+        "orders": {
+          "title": "Pedidos",
+          "content": "Cualquier pedido implica la aceptación de estas CGV. Tras la validación, se enviará un correo de confirmación. Nos reservamos el derecho de rechazar un pedido en caso de disputa anterior o problemas de pago."
+        },
+        "payment": {
+          "title": "Pago",
+          "content": "El pago puede realizarse por los siguientes métodos:",
+          "methods": "Tarjeta de crédito (vía Stripe, pago seguro) • Pago contra reembolso (disponible solo en Marruecos) • Transferencia bancaria"
+        },
+        "delivery": {
+          "title": "Entrega",
+          "content": "Los plazos de entrega son indicativos. Un retraso no puede dar lugar a cancelación salvo acuerdo mutuo. Los riesgos se transfieren al comprador en el momento de la entrega al transportista. Verifique el estado del paquete a la recepción."
+        },
+        "returns": {
+          "title": "Devoluciones y cambios",
+          "content": "Tiene 14 días después de la recepción para devolver un producto estándar no utilizado en su embalaje original. Los productos personalizados o a medida no son elegibles para devolución salvo defecto de fabricación."
+        },
+        "warranty": {
+          "title": "Garantía",
+          "content": "Nuestros productos se benefician de la garantía legal de conformidad (2 años) y la garantía contra vicios ocultos. Esta garantía no cubre el desgaste normal, daños por mal uso o modificaciones realizadas al producto."
+        },
+        "liability": {
+          "title": "Responsabilidad",
+          "content": "LE TATCHE BOIS no será responsable de daños indirectos relacionados con el uso de sus productos. Nuestra responsabilidad se limita al importe del pedido."
+        },
+        "intellectualProperty": {
+          "title": "Propiedad intelectual",
+          "content": "Todo el contenido del sitio (textos, imágenes, logos, diseños) es propiedad exclusiva de LE TATCHE BOIS. Queda prohibida cualquier reproducción sin autorización escrita."
+        },
+        "governingLaw": {
+          "title": "Ley aplicable",
+          "content": "Estas CGV se rigen por la ley marroquí. En caso de disputa, se buscará una solución amistosa. En su defecto, los tribunales de Marrakech serán competentes."
+        },
+        "contact": {
+          "title": "Contacto",
+          "content": "Para cualquier pregunta: contact@letatchebois.com | Teléfono: +212 698 013 468 | Dirección: Lot Hamane El Fetouaki N°365, Lamhamid, Marrakech, Marruecos"
+        }
+      }
+    },
+    "cookies": {
+      "title": "Política de Cookies",
+      "description": "Cómo utilizamos cookies y tecnologías similares en nuestro sitio",
+      "lastUpdated": "15 de enero de 2025",
+      "sections": {
+        "whatAreCookies": {
+          "title": "¿Qué son las cookies?",
+          "content": "Una cookie es un pequeño archivo de texto almacenado en su dispositivo cuando visita un sitio web. Las cookies permiten al sitio recordar sus acciones y preferencias durante un período de tiempo."
+        },
+        "types": {
+          "title": "Tipos de cookies utilizadas",
+          "content": "Utilizamos diferentes tipos de cookies en nuestro sitio:",
+          "essential": {
+            "title": "Cookies esenciales",
+            "content": "Necesarias para el funcionamiento del sitio. Permiten la navegación, el acceso a áreas seguras y el carrito de compras. Sin estas cookies, el sitio no puede funcionar correctamente."
+          },
+          "functional": {
+            "title": "Cookies funcionales",
+            "content": "Permiten recordar sus preferencias (idioma, moneda, región) para personalizar su experiencia en el sitio."
+          },
+          "analytics": {
+            "title": "Cookies analíticas",
+            "content": "Nos ayudan a entender cómo los visitantes utilizan el sitio recopilando información anónima. Estos datos nos permiten mejorar nuestros servicios."
+          },
+          "marketing": {
+            "title": "Cookies de marketing",
+            "content": "Se utilizan para rastrear visitantes en sitios web para mostrar anuncios relevantes. Actualmente no utilizamos este tipo de cookies."
+          }
+        },
+        "howWeUse": {
+          "title": "Cómo usamos las cookies",
+          "content": "Las cookies nos permiten:",
+          "purposes": "Mantener su sesión iniciada • Recordar el contenido de su carrito • Guardar sus preferencias de idioma y moneda • Analizar el tráfico del sitio • Mejorar el rendimiento del sitio"
+        },
+        "thirdParty": {
+          "title": "Cookies de terceros",
+          "content": "Algunas cookies son colocadas por servicios de terceros como Stripe (pago seguro) o herramientas de análisis. Estos socios tienen sus propias políticas de privacidad que le invitamos a consultar."
+        },
+        "manageCookies": {
+          "title": "Gestionar sus cookies",
+          "content": "Puede controlar y gestionar las cookies de varias formas:",
+          "instructions": "A través de la configuración de su navegador • Usando nuestro banner de consentimiento • Eliminando las cookies existentes. Tenga en cuenta que deshabilitar ciertas cookies puede afectar su experiencia en el sitio."
+        },
+        "consent": {
+          "title": "Su consentimiento",
+          "content": "En su primera visita, un banner le solicita su consentimiento para cookies no esenciales. Puede cambiar sus preferencias en cualquier momento a través del enlace en la parte inferior de la página."
+        },
+        "updates": {
+          "title": "Actualizaciones",
+          "content": "Esta política puede actualizarse. La fecha de última modificación se indica en la parte superior de la página. Le animamos a consultar esta página regularmente."
+        },
+        "contact": {
+          "title": "Contacto",
+          "content": "Para cualquier pregunta sobre nuestro uso de cookies: contact@letatchebois.com"
+        }
+      }
+    },
+    "shipping": {
+      "title": "Envío y Devoluciones",
+      "description": "Información sobre nuestros métodos de envío, plazos y política de devoluciones",
+      "lastUpdated": "15 de enero de 2025",
+      "sections": {
+        "shippingZones": {
+          "title": "Zonas de envío",
+          "content": "Realizamos envíos a las siguientes áreas:",
+          "morocco": {
+            "title": "Marruecos",
+            "content": "Envío disponible en todas las ciudades de Marruecos. Las ciudades principales (Casablanca, Rabat, Marrakech, Fez, Tánger) se benefician de plazos de entrega más cortos."
+          },
+          "international": {
+            "title": "Internacional",
+            "content": "Envío posible a Europa, Oriente Medio y otros destinos bajo petición. Contáctenos para un presupuesto personalizado que incluya gastos de aduana."
+          }
+        },
+        "deliveryTimes": {
+          "title": "Plazos de entrega",
+          "content": "Los plazos varían según el destino y tipo de producto:",
+          "times": "Productos en stock (Marruecos): 5-7 días hábiles • Envío exprés (Marruecos): 2-3 días hábiles • Productos a medida: 2-4 semanas según complejidad • Internacional: 10-21 días hábiles"
+        },
+        "shippingCosts": {
+          "title": "Gastos de envío",
+          "content": "Envío estándar Marruecos: 50-150 MAD según tamaño y peso. Envío exprés: suplemento de 80 MAD. Recogida en taller: GRATIS. Envío gratuito en pedidos superiores a 3000 MAD (solo Marruecos)."
+        },
+        "tracking": {
+          "title": "Seguimiento del pedido",
+          "content": "Se envía un correo con el número de seguimiento tras el envío. Siga su paquete en tiempo real en nuestra página de seguimiento o directamente en el sitio del transportista."
+        },
+        "deliveryIssues": {
+          "title": "Problemas de entrega",
+          "content": "A la recepción, verifique el estado del paquete. En caso de daño visible, rechace el paquete o anote reservas en el albarán de entrega. Contáctenos en 48h con fotos de soporte."
+        },
+        "returnsPolicy": {
+          "title": "Política de devoluciones",
+          "content": "Su satisfacción es nuestra prioridad.",
+          "conditions": {
+            "title": "Condiciones de devolución",
+            "content": "Productos estándar: devolución en 14 días • Artículo sin usar y en embalaje original • Productos a medida: no retornables salvo defecto • Gastos de devolución a cargo del cliente salvo error nuestro"
+          },
+          "process": {
+            "title": "Proceso de devolución",
+            "content": "1. Contáctenos por correo con su número de pedido. 2. Espere nuestra confirmación e instrucciones. 3. Empaquete cuidadosamente el producto. 4. Envíe con número de seguimiento."
+          }
+        },
+        "refunds": {
+          "title": "Reembolsos",
+          "content": "El reembolso se procesa en 14 días tras recepción y verificación del producto devuelto. El reembolso se realiza mediante el mismo método de pago usado en la compra."
+        },
+        "exchanges": {
+          "title": "Cambios",
+          "content": "El cambio es posible bajo las mismas condiciones que las devoluciones. La diferencia de precio se ajustará. Contáctenos para organizar el cambio."
+        },
+        "customOrders": {
+          "title": "Pedidos a medida",
+          "content": "Los productos fabricados a medida o personalizados no pueden ser devueltos ni reembolsados, salvo en caso de defecto de fabricación comprobado. Se requiere un anticipo del 50% al realizar el pedido."
+        },
+        "contact": {
+          "title": "Contacto",
+          "content": "Servicio al cliente: contact@letatchebois.com | Teléfono: +212 698 013 468 | De lunes a sábado, 8h-18h"
+        }
+      }
     }
   }
 }

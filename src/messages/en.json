@@ -1,250 +1,1446 @@
 {
+  "metadata": {
+    "title": "LE TATCHE BOIS - Artisan Woodworking Workshop in Morocco",
+    "description": "Traditional Moroccan woodworking workshop. Custom doors, windows, furniture crafted from noble woods. Delivery throughout Morocco.",
+    "keywords": "moroccan woodwork, artisan furniture, custom wood doors, handcrafted furniture"
+  },
+
   "common": {
     "readMore": "Read more",
     "viewAll": "View all",
+    "viewDetails": "View details",
     "contactUs": "Contact us",
     "requestQuote": "Request a quote",
+    "getQuote": "Get a quote",
     "loading": "Loading...",
     "error": "An error occurred",
     "success": "Success",
-    "cancel": "Cancel",
-    "save": "Save",
-    "delete": "Delete",
-    "edit": "Edit",
-    "add": "Add",
+    "addToCart": "Add to cart",
+    "buyNow": "Buy now",
+    "outOfStock": "Out of stock",
+    "inStock": "In stock",
+    "lowStock": "Low stock",
     "search": "Search",
     "filter": "Filter",
     "sort": "Sort",
-    "noResults": "No results",
-    "yes": "Yes",
-    "no": "No",
-    "confirm": "Confirm",
+    "close": "Close",
+    "open": "Open",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
     "back": "Back",
     "next": "Next",
     "previous": "Previous",
-    "close": "Close"
+    "submit": "Submit",
+    "send": "Send",
+    "download": "Download",
+    "upload": "Upload",
+    "share": "Share",
+    "print": "Print",
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "none": "None",
+    "or": "or",
+    "and": "and",
+    "from": "From",
+    "to": "to",
+    "by": "by",
+    "at": "at",
+    "in": "in",
+    "of": "of",
+    "the": "the",
+    "new": "New",
+    "featured": "Featured",
+    "popular": "Popular",
+    "recommended": "Recommended",
+    "sale": "Sale",
+    "free": "Free",
+    "currency": "MAD",
+    "language": "English"
   },
+
   "nav": {
     "home": "Home",
-    "about": "Workshop",
+    "about": "Our Workshop",
     "services": "Services",
     "projects": "Portfolio",
     "shop": "Shop",
     "cart": "Cart",
-    "quote": "Quote",
-    "contact": "Contact"
+    "quote": "Get Quote",
+    "contact": "Contact",
+    "admin": "Admin",
+    "login": "Login",
+    "logout": "Logout",
+    "account": "My Account",
+    "orders": "My Orders",
+    "wishlist": "Wishlist",
+    "purchaseOrders": "Purchase Orders",
+    "deliveryNotes": "Delivery Notes",
+    "receptionReports": "Reception Reports",
+    "billableServices": "Services (billable)",
+    "siteServices": "Site Services (pages)",
+    "b2bClients": "Clients (B2B)"
   },
-  "home": {
-    "hero": {
-      "title": "The Art of Moroccan Wood",
-      "subtitle": "Custom creations by passionate artisans. Traditional and modern woodworking for your living spaces.",
-      "cta": "Request a Quote",
-      "ctaSecondary": "View Our Work"
+
+  "hero": {
+    "slide1": {
+      "title": "The Art of Moroccan Woodworking",
+      "subtitle": "Exceptional handcrafted creations since 1995"
     },
-    "services": {
-      "title": "Our Services",
-      "subtitle": "Artisan craftsmanship at the service of your projects"
+    "slide2": {
+      "title": "Custom Furniture",
+      "subtitle": "Each piece tells a unique story"
     },
-    "projects": {
-      "title": "Our Portfolio",
-      "subtitle": "Discover our custom creations"
-    },
-    "products": {
-      "title": "Our Shop",
-      "subtitle": "Unique pieces and wooden accessories"
-    },
-    "about": {
-      "title": "Our Workshop",
-      "subtitle": "Over 20 years of expertise in traditional Moroccan woodworking"
+    "slide3": {
+      "title": "Tradition & Excellence",
+      "subtitle": "Ancestral craftsmanship at your service"
     },
     "cta": {
-      "title": "Custom Project?",
-      "subtitle": "Contact us to discuss your project and get a free quote.",
-      "button": "Request a Free Quote"
+      "projects": "View Our Projects",
+      "quote": "Request a Quote"
+    },
+    "scroll": "Scroll"
+  },
+
+  "stats": {
+    "title": "LE TATCHE BOIS in Numbers",
+    "subtitle": "Over 25 years of artisan excellence",
+    "years": "Years of experience",
+    "projects": "Projects completed",
+    "clients": "Satisfied clients",
+    "area": "Surface furnished"
+  },
+
+  "home": {
+    "cta": {
+      "badge": "Custom Project",
+      "title": "Bring Your Wood Ideas to Life",
+      "description": "Our team of skilled craftsmen is ready to create the perfect piece for your space. From design to installation, we guide you every step of the way.",
+      "ctaQuote": "Request a Free Quote",
+      "ctaContact": "Contact Us",
+      "trustYears": "Years of Experience",
+      "trustProjects": "Projects Delivered",
+      "trustSatisfaction": "Client Satisfaction"
+    },
+    "about": {
+      "badge": "About Us",
+      "title": "The Art of Moroccan Woodworking",
+      "imageAlt": "LE TATCHE BOIS woodworking workshop",
+      "since": "Since",
+      "description": "Since 1995, LE TATCHE BOIS has been carrying on the ancestral traditions of Moroccan craftsmanship while embracing innovation.",
+      "description1": "Since 1995, LE TATCHE BOIS has been carrying on the ancestral traditions of Moroccan craftsmanship while embracing innovation. Our family workshop brings together master craftsmen passionate about their trade.",
+      "description2": "Every piece we create is unique, shaped with love and respect for traditional techniques, while meeting modern standards of quality and durability.",
+      "features": {
+        "feature1": "Skilled craftsmen with over 25 years of experience",
+        "feature2": "Noble woods carefully selected with the greatest care",
+        "feature3": "Authentic traditional Moroccan techniques",
+        "feature4": "Satisfaction guarantee and personalized follow-up",
+        "quality": "Premium Quality",
+        "qualityDesc": "Carefully selected noble woods",
+        "expertise": "Artisan Expertise",
+        "expertiseDesc": "Skills passed down through generations",
+        "custom": "Made to Measure",
+        "customDesc": "Every project is as unique as you"
+      },
+      "cta": "Discover Our Workshop"
+    },
+    "featuredProjects": {
+      "badge": "Our Work",
+      "title": "Recent Projects",
+      "subtitle": "Discover our latest artisan creations",
+      "viewAll": "View All Projects",
+      "viewProject": "View Project",
+      "categories": {
+        "all": "All",
+        "doors": "Doors",
+        "furniture": "Furniture",
+        "stairs": "Stairs",
+        "ceilings": "Ceilings",
+        "restoration": "Restoration"
+      },
+      "project1": { "title": "Carved Doors Marrakech Villa" },
+      "project2": { "title": "Traditional Riad Furniture Fès" },
+      "project3": { "title": "Spiral Staircase Agadir Hotel" },
+      "project4": { "title": "Carved Ceiling Rabat Palace" },
+      "project5": { "title": "Mosque Restoration Casablanca" },
+      "project6": { "title": "Entrance Doors Tanger Villa" }
+    },
+    "featuredProducts": {
+      "badge": "Our Shop",
+      "title": "Featured Products",
+      "subtitle": "Handcrafted pieces ready to enhance your interior",
+      "viewAll": "View Full Shop",
+      "addToCart": "Add to Cart",
+      "outOfStock": "Out of Stock",
+      "lowStock": "Only {count} left in stock",
+      "wishlist": "Add to Wishlist",
+      "quickView": "Quick View",
+      "badges": {
+        "new": "New",
+        "sale": "Sale",
+        "featured": "Featured",
+        "handcrafted": "Handcrafted"
+      },
+      "categories": {
+        "tables": "Tables",
+        "furniture": "Furniture",
+        "doors": "Doors",
+        "accessories": "Accessories",
+        "decor": "Decor"
+      },
+      "products": {
+        "product1": { "name": "Artisan Coffee Table", "description": "Carved cedar table" },
+        "product2": { "name": "Golden Wall Mirror", "description": "Gilded wood frame" },
+        "product3": { "name": "Wall Shelf", "description": "Thuya wood shelf" },
+        "product4": { "name": "Traditional Chest", "description": "Carved wood chest" }
+      }
+    },
+    "servicesPreview": {
+      "badge": "Our Services",
+      "title": "What We Offer",
+      "subtitle": "Custom solutions for all your woodworking needs",
+      "viewAll": "All Services",
+      "learnMore": "Learn More",
+      "priceFrom": "From",
+      "services": {
+        "doors": {
+          "title": "Doors",
+          "description": "Entrance, interior and traditional Moroccan doors"
+        },
+        "windows": {
+          "title": "Windows",
+          "description": "Solid wood windows, mashrabiya screens"
+        },
+        "furniture": {
+          "title": "Furniture",
+          "description": "Custom furniture, Moroccan living rooms"
+        },
+        "stairs": {
+          "title": "Stairs",
+          "description": "Straight, curved, spiral staircases"
+        },
+        "ceilings": {
+          "title": "Ceilings",
+          "description": "Traditional carved ceilings"
+        },
+        "restoration": {
+          "title": "Restoration",
+          "description": "Restoration of antique pieces"
+        }
+      }
+    },
+    "testimonials": {
+      "badge": "Testimonials",
+      "title": "What Our Clients Say",
+      "subtitle": "Client satisfaction is our greatest pride",
+      "testimonials": {
+        "testimonial1": "Exceptional work! The doors of our riad are true works of art. The team captured the essence of traditional Moroccan craftsmanship.",
+        "testimonial2": "Professionalism and creativity delivered. The custom furniture exceeds all our expectations. I highly recommend LE TATCHE BOIS.",
+        "testimonial3": "A trusted partner for our hotel projects. Impeccable quality and respect for deadlines. A collaboration we happily renew.",
+        "testimonial4": "Passionate craftsmen who transformed our ideas into reality. The carved ceiling is magnificent, our clients are amazed."
+      }
     }
   },
-  "services": {
-    "title": "Our Services",
-    "subtitle": "Complete woodworking solutions",
-    "priceFrom": "Starting from",
-    "requestQuote": "Request a quote",
-    "viewDetails": "View details"
+
+  "about": {
+    "title": "Our Workshop",
+    "subtitle": "A passion passed down through generations",
+    "hero": {
+      "badge": "Our Workshop",
+      "title": "The Art of Moroccan Woodworking",
+      "subtitle": "Discover the history and craftsmanship of LE TATCHE BOIS"
+    },
+    "story": {
+      "badge": "Our Story",
+      "title": "A Family Passion",
+      "imageAlt": "LE TATCHE BOIS founder in his workshop",
+      "since": "Since",
+      "content1": "Founded in 1995 by Mohammed El Amrani, LE TATCHE BOIS was born from a deep passion for woodworking and Moroccan craftsmanship. What started as a small family workshop has become a benchmark in artisan woodworking in Morocco today.",
+      "content2": "Every piece we create tells a story, one of expertise passed down through generations, enriched by modern innovations while preserving the authenticity of traditional Moroccan techniques."
+    },
+    "mission": {
+      "title": "Our Mission",
+      "content": "To create exceptional wooden works that combine the elegance of contemporary design with the richness of traditional Moroccan craftsmanship, while respecting the environment and valuing the work of our artisans."
+    },
+    "history": {
+      "badge": "Our Journey",
+      "title": "30 Years of Excellence",
+      "founding": {
+        "title": "Workshop Founded",
+        "description": "Mohammed El Amrani founded LE TATCHE BOIS with a vision: to perpetuate the art of Moroccan woodworking."
+      },
+      "firstBigProject": {
+        "title": "First Major Project",
+        "description": "Completion of woodwork for a historic riad in Marrakech, marking our entry into large-scale projects."
+      },
+      "expansion": {
+        "title": "Workshop Expansion",
+        "description": "Workshop expansion and integration of new technologies while preserving our artisanal methods."
+      },
+      "anniversary": {
+        "title": "25 Years of Excellence",
+        "description": "Celebration of our jubilee with over 500 completed projects and a team of 15 skilled artisans."
+      },
+      "today": {
+        "title": "Today",
+        "description": "LE TATCHE BOIS continues to innovate, combining tradition and modernity for unique creations."
+      }
+    },
+    "values": {
+      "badge": "What Guides Us",
+      "title": "Our Values",
+      "subtitle": "The principles that guide every creation",
+      "quality": {
+        "title": "Quality",
+        "description": "Rigorous selection of the finest woods and impeccable finishes for lasting creations."
+      },
+      "craftsmanship": {
+        "title": "Craftsmanship",
+        "description": "Artisanal techniques passed down through generations, enriched by experience."
+      },
+      "innovation": {
+        "title": "Innovation",
+        "description": "Contemporary design integrating the latest technologies while respecting tradition."
+      },
+      "sustainability": {
+        "title": "Sustainability",
+        "description": "Commitment to eco-responsible practices and use of certified woods."
+      }
+    },
+    "team": {
+      "badge": "Our Team",
+      "title": "Passionate Craftsmen",
+      "subtitle": "A team dedicated to excellence and customer satisfaction",
+      "roles": {
+        "founder": "Founder & Master Craftsman",
+        "workshopChief": "Workshop Chief",
+        "designer": "Designer & Conceptor",
+        "seniorArtisan": "Senior Artisan"
+      }
+    },
+    "workshop": {
+      "badge": "Our Space",
+      "title": "The Workshop",
+      "subtitle": "Where magic happens, between tradition and modernity",
+      "tour": "Visit the workshop"
+    },
+    "cta": {
+      "title": "Want to Discover Our Workshop?",
+      "description": "Come visit us and discover our craftsmanship in action. Our artisans will be happy to welcome you.",
+      "visit": "Visit Us",
+      "quote": "Request a Quote"
+    }
   },
+
+  "services": {
+    "hero": {
+      "badge": "Master Craftsmen since 1995",
+      "title": "Our Woodworking Services",
+      "subtitle": "From custom furniture to traditional doors, we create unique pieces combining ancestral craftsmanship with contemporary design."
+    },
+    "services": {
+      "title": "What We Do",
+      "subtitle": "Complete woodworking solutions for all your projects",
+      "requestQuote": "Request a Quote"
+    },
+    "title": "Our Services",
+    "subtitle": "Custom solutions for all your projects",
+    "priceFrom": "Starting at",
+    "requestQuote": "Request a quote",
+    "viewDetails": "View details",
+    "backToServices": "Back to Services",
+    "included": "What's included",
+    "duration": "Estimated time",
+    "categories": {
+      "portes": {
+        "title": "Wooden Doors",
+        "description": "Entry doors, interior doors, closet doors. Hand-carved solid wood with traditional Moroccan patterns or modern designs."
+      },
+      "fenetres": {
+        "title": "Windows & Shutters",
+        "description": "Double-glazed wooden windows, swing or sliding shutters, traditional mashrabiya. Optimal thermal and acoustic insulation."
+      },
+      "mobilier": {
+        "title": "Custom Furniture",
+        "description": "Tables, chairs, wardrobes, bookcases, beds. Unique furniture created to your dimensions and style. Noble wood and fine finishes."
+      },
+      "escaliers": {
+        "title": "Stairs & Railings",
+        "description": "Straight, turning or spiral stairs. Carved railings, solid wood balusters. Classic or contemporary design."
+      },
+      "plafonds": {
+        "title": "Wooden Ceilings",
+        "description": "Traditional Moroccan carved cedar ceilings, wooden false ceilings, decorative beams. Warm atmosphere guaranteed."
+      },
+      "restauration": {
+        "title": "Restoration & Repair",
+        "description": "Antique furniture restoration, door and window repair, wood treatment against insects and humidity."
+      },
+      "doors": {
+        "title": "Doors",
+        "description": "Entry doors, interior doors, and traditional Moroccan doors"
+      },
+      "windows": {
+        "title": "Windows",
+        "description": "Solid wood windows, mashrabiya screens"
+      },
+      "furniture": {
+        "title": "Furniture",
+        "description": "Custom furniture, Moroccan living rooms"
+      },
+      "stairs": {
+        "title": "Stairs",
+        "description": "Straight, curved, and spiral staircases"
+      },
+      "ceilings": {
+        "title": "Ceilings",
+        "description": "Traditional carved ceilings"
+      },
+      "restoration": {
+        "title": "Restoration",
+        "description": "Restoration of antique pieces"
+      }
+    },
+    "process": {
+      "title": "Our Process",
+      "subtitle": "From design to installation, we guide you every step",
+      "stepLabel": "Step",
+      "consultation": {
+        "title": "Free Consultation",
+        "description": "We discuss your project, take measurements on-site and listen to your needs to create the perfect solution."
+      },
+      "design": {
+        "title": "Design & Quote",
+        "description": "Our craftsmen create detailed plans with wood and finish choices. You receive a transparent quote with no surprises."
+      },
+      "fabrication": {
+        "title": "Artisanal Crafting",
+        "description": "Each piece is handcrafted in our workshop by master carpenters with over 30 years of experience."
+      },
+      "installation": {
+        "title": "Delivery & Installation",
+        "description": "We deliver and install your creation with care. On-site finishing and cleaning included. 2-year warranty."
+      },
+      "step1": {
+        "title": "Consultation",
+        "description": "Discussion of your needs and preferences"
+      },
+      "step2": {
+        "title": "Design",
+        "description": "Plans and 3D visualization"
+      },
+      "step3": {
+        "title": "Crafting",
+        "description": "Handcrafted in our workshop"
+      },
+      "step4": {
+        "title": "Installation",
+        "description": "Professional installation and finishing"
+      }
+    },
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "subtitle": "Everything you need to know about our services",
+      "delays": {
+        "question": "What are the production times?",
+        "answer": "Times vary depending on project complexity. Allow 2-3 weeks for a simple door, 4-6 weeks for custom furniture, and 2-3 months for a complete kitchen. We give you a precise timeline with your quote."
+      },
+      "woodTypes": {
+        "question": "What types of wood do you use?",
+        "answer": "We mainly work with Atlas cedar, oak, walnut, mahogany and thuya. Each wood has its characteristics: cedar for its fragrance and resistance, oak for durability, walnut for elegance."
+      },
+      "deliveryZone": {
+        "question": "Do you deliver throughout Morocco?",
+        "answer": "Yes, we deliver throughout Morocco. Delivery is free in Fes and surrounding areas. For other cities, transport fees apply based on distance and volume."
+      },
+      "howToQuote": {
+        "question": "How do I request a quote?",
+        "answer": "You can request a free quote via our online form, by phone at +212 698 013 468, or by visiting our showroom. Send us your dimensions and photos for a more accurate quote."
+      },
+      "warranty": {
+        "question": "What warranty do you offer?",
+        "answer": "All our work is guaranteed for 2 years parts and labor. This warranty covers manufacturing defects and wood-related issues. We also offer responsive after-sales service."
+      },
+      "customDesign": {
+        "question": "Can you reproduce an existing model?",
+        "answer": "Absolutely! Send us photos of the model you like and we'll faithfully reproduce it or adapt it to your wishes. We also create 100% original designs."
+      },
+      "payment": {
+        "question": "What are the payment terms?",
+        "answer": "We require a 40% deposit on order, 40% at mid-production, and the 20% balance on delivery. We accept bank transfers and cash payment."
+      }
+    },
+    "cta": {
+      "title": "Ready to Transform Your Space?",
+      "description": "Contact us for a free consultation. Our craftsmen are here to bring your wood projects to life.",
+      "button": "Request a Free Quote"
+    },
+    "whyUs": {
+      "title": "Why Choose Us",
+      "experience": {
+        "title": "30 Years Experience",
+        "description": "Know-how passed down through generations"
+      },
+      "quality": {
+        "title": "Selected Noble Woods",
+        "description": "Certified first-quality materials"
+      },
+      "custom": {
+        "title": "100% Custom Made",
+        "description": "Each creation is unique and personalized"
+      },
+      "warranty": {
+        "title": "2-Year Warranty",
+        "description": "Responsive and professional after-sales service"
+      }
+    },
+    "galleryTitle": "Gallery",
+    "relatedProjectsTitle": "Completed Projects"
+  },
+
   "projects": {
     "title": "Our Portfolio",
-    "subtitle": "Discover our work",
+    "subtitle": "Discover our creations",
     "viewProject": "View project",
-    "client": "Client",
+    "viewGallery": "View gallery",
+    "viewAll": "View all projects",
+    "backToProjects": "Back to projects",
+    "filterAll": "All",
+    "filterByCategory": "Filter by category",
+    "filterByYear": "Filter by year",
     "location": "Location",
     "year": "Year",
     "duration": "Duration",
-    "surface": "Surface area",
-    "woodType": "Wood type",
-    "challenge": "The Challenge",
-    "solution": "Our Solution",
-    "relatedProjects": "Related Projects"
+    "materials": "Materials",
+    "description": "Description",
+    "challenge": "The challenge",
+    "solution": "Our solution",
+    "result": "The result",
+    "testimonial": "Client testimonial",
+    "relatedProjects": "Related projects",
+    "noProjects": "No projects found",
+    "detail": {
+      "challenge": "The Challenge",
+      "solution": "Our Solution",
+      "result": "The Result",
+      "gallery": "Photo Gallery",
+      "materials": "Materials Used",
+      "specifications": "Technical Specifications",
+      "testimonialTitle": "Client Testimonial",
+      "similarProjectCTA": "Have a similar project?",
+      "relatedProjects": "Related Projects"
+    }
   },
+
   "products": {
-    "title": "Shop",
-    "subtitle": "Unique artisan pieces",
-    "addToCart": "Add to cart",
-    "buyNow": "Buy now",
+    "title": "Our Shop",
+    "subtitle": "Ready-made artisan pieces",
+    "hero": {
+      "badge": "Artisan Shop",
+      "title": "Our Shop",
+      "subtitle": "Discover our collection of unique artisan pieces, crafted with passion by our master woodworkers"
+    },
+    "filters": {
+      "search": "Search for a product...",
+      "category": "Category",
+      "sortBy": "Sort by",
+      "title": "Filters"
+    },
+    "categories": {
+      "all": "All products",
+      "decoration": "Decoration",
+      "mobilier": "Furniture",
+      "accessoires": "Accessories",
+      "textile": "Textile"
+    },
+    "sort": {
+      "newest": "Newest",
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low",
+      "popular": "Popular"
+    },
+    "productsFound": "products found",
+    "noProducts": "No products match your criteria",
+    "resetFilters": "Reset filters",
+    "backToBoutique": "Back to shop",
+    "viewProduct": "View product",
+    "filterByCategory": "Category",
+    "filterByPrice": "Price",
+    "filterByMaterial": "Material",
+    "sortBy": "Sort by",
+    "sortOptions": {
+      "newest": "Newest",
+      "priceAsc": "Price: Low to High",
+      "priceDesc": "Price: High to Low",
+      "nameAsc": "Name: A-Z",
+      "nameDesc": "Name: Z-A",
+      "popular": "Popularity"
+    },
     "inStock": "In stock",
-    "lowStock": "Low stock",
     "outOfStock": "Out of stock",
-    "onOrder": "Made to order",
+    "lowStock": "Low stock ({count} left)",
+    "addToCart": "Add to cart",
+    "addedToCart": "Added to cart",
+    "addToWishlist": "Add to wishlist",
+    "removeFromWishlist": "Remove from wishlist",
+    "buyNow": "Buy now",
     "specifications": "Specifications",
     "dimensions": "Dimensions",
     "weight": "Weight",
     "material": "Material",
     "finish": "Finish",
-    "relatedProducts": "Related Products"
+    "color": "Color",
+    "care": "Care instructions",
+    "warranty": "Warranty",
+    "shipping": "Shipping",
+    "returns": "Returns",
+    "reviews": "Reviews",
+    "writeReview": "Write a review",
+    "noReviews": "No reviews for this product",
+    "relatedProducts": "Related products",
+    "recentlyViewed": "Recently viewed",
+    "trustBadges": {
+      "freeShipping": "Free shipping from 3000 MAD",
+      "warranty": "2 years warranty",
+      "returns": "14 days return"
+    },
+    "tabs": {
+      "description": "Description",
+      "specifications": "Specifications",
+      "shipping": "Shipping"
+    },
+    "specs": {
+      "dimensions": "Dimensions",
+      "material": "Material",
+      "finish": "Finish",
+      "weight": "Weight",
+      "origin": "Origin"
+    },
+    "shippingOptions": {
+      "standard": "Standard shipping (5-7 days)",
+      "express": "Express shipping (2-3 days)",
+      "pickup": "Workshop pickup (free)"
+    }
   },
+
   "cart": {
     "title": "Your Cart",
     "empty": "Your cart is empty",
+    "emptyDescription": "Browse our shop and add items",
     "continueShopping": "Continue shopping",
+    "item": "Item",
+    "items": "Items",
+    "quantity": "Quantity",
+    "price": "Price",
+    "total": "Total",
     "subtotal": "Subtotal",
     "shipping": "Shipping",
     "shippingCalculated": "Calculated at next step",
-    "total": "Total",
-    "checkout": "Proceed to checkout",
-    "remove": "Remove",
-    "quantity": "Quantity"
+    "tax": "Tax",
+    "discount": "Discount",
+    "promoCode": "Promo code",
+    "applyCode": "Apply",
+    "removeItem": "Remove",
+    "updateCart": "Update cart",
+    "checkout": "Checkout",
+    "secureCheckout": "Secure checkout",
+    "estimatedDelivery": "Estimated delivery",
+    "clearCart": "Clear cart",
+    "orderSummary": "Order summary",
+    "freeShippingThreshold": "Free shipping on orders over {amount}",
+    "freeShippingBadge": "Free shipping",
+    "promoApplied": "Promo code applied",
+    "promoInvalid": "Invalid promo code"
   },
+
   "checkout": {
     "title": "Checkout",
+    "steps": {
+      "information": "Information",
+      "shipping": "Shipping",
+      "payment": "Payment",
+      "confirmation": "Confirmation"
+    },
+    "contact": {
+      "title": "Contact Information",
+      "email": "Email",
+      "phone": "Phone"
+    },
     "shipping": {
       "title": "Shipping Address",
-      "fullName": "Full name",
-      "email": "Email",
-      "phone": "Phone",
+      "firstName": "First name",
+      "lastName": "Last name",
       "address": "Address",
+      "addressLine2": "Apartment, suite, etc.",
       "city": "City",
-      "postalCode": "Postal code"
+      "postalCode": "Postal code",
+      "country": "Country",
+      "saveAddress": "Save this address"
+    },
+    "shippingMethod": {
+      "title": "Shipping Method",
+      "standard": "Standard shipping",
+      "standardDesc": "5-7 business days",
+      "express": "Express shipping",
+      "expressDesc": "2-3 business days",
+      "pickup": "Workshop pickup",
+      "pickupDesc": "Free - Ready within 24h"
     },
     "payment": {
       "title": "Payment Method",
-      "stripe": "Credit card (Stripe)",
+      "card": "Credit card",
+      "cardSecure": "Secure payment via Stripe",
       "cod": "Cash on delivery",
-      "codNote": "Pay in cash when you receive your order"
+      "codDesc": "Pay cash upon delivery",
+      "bank": "Bank transfer",
+      "bankDesc": "Details sent by email"
     },
-    "summary": "Order Summary",
-    "placeOrder": "Place Order"
+    "cardDetails": {
+      "number": "Card number",
+      "expiry": "Expiration date",
+      "cvc": "CVC",
+      "name": "Name on card"
+    },
+    "summary": {
+      "title": "Order Summary",
+      "edit": "Edit"
+    },
+    "placeOrder": "Place Order",
+    "processing": "Processing...",
+    "terms": "By placing your order, you agree to our",
+    "termsLink": "terms and conditions",
+    "privacyLink": "privacy policy"
   },
+
   "order": {
     "confirmation": {
       "title": "Order Confirmed!",
-      "thankYou": "Thank you for your order",
+      "subtitle": "Thank you for your order",
       "orderNumber": "Order number",
-      "emailSent": "A confirmation email has been sent to",
-      "whatNext": "What's next?",
+      "whatsNext": "What's next?",
+      "emailSent": "Confirmation email sent",
+      "emailSentDesc": "You will receive an email with your order details.",
+      "preparation": "Preparation in progress",
+      "preparationDesc": "Your order will be prepared within 24-48h.",
+      "delivery": "Estimated delivery",
+      "deliveryDesc": "5-7 business days after shipping.",
+      "continueShopping": "Continue shopping",
       "trackOrder": "Track my order",
-      "continueShopping": "Continue shopping"
+      "needHelp": "Need help?"
+    },
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled",
+      "refunded": "Refunded"
     },
     "tracking": {
       "title": "Order Tracking",
-      "enterOrder": "Enter your order number",
+      "description": "Track your order status in real time",
+      "searchTitle": "Search for your order",
       "orderNumber": "Order number",
-      "email": "Email",
-      "track": "Track",
-      "status": {
-        "pending": "Pending",
-        "confirmed": "Confirmed",
-        "processing": "Processing",
-        "shipped": "Shipped",
-        "delivered": "Delivered",
-        "cancelled": "Cancelled"
-      }
+      "email": "Email used for the order",
+      "search": "Search",
+      "searching": "Searching...",
+      "orderDate": "Order date",
+      "statusTitle": "Order status",
+      "estimatedDelivery": "Estimated delivery",
+      "shippingAddress": "Shipping address",
+      "orderItems": "Ordered items",
+      "total": "Total",
+      "searchAnother": "Search another order",
+      "trackingNumber": "Tracking number",
+      "notFound": "Order not found",
+      "notFoundDesc": "Please check the order number and email entered.",
+      "needHelp": "Need help?",
+      "whatsapp": "WhatsApp"
     }
   },
+
   "quote": {
-    "title": "Quote Request",
-    "subtitle": "Describe your project and receive a personalized quote",
+    "title": "Request a Quote",
+    "subtitle": "Describe your project, we'll respond within 24 hours",
+    "free": "Free with no obligation",
     "steps": {
-      "service": "Service type",
-      "details": "Project details",
-      "contact": "Your contact info",
-      "review": "Review"
+      "service": "Service",
+      "details": "Details",
+      "dimensions": "Dimensions",
+      "contact": "Contact"
     },
-    "form": {
-      "serviceType": "Service type",
-      "selectService": "Select a service",
+    "step1": {
+      "title": "What service are you interested in?",
+      "subtitle": "Select a category"
+    },
+    "step2": {
+      "title": "Describe your project",
+      "subtitle": "More details help us advise you better",
+      "projectType": "Project type",
+      "woodType": "Preferred wood type",
+      "style": "Style",
+      "styleOptions": {
+        "traditional": "Traditional Moroccan",
+        "modern": "Modern",
+        "mixed": "Mixed"
+      },
       "description": "Project description",
       "descriptionPlaceholder": "Describe your project in detail...",
-      "dimensions": "Approximate dimensions",
-      "dimensionsPlaceholder": "E.g.: 3m x 2m",
-      "budget": "Estimated budget",
-      "deadline": "Desired date",
       "attachments": "Photos or plans (optional)",
-      "name": "Full name",
+      "uploadHint": "Drag files here or click to browse"
+    },
+    "step3": {
+      "title": "Approximate dimensions",
+      "subtitle": "Help us estimate",
+      "width": "Width (cm)",
+      "height": "Height (cm)",
+      "depth": "Depth (cm)",
+      "quantity": "Quantity",
+      "budget": "Estimated budget",
+      "budgetOptions": {
+        "under5k": "Under 5,000 MAD",
+        "5to10k": "5,000 - 10,000 MAD",
+        "10to25k": "10,000 - 25,000 MAD",
+        "25to50k": "25,000 - 50,000 MAD",
+        "over50k": "Over 50,000 MAD"
+      },
+      "deadline": "Desired timeline"
+    },
+    "step4": {
+      "title": "Your contact details",
+      "subtitle": "How can we reach you?",
+      "firstName": "First name",
+      "lastName": "Last name",
       "email": "Email",
       "phone": "Phone",
       "city": "City",
-      "company": "Company (optional)"
+      "preferredContact": "Preferred contact method",
+      "contactOptions": {
+        "email": "Email",
+        "phone": "Phone",
+        "whatsapp": "WhatsApp"
+      },
+      "newsletter": "Receive our news and offers"
     },
-    "submit": "Send my request",
+    "submit": "Submit my request",
+    "submitting": "Submitting...",
     "success": {
-      "title": "Request Sent!",
-      "message": "We have received your request. Our team will contact you within 24-48 hours.",
-      "reference": "Reference"
+      "title": "Request sent!",
+      "message": "We'll respond within 24 business hours.",
+      "reference": "Your reference",
+      "backHome": "Back to home"
+    },
+    "error": {
+      "title": "Error",
+      "message": "An error occurred. Please try again."
     }
   },
+
   "contact": {
-    "title": "Contact",
-    "subtitle": "Have a question? Feel free to contact us",
+    "title": "Contact Us",
+    "subtitle": "Have a question? We're here to help",
     "form": {
-      "name": "Name",
+      "title": "Send us a message",
+      "name": "Full name",
+      "namePlaceholder": "Your full name",
       "email": "Email",
-      "phone": "Phone",
+      "emailPlaceholder": "your@email.com",
+      "phone": "Phone (optional)",
+      "phonePlaceholder": "+212 6XX XX XX XX",
       "subject": "Subject",
+      "subjectPlaceholder": "Select a subject",
+      "subjectOptions": {
+        "general": "General inquiry",
+        "quote": "Quote request",
+        "order": "Order tracking",
+        "partnership": "Partnership",
+        "other": "Other"
+      },
       "message": "Message",
-      "send": "Send"
+      "messagePlaceholder": "How can we help you?",
+      "submit": "Send message",
+      "submitting": "Sending...",
+      "success": "Message sent!",
+      "successMessage": "We'll get back to you as soon as possible.",
+      "error": "Sending failed",
+      "errorMessage": "An error occurred. Please try again."
     },
     "info": {
-      "address": "Address",
-      "phone": "Phone",
-      "email": "Email",
-      "hours": "Hours"
+      "title": "Our Contact Info",
+      "address": {
+        "label": "Address",
+        "value": "Lot Hamane El Fetouaki N°365, Lamhamid",
+        "city": "Marrakech, Morocco",
+        "viewOnMap": "View on map"
+      },
+      "phone": {
+        "label": "Phone",
+        "value": "+212 698 013 468",
+        "whatsapp": "Contact via WhatsApp"
+      },
+      "email": {
+        "label": "Email",
+        "value": "contact@letatchebois.com"
+      },
+      "hours": {
+        "label": "Business Hours",
+        "weekdays": "Monday - Saturday: 9:00 AM - 6:00 PM",
+        "saturday": "",
+        "sunday": "Sunday: Closed"
+      }
     },
-    "success": "Message sent successfully!",
-    "whatsapp": "Chat on WhatsApp"
+    "map": {
+      "title": "Our Location"
+    },
+    "social": {
+      "title": "Follow Us",
+      "facebook": "Facebook",
+      "instagram": "Instagram",
+      "youtube": "YouTube"
+    },
+    "whatsapp": {
+      "button": "Chat on WhatsApp",
+      "message": "Hello, I would like to know more about your services."
+    }
   },
+
   "footer": {
-    "about": "Artisan woodworking workshop specialized in custom creations with noble wood.",
-    "quickLinks": "Quick Links",
-    "contact": "Contact",
+    "about": {
+      "title": "About",
+      "description": "LE TATCHE BOIS has been carrying on the art of Moroccan woodworking since 1995. Each creation is a unique piece, crafted with passion."
+    },
+    "quickLinks": {
+      "title": "Quick Links",
+      "home": "Home",
+      "about": "Our Workshop",
+      "services": "Services",
+      "projects": "Portfolio",
+      "shop": "Shop",
+      "contact": "Contact"
+    },
+    "services": {
+      "title": "Our Services",
+      "doors": "Doors",
+      "windows": "Windows",
+      "furniture": "Furniture",
+      "stairs": "Stairs",
+      "ceilings": "Ceilings",
+      "restoration": "Restoration"
+    },
+    "contact": {
+      "title": "Contact",
+      "address": "Lot Hamane El Fetouaki N°365, Lamhamid, Marrakech",
+      "phone": "+212 698 013 468",
+      "email": "contact@letatchebois.com"
+    },
     "newsletter": {
       "title": "Newsletter",
-      "subtitle": "Receive our news and offers",
+      "description": "Receive our news and exclusive offers",
       "placeholder": "Your email",
-      "subscribe": "Subscribe"
+      "subscribe": "Subscribe",
+      "success": "Thank you for subscribing!",
+      "error": "Error subscribing"
     },
+    "payment": {
+      "title": "Secure Payment",
+      "methods": "We accept"
+    },
+    "copyright": "© {year} LE TATCHE BOIS. All rights reserved.",
     "legal": {
       "privacy": "Privacy Policy",
       "terms": "Terms & Conditions",
-      "cookies": "Cookie Policy",
-      "shipping": "Shipping & Returns"
-    },
-    "copyright": "© {year} LE TATCHE BOIS. All rights reserved.",
-    "paymentMethods": "Payment methods"
+      "cookies": "Cookies",
+      "legal": "Legal Notice"
+    }
   },
+
   "validation": {
     "required": "This field is required",
     "email": "Invalid email",
     "phone": "Invalid phone number",
     "minLength": "Minimum {min} characters",
-    "maxLength": "Maximum {max} characters"
+    "maxLength": "Maximum {max} characters",
+    "min": "Minimum {min}",
+    "max": "Maximum {max}",
+    "number": "Must be a number",
+    "positive": "Must be positive",
+    "integer": "Must be a whole number",
+    "url": "Invalid URL",
+    "date": "Invalid date",
+    "passwordMatch": "Passwords do not match",
+    "passwordStrength": "Password must contain at least 8 characters, one uppercase, one lowercase, and one number"
   },
+
   "errors": {
-    "notFound": {
-      "title": "Page not found",
-      "message": "The page you are looking for does not exist.",
+    "404": {
+      "title": "Page Not Found",
+      "description": "The page you're looking for doesn't exist or has been moved.",
       "backHome": "Back to home"
     },
-    "serverError": {
-      "title": "Server error",
-      "message": "An error occurred. Please try again later."
+    "500": {
+      "title": "Server Error",
+      "description": "An unexpected error occurred. Please try again later.",
+      "retry": "Try again"
+    },
+    "network": {
+      "title": "Connection Error",
+      "description": "Check your internet connection and try again."
+    },
+    "generic": "An error occurred"
+  },
+
+  "admin": {
+    "dashboard": {
+      "title": "Dashboard",
+      "welcome": "Welcome,",
+      "overview": "Overview",
+      "recentOrders": "Recent Orders",
+      "recentQuotes": "Recent Quotes",
+      "recentMessages": "Recent Messages",
+      "stats": {
+        "totalOrders": "Orders",
+        "totalRevenue": "Revenue",
+        "pendingQuotes": "Pending Quotes",
+        "newMessages": "New Messages"
+      }
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "orders": "Orders",
+      "quotes": "Quotes",
+      "messages": "Messages",
+      "products": "Products",
+      "projects": "Projects",
+      "services": "Services",
+      "categories": "Categories",
+      "customers": "Customers",
+      "settings": "Settings",
+      "logout": "Logout"
+    },
+    "common": {
+      "add": "Add",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "search": "Search",
+      "filter": "Filter",
+      "export": "Export",
+      "import": "Import",
+      "actions": "Actions",
+      "status": "Status",
+      "date": "Date",
+      "confirmDelete": "Are you sure you want to delete?",
+      "deleteSuccess": "Deleted successfully",
+      "saveSuccess": "Saved successfully",
+      "error": "An error occurred"
+    },
+    "orders": {
+      "title": "Order Management",
+      "orderNumber": "Order #",
+      "customer": "Customer",
+      "total": "Total",
+      "status": "Status",
+      "date": "Date",
+      "updateStatus": "Update status",
+      "viewDetails": "View details",
+      "printInvoice": "Print invoice"
+    },
+    "quotes": {
+      "title": "Quote Management",
+      "reference": "Reference",
+      "customer": "Customer",
+      "service": "Service",
+      "status": "Status",
+      "date": "Date",
+      "respond": "Respond",
+      "markAsRead": "Mark as read",
+      "archive": "Archive",
+      "statuses": {
+        "new": "New",
+        "read": "Read",
+        "responded": "Responded",
+        "converted": "Converted",
+        "archived": "Archived"
+      }
+    },
+    "messages": {
+      "title": "Messages",
+      "from": "From",
+      "subject": "Subject",
+      "date": "Date",
+      "reply": "Reply",
+      "markAsRead": "Mark as read",
+      "archive": "Archive"
+    },
+    "products": {
+      "title": "Product Management",
+      "addProduct": "Add product",
+      "editProduct": "Edit product",
+      "name": "Name",
+      "category": "Category",
+      "price": "Price",
+      "stock": "Stock",
+      "status": "Status",
+      "featured": "Featured",
+      "images": "Images",
+      "description": "Description"
+    },
+    "projects": {
+      "title": "Project Management",
+      "addProject": "Add project",
+      "editProject": "Edit project"
+    },
+    "services": {
+      "title": "Service Management",
+      "addService": "Add service",
+      "editService": "Edit service"
+    },
+    "categories": {
+      "title": "Category Management",
+      "addCategory": "Add category",
+      "editCategory": "Edit category"
+    },
+    "settings": {
+      "title": "Settings",
+      "general": "General",
+      "appearance": "Appearance",
+      "notifications": "Notifications",
+      "security": "Security",
+      "backup": "Backup"
+    }
+  },
+
+  "auth": {
+    "login": {
+      "title": "Login",
+      "email": "Email",
+      "password": "Password",
+      "remember": "Remember me",
+      "forgot": "Forgot password?",
+      "submit": "Sign in",
+      "noAccount": "Don't have an account?",
+      "register": "Sign up",
+      "error": "Invalid email or password"
+    },
+    "register": {
+      "title": "Sign Up",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm password",
+      "terms": "I agree to the",
+      "termsLink": "terms and conditions",
+      "submit": "Sign up",
+      "hasAccount": "Already have an account?",
+      "login": "Sign in"
+    },
+    "forgot": {
+      "title": "Forgot Password",
+      "description": "Enter your email to receive a reset link",
+      "email": "Email",
+      "submit": "Send",
+      "success": "Email sent! Check your inbox.",
+      "backToLogin": "Back to login"
+    },
+    "reset": {
+      "title": "Reset Password",
+      "password": "New password",
+      "confirmPassword": "Confirm password",
+      "submit": "Reset",
+      "success": "Password reset successfully"
+    }
+  },
+
+  "accessibility": {
+    "skipToContent": "Skip to content",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "openCart": "Open cart",
+    "closeCart": "Close cart",
+    "previousSlide": "Previous slide",
+    "nextSlide": "Next slide",
+    "expandImage": "Expand image",
+    "closeImage": "Close image",
+    "loading": "Loading",
+    "required": "required"
+  },
+
+  "cookieBanner": {
+    "banner": {
+      "title": "We use cookies",
+      "description": "This site uses cookies to enhance your browsing experience, analyze traffic, and personalize content.",
+      "acceptAll": "Accept All",
+      "rejectAll": "Reject All",
+      "customize": "Customize",
+      "learnMore": "Learn more"
+    },
+    "modal": {
+      "title": "Cookie Settings",
+      "description": "Choose which cookies you want to accept. Necessary cookies are always active as they are essential for the site to function.",
+      "necessary": {
+        "title": "Necessary Cookies",
+        "description": "Essential for the website to function properly. They enable navigation, access to secure areas, and the shopping cart."
+      },
+      "analytics": {
+        "title": "Analytics Cookies",
+        "description": "Help us understand how visitors use the site by collecting anonymous data to improve our services."
+      },
+      "marketing": {
+        "title": "Marketing Cookies",
+        "description": "Used to display relevant advertisements and measure the effectiveness of our advertising campaigns."
+      },
+      "savePreferences": "Save Preferences",
+      "close": "Close"
+    },
+    "footer": {
+      "managePreferences": "Manage Cookies"
+    }
+  },
+
+  "legal": {
+    "common": {
+      "lastUpdated": "Last updated",
+      "tableOfContents": "Table of Contents",
+      "backToTop": "Back to top"
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "How we collect, use, and protect your personal data",
+      "lastUpdated": "January 15, 2025",
+      "sections": {
+        "introduction": {
+          "title": "Introduction",
+          "content": "LE TATCHE BOIS is committed to protecting the privacy of its customers and visitors. This privacy policy explains how we collect, use, store, and protect your personal information when you use our website and services."
+        },
+        "dataCollection": {
+          "title": "Data Collection",
+          "content": "We collect different types of information to provide and improve our services.",
+          "personal": {
+            "title": "Personal Data",
+            "content": "Name, email address, phone number, postal address, payment information when you place an order or request a quote."
+          },
+          "automatic": {
+            "title": "Automatically Collected Data",
+            "content": "IP address, browser type, pages visited, visit duration, cookies and similar technologies data."
+          }
+        },
+        "dataUsage": {
+          "title": "Data Usage",
+          "content": "Your personal data is used for the following purposes:",
+          "purposes": "Processing and delivering your orders • Responding to your quote requests • Communication regarding your order • Improving our services • Sending newsletters (with your consent) • Compliance with legal obligations"
+        },
+        "dataSharing": {
+          "title": "Data Sharing",
+          "content": "We never sell your personal data. We may share it with trusted partners (carriers, payment processors) only as part of providing our services. These partners are contractually required to protect your data."
+        },
+        "dataSecurity": {
+          "title": "Data Security",
+          "content": "We implement appropriate technical and organizational security measures to protect your data against unauthorized access, modification, disclosure, or destruction. Payments are secured via Stripe with SSL encryption."
+        },
+        "yourRights": {
+          "title": "Your Rights",
+          "content": "In accordance with GDPR and Moroccan law 09-08, you have the following rights:",
+          "rights": "Right of access to your data • Right to rectification • Right to erasure • Right to restriction of processing • Right to data portability • Right to object"
+        },
+        "cookies": {
+          "title": "Cookies",
+          "content": "We use cookies to improve your experience. Please see our Cookie Policy for more details on the types of cookies used and how to manage them."
+        },
+        "contact": {
+          "title": "Contact",
+          "content": "For any questions about this policy or to exercise your rights, contact us at: contact@letatchebois.com or by mail at: LE TATCHE BOIS, Lot Hamane El Fetouaki N°365, Lamhamid, Marrakech, Morocco. Phone: +212 698 013 468"
+        }
+      }
+    },
+    "terms": {
+      "title": "Terms and Conditions",
+      "description": "The terms and conditions governing the use of our services and purchase of our products",
+      "lastUpdated": "January 15, 2025",
+      "sections": {
+        "acceptance": {
+          "title": "Acceptance of Terms",
+          "content": "By placing an order on letatchebois.com, you unreservedly accept these general terms and conditions of sale. These conditions govern all relationships between LE TATCHE BOIS and its customers."
+        },
+        "definitions": {
+          "title": "Definitions",
+          "content": "\"The Seller\" refers to LE TATCHE BOIS, an artisan woodworking company. \"The Customer\" refers to any natural or legal person placing an order. \"The Site\" refers to the website letatchebois.com. \"The Products\" refers to items offered for sale."
+        },
+        "products": {
+          "title": "Products",
+          "content": "Our products are handcrafted in Morocco using quality woods.",
+          "description": {
+            "title": "Product Description",
+            "content": "Photos and descriptions are as accurate as possible. However, wood being a natural material, slight variations in color or grain may exist."
+          },
+          "pricing": {
+            "title": "Pricing",
+            "content": "Prices are shown in Moroccan dirhams (MAD) including all taxes. We reserve the right to modify prices at any time, but products will be billed at the price in effect at the time of order validation."
+          }
+        },
+        "orders": {
+          "title": "Orders",
+          "content": "Any order implies acceptance of these T&Cs. After validation, a confirmation email will be sent. We reserve the right to refuse an order in case of prior dispute or payment issues."
+        },
+        "payment": {
+          "title": "Payment",
+          "content": "Payment can be made by the following methods:",
+          "methods": "Credit card (via Stripe, secure payment) • Cash on delivery (available in Morocco only) • Bank transfer"
+        },
+        "delivery": {
+          "title": "Delivery",
+          "content": "Delivery times are indicative. A delay cannot give rise to cancellation unless mutually agreed. Risks are transferred to the buyer upon handover to the carrier. Check the package condition upon receipt."
+        },
+        "returns": {
+          "title": "Returns and Exchanges",
+          "content": "You have 14 days after receipt to return an unused standard product in its original packaging. Custom or personalized products are not eligible for return unless there is a manufacturing defect."
+        },
+        "warranty": {
+          "title": "Warranty",
+          "content": "Our products benefit from the legal warranty of conformity (2 years) and the warranty against hidden defects. This warranty does not cover normal wear, damage due to misuse, or modifications made to the product."
+        },
+        "liability": {
+          "title": "Liability",
+          "content": "LE TATCHE BOIS cannot be held liable for indirect damages related to the use of its products. Our liability is limited to the order amount."
+        },
+        "intellectualProperty": {
+          "title": "Intellectual Property",
+          "content": "All site content (texts, images, logos, designs) is the exclusive property of LE TATCHE BOIS. Any reproduction without written authorization is prohibited."
+        },
+        "governingLaw": {
+          "title": "Governing Law",
+          "content": "These T&Cs are governed by Moroccan law. In case of dispute, an amicable solution will be sought. Failing that, the courts of Marrakech will have jurisdiction."
+        },
+        "contact": {
+          "title": "Contact",
+          "content": "For any questions: contact@letatchebois.com | Phone: +212 698 013 468 | Address: Lot Hamane El Fetouaki N°365, Lamhamid, Marrakech, Morocco"
+        }
+      }
+    },
+    "cookies": {
+      "title": "Cookie Policy",
+      "description": "How we use cookies and similar technologies on our site",
+      "lastUpdated": "January 15, 2025",
+      "sections": {
+        "whatAreCookies": {
+          "title": "What are Cookies?",
+          "content": "A cookie is a small text file stored on your device when you visit a website. Cookies allow the site to remember your actions and preferences over a period of time."
+        },
+        "types": {
+          "title": "Types of Cookies Used",
+          "content": "We use different types of cookies on our site:",
+          "essential": {
+            "title": "Essential Cookies",
+            "content": "Necessary for site operation. They enable navigation, access to secure areas, and the shopping cart. Without these cookies, the site cannot function properly."
+          },
+          "functional": {
+            "title": "Functional Cookies",
+            "content": "Allow remembering your preferences (language, currency, region) to personalize your experience on the site."
+          },
+          "analytics": {
+            "title": "Analytics Cookies",
+            "content": "Help us understand how visitors use the site by collecting anonymous information. This data allows us to improve our services."
+          },
+          "marketing": {
+            "title": "Marketing Cookies",
+            "content": "Used to track visitors across websites to display relevant ads. We currently do not use this type of cookie."
+          }
+        },
+        "howWeUse": {
+          "title": "How We Use Cookies",
+          "content": "Cookies allow us to:",
+          "purposes": "Maintain your login session • Remember your cart contents • Save your language and currency preferences • Analyze site traffic • Improve site performance"
+        },
+        "thirdParty": {
+          "title": "Third-Party Cookies",
+          "content": "Some cookies are placed by third-party services like Stripe (secure payment) or analytics tools. These partners have their own privacy policies which we encourage you to review."
+        },
+        "manageCookies": {
+          "title": "Managing Your Cookies",
+          "content": "You can control and manage cookies in several ways:",
+          "instructions": "Via your browser settings • Using our consent banner • By deleting existing cookies. Note that disabling certain cookies may affect your experience on the site."
+        },
+        "consent": {
+          "title": "Your Consent",
+          "content": "On your first visit, a banner asks for your consent for non-essential cookies. You can change your preferences at any time via the link at the bottom of the page."
+        },
+        "updates": {
+          "title": "Updates",
+          "content": "This policy may be updated. The last modification date is indicated at the top of the page. We encourage you to check this page regularly."
+        },
+        "contact": {
+          "title": "Contact",
+          "content": "For any questions about our use of cookies: contact@letatchebois.com"
+        }
+      }
+    },
+    "shipping": {
+      "title": "Shipping and Returns",
+      "description": "Information about our delivery methods, times, and return policy",
+      "lastUpdated": "January 15, 2025",
+      "sections": {
+        "shippingZones": {
+          "title": "Shipping Zones",
+          "content": "We deliver to the following areas:",
+          "morocco": {
+            "title": "Morocco",
+            "content": "Delivery available in all Moroccan cities. Major cities (Casablanca, Rabat, Marrakech, Fès, Tangier) benefit from shorter delivery times."
+          },
+          "international": {
+            "title": "International",
+            "content": "Delivery possible to Europe, Middle East, and other destinations upon request. Contact us for a custom quote including customs fees."
+          }
+        },
+        "deliveryTimes": {
+          "title": "Delivery Times",
+          "content": "Delivery times vary depending on destination and product type:",
+          "times": "In-stock products (Morocco): 5-7 business days • Express delivery (Morocco): 2-3 business days • Custom products: 2-4 weeks depending on complexity • International: 10-21 business days"
+        },
+        "shippingCosts": {
+          "title": "Shipping Costs",
+          "content": "Standard Morocco delivery: 50-150 MAD depending on size and weight. Express delivery: 80 MAD supplement. Workshop pickup: FREE. Free delivery on orders over 3000 MAD (Morocco only)."
+        },
+        "tracking": {
+          "title": "Order Tracking",
+          "content": "An email with the tracking number is sent upon shipment. Track your package in real-time on our tracking page or directly on the carrier's website."
+        },
+        "deliveryIssues": {
+          "title": "Delivery Issues",
+          "content": "Upon receipt, check the package condition. In case of visible damage, refuse the package or note reservations on the delivery slip. Contact us within 48h with supporting photos."
+        },
+        "returnsPolicy": {
+          "title": "Return Policy",
+          "content": "Your satisfaction is our priority.",
+          "conditions": {
+            "title": "Return Conditions",
+            "content": "Standard products: return within 14 days • Unused item in original packaging • Custom products: non-returnable unless defective • Return shipping at customer's expense unless our error"
+          },
+          "process": {
+            "title": "Return Process",
+            "content": "1. Contact us by email with your order number. 2. Wait for our confirmation and instructions. 3. Carefully package the product. 4. Ship with a tracking number."
+          }
+        },
+        "refunds": {
+          "title": "Refunds",
+          "content": "Refund is processed within 14 days after receipt and verification of the returned product. Refund is made via the same payment method used for the purchase."
+        },
+        "exchanges": {
+          "title": "Exchanges",
+          "content": "Exchange is possible under the same conditions as returns. Price difference will be adjusted. Contact us to arrange the exchange."
+        },
+        "customOrders": {
+          "title": "Custom Orders",
+          "content": "Custom-made or personalized products cannot be returned or refunded, except in case of proven manufacturing defect. A 50% deposit is required at order."
+        },
+        "contact": {
+          "title": "Contact",
+          "content": "Customer service: contact@letatchebois.com | Phone: +212 698 013 468 | Monday to Saturday, 8am-6pm"
+        }
+      }
     }
   }
 }
