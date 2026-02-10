@@ -134,11 +134,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
     const loc = locale as SupportedLocale;
     const title = getLocalizedText(
-      { fr: project.titleFr, en: project.titleEn, es: project.titleEs, ar: project.titleAr },
+      { fr: project.titleFr ?? "", en: project.titleEn ?? "", es: project.titleEs ?? "", ar: project.titleAr ?? "" },
       loc
     );
     const description = getLocalizedText(
-      { fr: project.descriptionFr, en: project.descriptionEn, es: project.descriptionEs, ar: project.descriptionAr },
+      { fr: project.descriptionFr ?? "", en: project.descriptionEn ?? "", es: project.descriptionEs ?? "", ar: project.descriptionAr ?? "" },
       loc
     );
 
