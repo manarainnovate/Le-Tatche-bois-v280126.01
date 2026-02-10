@@ -199,10 +199,10 @@ export default async function PortfolioDetailPage({ params }: PageProps) {
   const categoryName = project.category
     ? getLocalizedText(
         {
-          fr: project.category.nameFr,
-          en: project.category.nameEn,
-          es: project.category.nameEs,
-          ar: project.category.nameAr,
+          fr: project.category.nameFr ?? "",
+          en: project.category.nameEn ?? "",
+          es: project.category.nameEs ?? "",
+          ar: project.category.nameAr ?? "",
         },
         loc
       )
