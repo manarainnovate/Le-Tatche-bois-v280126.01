@@ -135,7 +135,7 @@ export function ServiceDetailContent({
     "shortDesc",
     locale
   );
-  const description = t(service, "description", locale);
+  const description = t(service as any, "description", locale);
 
   // Hero slideshow state
   const heroImages = galleryImages.length > 0 ? galleryImages : [];
