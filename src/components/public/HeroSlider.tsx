@@ -18,7 +18,7 @@ interface HeroSlide {
   subtitleEn?: string | null;
   subtitleEs?: string | null;
   subtitleAr?: string | null;
-  imageUrl: string;
+  imageUrl: string | null;
   ctaTextFr?: string | null;
   ctaTextEn?: string | null;
   ctaUrl?: string | null;
@@ -185,7 +185,7 @@ export default function HeroSlider({
             {/* Background Image */}
             <div
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-              style={{ backgroundImage: `url(${slide.imageUrl})` }}
+              style={{ backgroundImage: slide.imageUrl ? `url(${slide.imageUrl})` : undefined }}
             />
 
             {/* Overlay */}

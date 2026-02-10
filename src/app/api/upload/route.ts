@@ -166,7 +166,7 @@ export async function POST(request: NextRequest) {
 
     // Auto-optimize image
     const { buffer: optimizedBuffer, optimized } = await optimizeImage(buffer, file.type);
-    buffer = optimizedBuffer;
+    buffer = Buffer.from(optimizedBuffer);
 
     // Create uploads directory
     const uploadDir = getUploadDir();
@@ -263,10 +263,10 @@ async function handleMultipleFiles(files: File[]) {
 
       // Upload with auto-optimization
       const bytes = await file.arrayBuffer();
-      let buffer = Buffer.from(bytes);
+      let buffer: Buffer = Buffer.from(bytes);
 
       const { buffer: optimizedBuffer } = await optimizeImage(buffer, file.type);
-      buffer = optimizedBuffer;
+      buffer = Buffer.from(optimizedBuffer);
 
       const fileName = generateFileName(file.name);
       const filePath = path.join(uploadDir, fileName);

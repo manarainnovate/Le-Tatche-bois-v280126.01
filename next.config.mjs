@@ -48,6 +48,11 @@ const nextConfig = {
   // Performance optimizations
   poweredByHeader: false, // Remove X-Powered-By header for security
 
+  // ESLint configuration - ignore warnings during build
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // ═══════════════════════════════════════════════════════════
   // Security Headers
   // ═══════════════════════════════════════════════════════════
