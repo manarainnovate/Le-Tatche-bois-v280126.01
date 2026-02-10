@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     // Get file buffer
     const bytes = await file.arrayBuffer();
-    let buffer = Buffer.from(bytes);
+    let buffer: Buffer = Buffer.from(bytes);
 
     // Auto-optimize image
     const { buffer: optimizedBuffer, optimized } = await optimizeImage(buffer, file.type);
