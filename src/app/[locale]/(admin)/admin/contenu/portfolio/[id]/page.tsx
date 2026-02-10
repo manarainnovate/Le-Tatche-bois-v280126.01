@@ -499,14 +499,11 @@ export default function PortfolioEditPage({ params }: PageProps) {
         beforeDescEn: beforeDescValues.en,
         beforeDescEs: beforeDescValues.es,
         beforeDescAr: beforeDescValues.ar,
-        beforeImages: form.beforeImages,
         // After
         afterDescFr: afterDescValues.fr,
         afterDescEn: afterDescValues.en,
         afterDescEs: afterDescValues.es,
         afterDescAr: afterDescValues.ar,
-        afterImages: form.afterImages,
-        // Other fields
         ...form,
       };
 
