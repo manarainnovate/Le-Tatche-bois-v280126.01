@@ -180,11 +180,11 @@ export default async function PortfolioDetailPage({ params }: PageProps) {
 
   // Get localized content
   const title = getLocalizedText(
-    { fr: project.titleFr, en: project.titleEn, es: project.titleEs, ar: project.titleAr },
+    { fr: project.titleFr ?? "", en: project.titleEn ?? "", es: project.titleEs ?? "", ar: project.titleAr ?? "" },
     loc
   );
   const description = getLocalizedText(
-    { fr: project.descriptionFr, en: project.descriptionEn, es: project.descriptionEs, ar: project.descriptionAr },
+    { fr: project.descriptionFr ?? "", en: project.descriptionEn ?? "", es: project.descriptionEs ?? "", ar: project.descriptionAr ?? "" },
     loc
   );
   const beforeDesc = getLocalizedText(
