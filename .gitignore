@@ -61,6 +61,6 @@ prisma/.db-journal
 # OS
 Thumbs.db
 
-# Uploaded files (keep structure, ignore content)
-/public/uploads/*
-!/public/uploads/.gitkeep
+# Uploaded files - INCLUDE in Git for deployment
+# Exclude originals backup directory (3GB+, not needed in production)
+/public/uploads/originals/
