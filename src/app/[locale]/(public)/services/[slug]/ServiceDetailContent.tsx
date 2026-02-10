@@ -129,7 +129,7 @@ export function ServiceDetailContent({
   const direction = useDirection();
   const isRTL = direction === "rtl";
 
-  const title = t(service, "title", locale);
+  const title = t(service as any, "title", locale);
   const shortDesc = t(
     { shortDescFr: service.shortDescFr, shortDescEn: service.shortDescEn },
     "shortDesc",
