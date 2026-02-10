@@ -363,8 +363,8 @@ export function ServiceDetailContent({
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {projects.map((project) => {
-                const projectTitle = t(project, "title", locale);
-                const projectDesc = t(project, "description", locale);
+                const projectTitle = t(project as any,  "title", locale);
+                const projectDesc = t(project as any,  "description", locale);
                 const projectImage = project.coverImage || project.afterImages[0] || "";
 
                 return (
