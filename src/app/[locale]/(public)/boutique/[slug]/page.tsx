@@ -79,6 +79,22 @@ interface Product {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// Helper Functions
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Fix image URL for production Docker environment
+ * Converts /uploads/ to /api/uploads/ for proper routing
+ */
+function fixImageUrl(url: string | null | undefined): string {
+  if (!url) return '/images/placeholder.svg';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  if (url.startsWith('/api/uploads/')) return url;
+  if (url.startsWith('/uploads/')) return url.replace('/uploads/', '/api/uploads/');
+  return url;
+}
+
+// ═══════════════════════════════════════════════════════════════
 // Product Detail Page Component
 // ═══════════════════════════════════════════════════════════════
 
@@ -167,7 +183,7 @@ export default function ProductDetailPage() {
       name: product.name,
       price: product.price,
       quantity,
-      image: product.thumbnail || product.images[0] || '',
+      image: fixImageUrl(product.thumbnail || product.images[0]),
     });
 
     setAddedToCart(true);
@@ -187,7 +203,7 @@ export default function ProductDetailPage() {
       name: product.name,
       price: product.price,
       quantity,
-      image: product.thumbnail || product.images[0] || '',
+      image: fixImageUrl(product.thumbnail || product.images[0]),
     });
     router.push(`/${locale}/checkout`);
   };
@@ -335,7 +351,7 @@ export default function ProductDetailPage() {
                 onClick={() => setLightboxOpen(true)}
               >
                 <Image
-                  src={product.images[selectedImage] || product.thumbnail || product.images[0] || '/placeholder.jpg'}
+                  src={fixImageUrl(product.images[selectedImage] || product.thumbnail || product.images[0])}
                   alt={product.name}
                   fill
                   className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -403,7 +419,7 @@ export default function ProductDetailPage() {
                       style={{ aspectRatio: '1/1' }}
                     >
                       <Image
-                        src={img}
+                        src={fixImageUrl(img)}
                         alt={`${product.name} - ${idx + 1}`}
                         fill
                         className="object-cover"
@@ -741,12 +757,6 @@ export default function ProductDetailPage() {
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {product.relatedProducts.slice(0, 4).map((item) => {
-                // Fix image URL for production
-                let imageUrl = item.images?.[0] || '/images/placeholder.svg';
-                if (imageUrl.startsWith('/uploads/')) {
-                  imageUrl = imageUrl.replace('/uploads/', '/api/uploads/');
-                }
-
                 return (
                   <Link
                     key={item.id}
@@ -756,7 +766,7 @@ export default function ProductDetailPage() {
                     {/* Image with fixed aspect ratio using padding-bottom technique */}
                     <div className="relative w-full overflow-hidden bg-gray-100" style={{ paddingBottom: '100%' }}>
                       <img
-                        src={imageUrl}
+                        src={fixImageUrl(item.images?.[0])}
                         alt={item.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         loading="lazy"
@@ -835,7 +845,7 @@ export default function ProductDetailPage() {
 
           <div className="relative w-full max-w-4xl mx-4" style={{ aspectRatio: '1/1', maxHeight: '80vh' }}>
             <Image
-              src={product.images[selectedImage] || product.images[0] || '/placeholder.jpg'}
+              src={fixImageUrl(product.images[selectedImage] || product.images[0])}
               alt={product.name}
               fill
               className="object-contain"
