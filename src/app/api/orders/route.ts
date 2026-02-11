@@ -99,25 +99,28 @@ export async function POST(request: NextRequest) {
     const isCardPayment = paymentMethod === "CARD" || paymentMethod === "STRIPE";
 
     // Create shipping address first
+    // EXACT SCHEMA FIELDS: firstName, lastName, company, address1, address2, city, postalCode, region, country, phone, type, isDefault
     const shippingAddress = await prisma.address.create({
       data: {
         firstName: body.shipping.firstName || body.customer.firstName,
         lastName: body.shipping.lastName || body.customer.lastName,
-        company: null,
         address1: body.shipping.address,
-        address2: null,
         city: body.shipping.city,
-        region: null,
         postalCode: body.shipping.postalCode,
-        country: body.shipping.country || "MA",
+        country: body.shipping.country,
         phone: body.customer.phone,
+        type: "shipping",
         isDefault: false,
+        // Optional fields - omit if not available (don't pass null)
+        // company, address2, region are optional and not included
       },
     });
 
     console.log("✅ Shipping address created:", shippingAddress.id);
 
     // Save order to database
+    // EXACT SCHEMA FIELDS: orderNumber, customerName, customerEmail, customerPhone, shippingAddressId,
+    // subtotal, shippingAmount, total, currency, paymentMethod, paymentStatus, status, locale, customerNote
     const order = await prisma.order.create({
       data: {
         orderNumber: orderId,
@@ -129,22 +132,25 @@ export async function POST(request: NextRequest) {
         shippingAmount: Number(body.shippingCost),
         total: Number(body.total),
         currency: "MAD",
-        paymentMethod: isCardPayment ? "STRIPE" : "COD",
-        paymentStatus: isCardPayment ? "PAID" : "PENDING",
-        status: isCardPayment ? "PROCESSING" : "PENDING",
+        paymentMethod: isCardPayment ? "CARD" : "COD", // EXACT enum values: CARD, COD, BANK_TRANSFER, PAYPAL
+        paymentStatus: isCardPayment ? "PAID" : "PENDING", // EXACT enum values: PENDING, PAID, FAILED, REFUNDED, PARTIALLY_REFUNDED
+        status: isCardPayment ? "PROCESSING" : "PENDING", // EXACT enum values from OrderStatus
         locale: body.locale || "fr",
-        customerNote: body.notes || null,
+        // Optional fields
+        ...(body.notes && { customerNote: body.notes }),
+        // Create order items
         items: {
           create: body.items.map((item) => {
             const itemPrice = typeof item.price === 'string' ? parseFloat(item.price) : item.price;
+            // EXACT SCHEMA FIELDS for OrderItem: productId, name, sku, image, quantity, unitPrice, total
             return {
               productId: item.id || item.productId || "",
               name: item.name,
-              sku: "",
+              sku: "", // We don't have SKU from cart, use empty string
               quantity: item.quantity,
               unitPrice: itemPrice,
               total: itemPrice * item.quantity,
-              image: item.image || null,
+              ...(item.image && { image: item.image }),
             };
           }),
         },
@@ -175,7 +181,7 @@ export async function POST(request: NextRequest) {
       shipping: Number(body.shippingCost),
       total: Number(body.total),
       shippingAddress: `${body.shipping.address}, ${body.shipping.city} ${body.shipping.postalCode}, ${body.shipping.country}`,
-      paymentMethod: isCardPayment ? "STRIPE" : "COD",
+      paymentMethod: isCardPayment ? "CARD" : "COD",
       locale: body.locale || "fr",
       createdAt: order.createdAt,
     };

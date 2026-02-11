@@ -520,7 +520,9 @@ export default function EcommerceProductsPage({ params }: PageProps) {
       header: t.category,
       render: (product) => (
         <span className="text-sm text-gray-600 dark:text-gray-400">
-          {product.category?.name ?? "-"}
+          {typeof product.category === 'object' && product.category !== null
+            ? (product.category as any).name ?? "-"
+            : product.category ?? "-"}
         </span>
       ),
     },
