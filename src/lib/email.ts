@@ -18,7 +18,7 @@ function getTransporter(): Transporter | null {
   const secure = process.env.SMTP_SECURE === "true"; // true for port 465
 
   if (!host || !user || !pass) {
-    console.warn("[Email] SMTP not configured - emails will be logged only");
+    console.warn("[Email] SMTP not configured - emails will NOT be sent");
     console.warn(`[Email] Config: host=${host ? 'SET' : 'NOT SET'}, user=${user ? 'SET' : 'NOT SET'}, pass=${pass ? 'SET' : 'NOT SET'}`);
     return null;
   }
@@ -34,10 +34,10 @@ function getTransporter(): Transporter | null {
       },
     });
 
-    console.log(`[Email] Transporter configured: ${host}:${port} (secure: ${secure})`);
+    console.log(`[Email] ✅ Transporter configured: ${host}:${port} (secure: ${secure})`);
     return transporter;
   } catch (error) {
-    console.error("[Email] Failed to create transporter:", error);
+    console.error("[Email] ❌ Failed to create transporter:", error);
     return null;
   }
 }
@@ -59,25 +59,46 @@ async function sendEmail(
   subject: string,
   html: string
 ): Promise<boolean> {
+  // Log email configuration for debugging
+  console.log('[Email] Config:', {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    user: process.env.SMTP_USER,
+    passSet: !!(process.env.SMTP_PASSWORD || process.env.SMTP_PASS),
+    from: FROM_EMAIL,
+    admin: ADMIN_EMAIL,
+  });
+  console.log('[Email] 📧 Attempting to send email...');
+  console.log('[Email] To:', to);
+  console.log('[Email] Subject:', subject);
+
   const transport = getTransporter();
 
   if (!transport) {
-    // Log email if transporter not configured (development)
-    console.log(`[Email] Would send to ${to}: ${subject}`);
-    return true;
+    // SMTP not configured - email cannot be sent
+    console.error(`[Email] ❌ SMTP not configured - email NOT sent to ${to}: ${subject}`);
+    return false;
   }
 
   try {
+    console.log(`[Email] Sending via ${process.env.SMTP_HOST}...`);
     await transport.sendMail({
       from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
       to,
       subject,
       html,
     });
-    console.log(`[Email] Sent to ${to}: ${subject}`);
+    console.log(`[Email] ✅ Successfully sent to ${to}: ${subject}`);
     return true;
-  } catch (error) {
-    console.error(`[Email] Failed to send to ${to}:`, error);
+  } catch (error: any) {
+    console.error(`[Email] ❌ Failed to send to ${to}:`, error);
+    console.error(`[Email] Error details:`, {
+      name: error?.name,
+      message: error?.message,
+      code: error?.code,
+      command: error?.command,
+      response: error?.response,
+    });
     return false;
   }
 }
@@ -100,6 +121,7 @@ export interface MessageEmailData {
 export async function sendMessageNotificationToAdmin(
   message: MessageEmailData
 ): Promise<boolean> {
+  console.log('[Email] 📩 Sending admin notification for contact form message...');
   const html = EmailTemplates.getAdminMessageNotificationEmail(message);
   const subject = `📩 Nouveau message de ${message.name} — LE TATCHE BOIS`;
   return sendEmail(ADMIN_EMAIL, subject, html);
@@ -108,6 +130,7 @@ export async function sendMessageNotificationToAdmin(
 export async function sendMessageConfirmationToVisitor(
   message: MessageEmailData
 ): Promise<boolean> {
+  console.log('[Email] 📧 Sending confirmation to visitor...');
   const translations = {
     fr: "Merci pour votre message — LE TATCHE BOIS",
     en: "Thank you for your message — LE TATCHE BOIS",
@@ -146,6 +169,7 @@ export interface OrderEmailData {
 export async function sendOrderNotificationToAdmin(
   order: OrderEmailData
 ): Promise<boolean> {
+  console.log('[Email] 🛒 Sending admin notification for order:', order.orderNumber);
   const html = EmailTemplates.getAdminOrderNotificationEmail(order);
   const subject = `🛒 Nouvelle commande ${order.orderNumber} — ${order.total.toFixed(2)} DH`;
   return sendEmail(ADMIN_EMAIL, subject, html);
@@ -154,6 +178,7 @@ export async function sendOrderNotificationToAdmin(
 export async function sendOrderConfirmationToCustomer(
   order: OrderEmailData
 ): Promise<boolean> {
+  console.log('[Email] 📦 Sending order confirmation to customer:', order.customerEmail);
   const translations = {
     fr: `Confirmation de commande ${order.orderNumber} — LE TATCHE BOIS`,
     en: `Order confirmation ${order.orderNumber} — LE TATCHE BOIS`,
@@ -171,6 +196,7 @@ export async function sendOrderStatusUpdateToCustomer(
   status: "CONFIRMED" | "SHIPPED" | "DELIVERED",
   trackingNumber?: string
 ): Promise<boolean> {
+  console.log('[Email] 📦 Sending order status update:', status, 'for order:', order.orderNumber);
   const statusTranslations = {
     CONFIRMED: {
       fr: `Commande ${order.orderNumber} confirmée`,
@@ -218,6 +244,7 @@ export interface QuoteEmailData {
 export async function sendQuoteNotificationToAdmin(
   quote: QuoteEmailData
 ): Promise<boolean> {
+  console.log('[Email] 📋 Sending admin notification for quote request:', quote.quoteNumber);
   const html = EmailTemplates.getAdminQuoteNotificationEmail(quote);
   const subject = `📋 Nouvelle demande de devis ${quote.quoteNumber} — ${quote.service}`;
   return sendEmail(ADMIN_EMAIL, subject, html);
@@ -226,6 +253,7 @@ export async function sendQuoteNotificationToAdmin(
 export async function sendQuoteConfirmationToCustomer(
   quote: QuoteEmailData
 ): Promise<boolean> {
+  console.log('[Email] 📋 Sending quote confirmation to customer:', quote.customerEmail);
   const translations = {
     fr: `Demande de devis reçue ${quote.quoteNumber} — LE TATCHE BOIS`,
     en: `Quote request received ${quote.quoteNumber} — LE TATCHE BOIS`,
