@@ -144,14 +144,15 @@ export const POST = withAuth(
           console.log(`[Reply Email] Attachment: ${file.name} (${file.size} bytes) - URL: ${file.url}`);
 
           // Convert relative URL to absolute file path
-          // file.url is like "/uploads/2026/02/filename.pdf"
+          // file.url is like "/api/uploads/2026/02/filename.pdf" or "/uploads/2026/02/filename.pdf"
           let filePath: string;
           if (file.url.startsWith('http://') || file.url.startsWith('https://')) {
             // External URL - nodemailer will download it
             filePath = file.url;
           } else {
-            // Local file - convert /uploads/... to absolute path
-            filePath = path.join(process.cwd(), 'public', file.url);
+            // Local file - strip /api prefix and convert to absolute path
+            const normalizedUrl = file.url.replace(/^\/api/, '');
+            filePath = path.join(process.cwd(), 'public', normalizedUrl);
             console.log(`[Reply Email] Converted to absolute path: ${filePath}`);
           }
 

@@ -145,7 +145,7 @@ export function MultiImageUpload({
     // Collect URLs to delete from server (in background)
     const urlsToDelete = Array.from(selectedIndices)
       .map((idx) => value[idx])
-      .filter((url): url is string => !!url && url.startsWith("/uploads/"));
+      .filter((url): url is string => !!url && (url.startsWith("/uploads/") || url.startsWith("/api/uploads/")));
 
     // Update UI instantly (optimistic)
     const newUrls = value.filter((_, i) => !selectedIndices.has(i));
@@ -281,7 +281,7 @@ export function MultiImageUpload({
     onChange(newUrls);
 
     // Fire server delete in background (don't block UI)
-    if (urlToRemove && urlToRemove.startsWith("/uploads/")) {
+    if (urlToRemove && (urlToRemove.startsWith("/uploads/") || urlToRemove.startsWith("/api/uploads/"))) {
       fetch("/api/upload", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },

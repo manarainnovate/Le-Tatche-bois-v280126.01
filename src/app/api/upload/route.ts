@@ -62,7 +62,8 @@ function getPublicUrl(fileName: string): string {
   const today = new Date();
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
-  return `/uploads/${year}/${month}/${fileName}`;
+  // Return API route path instead of static path for Docker compatibility
+  return `/api/uploads/${year}/${month}/${fileName}`;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -329,11 +330,14 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "URL invalide" }, { status: 400 });
     }
 
-    if (!url.startsWith("/uploads/")) {
+    // Support both old /uploads/ and new /api/uploads/ paths
+    if (!url.startsWith("/uploads/") && !url.startsWith("/api/uploads/")) {
       return NextResponse.json({ error: "URL invalide" }, { status: 400 });
     }
 
-    const filePath = path.join(process.cwd(), "public", url);
+    // Strip /api prefix if present
+    const normalizedUrl = url.replace(/^\/api/, '');
+    const filePath = path.join(process.cwd(), "public", normalizedUrl);
 
     try {
       await unlink(filePath);
@@ -362,6 +366,6 @@ export function GET() {
     allowedTypes: "all (except .exe)",
     blockedTypes: BLOCKED_TYPES,
     storage: "local",
-    uploadPath: "/uploads/{year}/{month}/{filename}",
+    uploadPath: "/api/uploads/{year}/{month}/{filename}",
   });
 }

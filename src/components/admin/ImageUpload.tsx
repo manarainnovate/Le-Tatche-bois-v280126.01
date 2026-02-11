@@ -183,7 +183,7 @@ export function ImageUpload({
 
   // Remove image
   const handleRemove = async () => {
-    if (value && value.startsWith("/uploads/")) {
+    if (value && (value.startsWith("/uploads/") || value.startsWith("/api/uploads/"))) {
       // Try to delete from server
       try {
         await fetch("/api/upload", {
