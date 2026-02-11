@@ -19,6 +19,7 @@ import {
   Printer,
   Receipt,
   Loader2,
+  Eye,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -380,6 +381,225 @@ export function DevisDetailClient({ document, locale }: DevisDetailClientProps) 
   // Check if we can create more deposits
   const canCreateDeposit = document.status === "ACCEPTED" && remainingBalance > 0;
 
+  // Helper function to convert number to French words
+  function numberToFrenchWords(n: number): string {
+    const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf',
+      'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+    const tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante', 'quatre-vingt', 'quatre-vingt'];
+
+    if (n === 0) return 'zéro';
+
+    function convert(num: number): string {
+      if (num < 20) return units[num];
+      if (num < 100) {
+        const t = Math.floor(num / 10);
+        const u = num % 10;
+        if (t === 7 || t === 9) return tens[t] + '-' + units[10 + u];
+        if (u === 0) return tens[t] + (t === 8 ? 's' : '');
+        if (u === 1 && t !== 8) return tens[t] + ' et un';
+        return tens[t] + '-' + units[u];
+      }
+      if (num < 1000) {
+        const h = Math.floor(num / 100);
+        const rest = num % 100;
+        let str = h === 1 ? 'cent' : units[h] + ' cent';
+        if (rest === 0 && h > 1) str += 's';
+        if (rest > 0) str += ' ' + convert(rest);
+        return str;
+      }
+      if (num < 1000000) {
+        const t = Math.floor(num / 1000);
+        const rest = num % 1000;
+        let str = t === 1 ? 'mille' : convert(t) + ' mille';
+        if (rest > 0) str += ' ' + convert(rest);
+        return str;
+      }
+      const m = Math.floor(num / 1000000);
+      const rest = num % 1000000;
+      let str = convert(m) + (m === 1 ? ' million' : ' millions');
+      if (rest > 0) str += ' ' + convert(rest);
+      return str;
+    }
+
+    const intPart = Math.floor(n);
+    const decPart = Math.round((n - intPart) * 100);
+
+    let result = convert(intPart) + ' dirhams';
+    if (decPart > 0) result += ' et ' + convert(decPart) + ' centimes';
+
+    return result.charAt(0).toUpperCase() + result.slice(1);
+  }
+
+  // Generate document HTML for printing/viewing
+  const generateDocumentHTML = () => {
+    const lineItemsHTML = document.items.map(item => `
+      <tr>
+        <td>${item.designation}</td>
+        <td style="text-align:right;">${Number(item.quantity)}</td>
+        <td style="text-align:right;">${formatCurrency(Number(item.unitPriceHT))}</td>
+        <td style="text-align:right;">${item.discountPercent || 0}%</td>
+        <td style="text-align:right;">${formatCurrency(Number(item.totalHT))}</td>
+      </tr>
+    `).join('');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>DEVIS ${document.number}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Georgia, serif; padding: 40px; color: #333; line-height: 1.6; }
+          .header { display: flex; justify-content: space-between; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #6B3A1F; }
+          .logo { font-size: 24px; font-weight: bold; color: #6B3A1F; }
+          .company-info { font-size: 12px; color: #666; margin-top: 8px; }
+          .doc-info { text-align: right; }
+          .doc-title { font-size: 22px; color: #6B3A1F; margin-bottom: 8px; font-weight: bold; }
+          .doc-number { font-size: 16px; color: #333; }
+          .client-section { margin: 30px 0; padding: 20px; background: #f9f6f3; border-left: 4px solid #6B3A1F; }
+          .section-title { font-size: 14px; font-weight: bold; color: #6B3A1F; margin-bottom: 10px; text-transform: uppercase; }
+          table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+          thead { background: #6B3A1F; color: white; }
+          th { padding: 12px; text-align: left; font-size: 12px; font-weight: 600; }
+          td { padding: 10px; border-bottom: 1px solid #e5e5e5; font-size: 13px; }
+          tbody tr:hover { background: #f9f6f3; }
+          .totals { margin: 30px 0; padding: 20px; background: #f9f6f3; border-radius: 8px; }
+          .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+          .total-row.grand { font-size: 18px; font-weight: bold; color: #6B3A1F; border-top: 2px solid #6B3A1F; padding-top: 12px; margin-top: 12px; }
+          .amount-words { margin-top: 12px; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 4px; font-style: italic; font-size: 13px; color: #666; }
+          .notes { margin: 30px 0; padding: 15px; background: #fffbf5; border-left: 4px solid #f59e0b; font-size: 13px; }
+          .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #999; font-size: 11px; }
+          @media print {
+            body { padding: 20px; }
+            @page { margin: 1.5cm; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="logo">LE TATCHE BOIS</div>
+            <div class="company-info">
+              <p>Artisan Menuisier au Maroc</p>
+              <p>Email: contact@letatchebois.com</p>
+              <p>Tél: +212 XXX XXX XXX</p>
+            </div>
+          </div>
+          <div class="doc-info">
+            <div class="doc-title">DEVIS</div>
+            <div class="doc-number">N° ${document.number}</div>
+            <p style="margin-top: 10px; font-size: 12px;">Date: ${new Date(document.date).toLocaleDateString('fr-FR')}</p>
+            ${document.validUntil ? `<p style="font-size: 12px;">Validité: ${new Date(document.validUntil).toLocaleDateString('fr-FR')}</p>` : ''}
+          </div>
+        </div>
+
+        <div class="client-section">
+          <div class="section-title">Client</div>
+          <p><strong>${document.clientName}</strong></p>
+          <p style="font-size: 12px; color: #666;">N° Client: ${document.client.clientNumber}</p>
+          ${document.clientAddress ? `<p style="font-size: 12px; margin-top: 5px;">${document.clientAddress}</p>` : ''}
+          ${document.clientCity ? `<p style="font-size: 12px;">${document.clientCity}</p>` : ''}
+          ${document.clientIce ? `<p style="font-size: 12px; margin-top: 5px;">ICE: ${document.clientIce}</p>` : ''}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Désignation</th>
+              <th style="text-align:right; width:80px;">Qté</th>
+              <th style="text-align:right; width:100px;">P.U. HT</th>
+              <th style="text-align:right; width:80px;">Remise</th>
+              <th style="text-align:right; width:120px;">Total HT</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lineItemsHTML}
+          </tbody>
+        </table>
+
+        <div class="totals">
+          <div class="total-row">
+            <span>Sous-total HT:</span>
+            <span>${formatCurrency(Number(document.totalHT))}</span>
+          </div>
+          ${Number(document.discountAmount) > 0 ? `
+          <div class="total-row" style="color: #dc2626;">
+            <span>Remise:</span>
+            <span>-${formatCurrency(Number(document.discountAmount))}</span>
+          </div>
+          ` : ''}
+          <div class="total-row">
+            <span>Net HT:</span>
+            <span>${formatCurrency(Number(document.netHT))}</span>
+          </div>
+          <div class="total-row">
+            <span>Total TVA:</span>
+            <span>${formatCurrency(Number(document.totalTVA))}</span>
+          </div>
+          <div class="total-row grand">
+            <span>TOTAL TTC:</span>
+            <span>${formatCurrency(Number(document.totalTTC))}</span>
+          </div>
+          ${Number(document.totalTTC) > 0 ? `
+          <div class="amount-words">
+            Montant en lettres: ${numberToFrenchWords(Number(document.totalTTC))}
+          </div>
+          ` : ''}
+        </div>
+
+        ${document.publicNotes ? `
+        <div class="notes">
+          <div class="section-title">Notes</div>
+          <p>${document.publicNotes.replace(/\n/g, '<br>')}</p>
+        </div>
+        ` : ''}
+
+        <div class="footer">
+          <p><strong>LE TATCHE BOIS</strong> - Artisanat du bois marocain</p>
+          <p>letatchebois.com | contact@letatchebois.com</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // VIEW - Open in new tab as clean printable HTML
+  const handleView = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(generateDocumentHTML());
+      printWindow.document.close();
+    }
+  };
+
+  // DOWNLOAD - Trigger print with PDF option
+  const handleDownload = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(generateDocumentHTML());
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+  };
+
+  // PRINT - Direct print using iframe
+  const handlePrint = () => {
+    const iframe = window.document.createElement('iframe');
+    iframe.style.display = 'none';
+    window.document.body.appendChild(iframe);
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.write(generateDocumentHTML());
+      iframeDoc.close();
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => window.document.body.removeChild(iframe), 1000);
+    }
+  };
+
   return (
     <div className={cn("space-y-6", isRTL && "rtl")}>
       {/* Header */}
@@ -410,6 +630,33 @@ export function DevisDetailClient({ document, locale }: DevisDetailClientProps) 
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
+          {/* VIEW */}
+          <button
+            onClick={handleView}
+            className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+          >
+            <Eye className="w-4 h-4" />
+            Aperçu
+          </button>
+
+          {/* DOWNLOAD */}
+          <button
+            onClick={handleDownload}
+            className="px-4 py-2 text-sm font-medium border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Télécharger PDF
+          </button>
+
+          {/* PRINT */}
+          <button
+            onClick={handlePrint}
+            className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Imprimer
+          </button>
+
           <Link
             href={`/${locale}/admin/facturation/devis/${document.id}/edit`}
             className="inline-flex items-center justify-center font-medium transition-all duration-200 border-2 border-wood-primary text-wood-primary bg-transparent hover:bg-wood-primary hover:text-white h-8 px-3 text-sm rounded-md"
@@ -417,23 +664,6 @@ export function DevisDetailClient({ document, locale }: DevisDetailClientProps) 
             <Pencil className="h-4 w-4 me-1" />
             {t.edit}
           </Link>
-          <a
-            href={`/api/crm/documents/${document.id}/pdf`}
-            download
-            className="inline-flex items-center justify-center font-medium transition-all duration-200 border-2 border-wood-primary text-wood-primary bg-transparent hover:bg-wood-primary hover:text-white h-8 px-3 text-sm rounded-md gap-1.5"
-          >
-            <Download className="h-4 w-4 me-1" />
-            {t.download}
-          </a>
-          <a
-            href={`/api/crm/documents/${document.id}/pdf`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center font-medium transition-all duration-200 border-2 border-wood-primary text-wood-primary bg-transparent hover:bg-wood-primary hover:text-white h-8 px-3 text-sm rounded-md gap-1.5"
-          >
-            <Printer className="h-4 w-4 me-1" />
-            {t.print}
-          </a>
           {document.status === "DRAFT" && (
             <Button variant="outline" size="sm">
               <Send className="h-4 w-4 me-1" />

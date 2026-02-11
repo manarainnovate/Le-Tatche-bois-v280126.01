@@ -19,6 +19,8 @@ import {
   Package,
   Edit,
   Receipt,
+  Eye,
+  Download,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocumentStatusBadge } from "@/components/crm/documents";
@@ -378,8 +380,199 @@ export function PVDetailClient({ document, locale }: PVDetailClientProps) {
     }).format(new Date(date));
   };
 
+  // Helper function to convert number to French words
+  function numberToFrenchWords(n: number): string {
+    const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf',
+      'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+    const tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante', 'quatre-vingt', 'quatre-vingt'];
+
+    if (n === 0) return 'zéro';
+
+    function convert(num: number): string {
+      if (num < 20) return units[num];
+      if (num < 100) {
+        const t = Math.floor(num / 10);
+        const u = num % 10;
+        if (t === 7 || t === 9) return tens[t] + '-' + units[10 + u];
+        if (u === 0) return tens[t] + (t === 8 ? 's' : '');
+        if (u === 1 && t !== 8) return tens[t] + ' et un';
+        return tens[t] + '-' + units[u];
+      }
+      if (num < 1000) {
+        const h = Math.floor(num / 100);
+        const rest = num % 100;
+        let str = h === 1 ? 'cent' : units[h] + ' cent';
+        if (rest === 0 && h > 1) str += 's';
+        if (rest > 0) str += ' ' + convert(rest);
+        return str;
+      }
+      if (num < 1000000) {
+        const t = Math.floor(num / 1000);
+        const rest = num % 1000;
+        let str = t === 1 ? 'mille' : convert(t) + ' mille';
+        if (rest > 0) str += ' ' + convert(rest);
+        return str;
+      }
+      const m = Math.floor(num / 1000000);
+      const rest = num % 1000000;
+      let str = convert(m) + (m === 1 ? ' million' : ' millions');
+      if (rest > 0) str += ' ' + convert(rest);
+      return str;
+    }
+
+    const intPart = Math.floor(n);
+    const decPart = Math.round((n - intPart) * 100);
+
+    let result = convert(intPart) + ' dirhams';
+    if (decPart > 0) result += ' et ' + convert(decPart) + ' centimes';
+
+    return result.charAt(0).toUpperCase() + result.slice(1);
+  }
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'decimal',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount) + ' DH';
+  };
+
+  // Generate document HTML for printing/viewing
+  const generateDocumentHTML = () => {
+    const lineItemsHTML = document.items.map(item => {
+      const metadata = item.metadata as {
+        quantityDelivered?: number;
+        status?: string;
+        remarks?: string;
+      } | null;
+      return `
+        <tr>
+          <td>${item.designation}</td>
+          <td style="text-align:center;">${metadata?.quantityDelivered || item.quantity}</td>
+          <td style="text-align:center;">${item.quantity}</td>
+          <td style="text-align:center;">${metadata?.status ? getStatusLabel(metadata.status) : '-'}</td>
+        </tr>
+      `;
+    }).join('');
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>PV DE RÉCEPTION ${document.number}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: Georgia, serif; padding: 40px; color: #333; line-height: 1.6; }
+          .header { display: flex; justify-content: space-between; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #6B3A1F; }
+          .logo { font-size: 24px; font-weight: bold; color: #6B3A1F; }
+          .company-info { font-size: 12px; color: #666; margin-top: 8px; }
+          .doc-info { text-align: right; }
+          .doc-title { font-size: 22px; color: #6B3A1F; margin-bottom: 8px; font-weight: bold; }
+          .doc-number { font-size: 16px; color: #333; }
+          .client-section { margin: 30px 0; padding: 20px; background: #f9f6f3; border-left: 4px solid #6B3A1F; }
+          .section-title { font-size: 14px; font-weight: bold; color: #6B3A1F; margin-bottom: 10px; text-transform: uppercase; }
+          table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+          thead { background: #6B3A1F; color: white; }
+          th { padding: 12px; text-align: left; font-size: 12px; font-weight: 600; }
+          td { padding: 10px; border-bottom: 1px solid #e5e5e5; font-size: 13px; }
+          tbody tr:hover { background: #f9f6f3; }
+          .notes { margin: 30px 0; padding: 15px; background: #fffbf5; border-left: 4px solid #f59e0b; font-size: 13px; }
+          .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #999; font-size: 11px; }
+          @media print {
+            body { padding: 20px; }
+            @page { margin: 1.5cm; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="logo">LE TATCHE BOIS</div>
+            <div class="company-info">
+              <p>Artisan Menuisier au Maroc</p>
+              <p>Email: contact@letatchebois.com</p>
+              <p>Tél: +212 XXX XXX XXX</p>
+            </div>
+          </div>
+          <div class="doc-info">
+            <div class="doc-title">PV DE RÉCEPTION</div>
+            <div class="doc-number">N° ${document.number}</div>
+            <p style="margin-top: 10px; font-size: 12px;">Date: ${new Date(document.date).toLocaleDateString('fr-FR')}</p>
+            ${document.signedDate ? `<p style="font-size: 12px;">Signé le: ${new Date(document.signedDate).toLocaleDateString('fr-FR')}</p>` : ''}
+          </div>
+        </div>
+
+        <div class="client-section">
+          <div class="section-title">Client</div>
+          <p><strong>${document.clientName}</strong></p>
+          ${document.client ? `<p style="font-size: 12px; color: #666;">N° Client: ${document.client.clientNumber}</p>` : ''}
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Désignation</th>
+              <th style="text-align:center; width:100px;">Qté Livrée</th>
+              <th style="text-align:center; width:100px;">Qté Acceptée</th>
+              <th style="text-align:center; width:120px;">État</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lineItemsHTML}
+          </tbody>
+        </table>
+
+        ${document.publicNotes ? `
+        <div class="notes">
+          <div class="section-title">Observations</div>
+          <p>${document.publicNotes.replace(/\n/g, '<br>')}</p>
+        </div>
+        ` : ''}
+
+        <div class="footer">
+          <p><strong>LE TATCHE BOIS</strong> - Artisanat du bois marocain</p>
+          <p>letatchebois.com | contact@letatchebois.com</p>
+        </div>
+      </body>
+      </html>
+    `;
+  };
+
+  // VIEW - Open in new tab as clean printable HTML
+  const handleView = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(generateDocumentHTML());
+      printWindow.document.close();
+    }
+  };
+
+  // DOWNLOAD - Trigger print with PDF option
+  const handleDownload = () => {
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(generateDocumentHTML());
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    }
+  };
+
+  // PRINT - Direct print using iframe
   const handlePrint = () => {
-    window.open(`/api/crm/documents/${document.id}/pdf`, "_blank");
+    const iframe = window.document.createElement('iframe');
+    iframe.style.display = 'none';
+    window.document.body.appendChild(iframe);
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.write(generateDocumentHTML());
+      iframeDoc.close();
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+      setTimeout(() => window.document.body.removeChild(iframe), 1000);
+    }
   };
 
   const handleMarkSigned = async () => {
@@ -481,12 +674,31 @@ export function PVDetailClient({ document, locale }: PVDetailClientProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* VIEW */}
+          <button
+            onClick={handleView}
+            className="px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2 text-gray-700 dark:text-gray-300"
+          >
+            <Eye className="w-4 h-4" />
+            Aperçu
+          </button>
+
+          {/* DOWNLOAD */}
+          <button
+            onClick={handleDownload}
+            className="px-4 py-2 text-sm font-medium border border-amber-600 text-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Télécharger PDF
+          </button>
+
+          {/* PRINT */}
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 flex items-center gap-2"
           >
-            <Printer className="h-4 w-4" />
-            {t.print}
+            <Printer className="w-4 h-4" />
+            Imprimer
           </button>
 
           {canEdit && (
