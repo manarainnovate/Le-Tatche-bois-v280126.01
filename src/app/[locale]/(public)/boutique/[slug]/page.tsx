@@ -8,7 +8,7 @@ import { useCartStore } from '@/stores/cart';
 import { useToast } from '@/hooks/useToast';
 import { useThemeSettings } from '@/stores/themeSettings';
 import { useCurrency } from '@/stores/currency';
-import { hexToRgba } from '@/lib/utils';
+import { hexToRgba, cn } from '@/lib/utils';
 import {
   Heart,
   ShoppingCart,
@@ -739,40 +739,52 @@ export default function ProductDetailPage() {
               {t.relatedProducts}
             </h2>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              {product.relatedProducts.map((item) => (
-                <Link
-                  key={item.id}
-                  href={`/${locale}/boutique/${item.slug}`}
-                  className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all overflow-hidden"
-                >
-                  <div className="relative w-full overflow-hidden bg-gray-100" style={{ aspectRatio: '1/1' }}>
-                    <Image
-                      src={item.images[0] || '/placeholder.jpg'}
-                      alt={item.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                    />
-                    {item.comparePrice && (
-                      <span className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full`}>
-                        -{Math.round((1 - item.price / item.comparePrice) * 100)}%
-                      </span>
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold group-hover:text-wood-primary transition-colors line-clamp-1" style={{ color: theme.boutiqueRelated.titleColor }}>
-                      {item.name}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-2 flex-wrap">
-                      <span className="font-bold text-wood-primary">{formatPrice(item.price)}</span>
-                      {item.comparePrice && (
-                        <span className="text-sm text-gray-400 line-through">{formatPrice(item.comparePrice)}</span>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {product.relatedProducts.slice(0, 4).map((item) => {
+                // Fix image URL for production
+                let imageUrl = item.images?.[0] || '/images/placeholder.svg';
+                if (imageUrl.startsWith('/uploads/')) {
+                  imageUrl = imageUrl.replace('/uploads/', '/api/uploads/');
+                }
+
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/${locale}/boutique/${item.slug}`}
+                    className="group bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden"
+                  >
+                    {/* Image with fixed aspect ratio using padding-bottom technique */}
+                    <div className="relative w-full overflow-hidden bg-gray-100" style={{ paddingBottom: '100%' }}>
+                      <img
+                        src={imageUrl}
+                        alt={item.name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = '/images/placeholder.svg';
+                        }}
+                      />
+                      {item.comparePrice && item.comparePrice > item.price && (
+                        <span className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full z-10`}>
+                          -{Math.round((1 - item.price / item.comparePrice) * 100)}%
+                        </span>
                       )}
                     </div>
-                  </div>
-                </Link>
-              ))}
+                    {/* Text content BELOW image */}
+                    <div className="p-4">
+                      <h3 className="font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2 min-h-[2.5rem]" style={{ color: theme.boutiqueRelated.titleColor }}>
+                        {item.name}
+                      </h3>
+                      <div className={cn("flex items-center gap-2 mt-2 flex-wrap", isRTL && "flex-row-reverse")}>
+                        <span className="font-bold text-amber-600 text-lg">{formatPrice(item.price)}</span>
+                        {item.comparePrice && item.comparePrice > item.price && (
+                          <span className="text-sm text-gray-400 line-through">{formatPrice(item.comparePrice)}</span>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </section>

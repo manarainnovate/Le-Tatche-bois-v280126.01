@@ -42,9 +42,9 @@ export const POST = withAuth(
       const host = process.env.SMTP_HOST;
       const port = parseInt(process.env.SMTP_PORT ?? "465", 10);
       const user = process.env.SMTP_USER;
-      const pass = process.env.SMTP_PASS;
+      const pass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS; // Support both variable names
       const secure = process.env.SMTP_SECURE === "true";
-      const fromEmail = process.env.SMTP_FROM ?? "contact@letatchebois.com";
+      const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "contact@letatchebois.com";
 
       if (!host || !user || !pass) {
         console.error("[Reply Email] SMTP not configured properly");

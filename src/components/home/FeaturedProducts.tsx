@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useLocale } from "next-intl";
@@ -13,20 +13,30 @@ import {
   ShoppingCart,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
+  Package,
 } from "lucide-react";
-import ProductCardSlider from "@/components/public/ProductCardSlider";
-import {
-  products as allProducts,
-  productCategories,
-  type Product,
-  type Locale,
-  calculateDiscount,
-} from "@/data/products";
 
 // ═══════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════
+
+interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  category?: {
+    slug: string;
+    name: string;
+  };
+  price: number;
+  comparePrice?: number;
+  thumbnail?: string;
+  images?: string[];
+  inStock: boolean;
+  stockQty: number;
+  isFeatured?: boolean;
+  isNew?: boolean;
+}
 
 interface ProductCardProps {
   product: Product;
@@ -43,6 +53,18 @@ interface ProductCardProps {
   }) => void;
   isVisible: boolean;
   index: number;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HELPER - Fix image URL for production
+// ═══════════════════════════════════════════════════════════
+
+function fixImageUrl(url: string | undefined): string {
+  if (!url) return '/images/placeholder.svg';
+  if (url.startsWith('http')) return url;
+  if (url.startsWith('/uploads/')) return url.replace('/uploads/', '/api/uploads/');
+  if (url.startsWith('/api/uploads/')) return url;
+  return url;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -64,22 +86,16 @@ function ProductCard({
     e.stopPropagation();
     addItem({
       productId: product.id,
-      name: product.name[locale as Locale],
+      name: product.name,
       price: product.price,
       quantity: 1,
-      image: product.images[0] ?? "/images/placeholder.jpg",
+      image: fixImageUrl(product.thumbnail || product.images?.[0]),
     });
   };
 
-  const discountPercent = product.originalPrice
-    ? calculateDiscount(product.originalPrice, product.price)
-    : 0;
-
   const productUrl = `/${locale}/boutique/${product.slug}`;
-  const categoryName =
-    productCategories.find((c) => c.id === product.category)?.[
-      locale as Locale
-    ] || product.category;
+  const categoryName = product.category?.name || '';
+  const imageUrl = fixImageUrl(product.thumbnail || product.images?.[0]);
 
   return (
     <div
@@ -91,24 +107,28 @@ function ProductCard({
       )}
       style={{ transitionDelay: `${index * 100}ms` }}
     >
-      {/* Product Image Slider */}
+      {/* Product Image */}
       <Link href={productUrl}>
-        <div className="relative">
-          <ProductCardSlider
-            images={product.images}
-            productName={product.name[locale as Locale]}
-            category={categoryName}
+        <div className="relative w-full overflow-hidden bg-gray-100" style={{ paddingBottom: '100%' }}>
+          <img
+            src={imageUrl}
+            alt={product.name}
+            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/images/placeholder.svg';
+            }}
           />
 
           {/* Sale Badge */}
-          {product.isSale && discountPercent > 0 && (
+          {product.comparePrice && product.comparePrice > product.price && (
             <span
               className={cn(
                 "absolute top-3 px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full z-20",
                 isRTL ? "right-3" : "left-3"
               )}
             >
-              -{discountPercent}%
+              -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
             </span>
           )}
 
@@ -116,25 +136,24 @@ function ProductCard({
           {product.isNew && (
             <span
               className={cn(
-                "absolute px-3 py-1 bg-gradient-to-r from-wood-primary to-wood-accent text-white text-xs font-bold rounded-full flex items-center gap-1 z-20",
+                "absolute px-3 py-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold rounded-full z-20",
                 isRTL ? "right-3" : "left-3",
-                product.isSale && discountPercent > 0 ? "top-10" : "top-3"
+                product.comparePrice && product.comparePrice > product.price ? "top-10" : "top-3"
               )}
             >
-              <Sparkles className="w-3 h-3" />
               {t("badges.new")}
             </span>
           )}
 
           {/* Low Stock Badge */}
-          {product.stockQuantity > 0 && product.stockQuantity <= 5 && (
+          {product.stockQty > 0 && product.stockQty <= 5 && (
             <span
               className={cn(
                 "absolute top-3 px-2 py-1 bg-orange-500 text-white text-xs rounded-full z-20",
                 isRTL ? "left-3" : "right-3"
               )}
             >
-              {t("lowStock", { count: product.stockQuantity })}
+              {t("lowStock", { count: product.stockQty })}
             </span>
           )}
         </div>
@@ -143,14 +162,16 @@ function ProductCard({
       {/* Product Info */}
       <div className={cn("p-4", isRTL && "text-right")}>
         {/* Category */}
-        <p className="text-xs text-amber-600 font-semibold uppercase tracking-wider mb-1">
-          {categoryName}
-        </p>
+        {categoryName && (
+          <p className="text-xs text-amber-600 font-semibold uppercase tracking-wider mb-1">
+            {categoryName}
+          </p>
+        )}
 
         {/* Title */}
         <Link href={productUrl}>
-          <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-amber-600 transition-colors">
-            {product.name[locale as Locale]}
+          <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-amber-600 transition-colors min-h-[2.5rem]">
+            {product.name}
           </h3>
         </Link>
 
@@ -164,9 +185,9 @@ function ProductCard({
           <span className="text-xl font-bold text-amber-600">
             {format(product.price)}
           </span>
-          {product.originalPrice && (
+          {product.comparePrice && product.comparePrice > product.price && (
             <span className="text-sm text-gray-400 line-through">
-              {format(product.originalPrice)}
+              {format(product.comparePrice)}
             </span>
           )}
         </div>
@@ -178,7 +199,7 @@ function ProductCard({
           </p>
         )}
 
-        {/* Add to Cart Button - Always visible */}
+        {/* Add to Cart Button */}
         <button
           onClick={handleAddToCart}
           disabled={!product.inStock}
@@ -198,37 +219,6 @@ function ProductCard({
 }
 
 // ═══════════════════════════════════════════════════════════
-// CATEGORY TAB COMPONENT
-// ═══════════════════════════════════════════════════════════
-
-function CategoryTab({
-  category,
-  isActive,
-  onClick,
-  locale,
-}: {
-  category: (typeof productCategories)[0];
-  isActive: boolean;
-  onClick: () => void;
-  locale: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap",
-        "transition-all duration-300 transform",
-        isActive
-          ? "bg-wood-primary text-white shadow-lg shadow-wood-primary/30 scale-105"
-          : "bg-wood-light/50 text-wood-dark hover:bg-wood-light hover:scale-102"
-      )}
-    >
-      {category[locale as Locale]}
-    </button>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════
 // FEATURED PRODUCTS COMPONENT
 // ═══════════════════════════════════════════════════════════
 
@@ -242,28 +232,50 @@ export function FeaturedProducts() {
   const { productsBackground: bg } = useThemeSettings();
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("all");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Limit categories shown in tabs
-  const displayedCategories = useMemo(() => {
-    return productCategories.slice(0, 5); // all + 4 main categories
-  }, []);
+  // Fetch real products from database
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/products?limit=8&isActive=true&isFeatured=true`, {
+          headers: { 'Accept-Language': locale },
+        });
 
-  // Filter and limit products
-  const filteredProducts = useMemo(() => {
-    const filtered =
-      activeCategory === "all"
-        ? allProducts.filter((p) => p.featured)
-        : allProducts.filter((p) => p.category === activeCategory);
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
 
-    // If filtering by category returns less than 8, fill with featured products
-    if (filtered.length < 8 && activeCategory === "all") {
-      // Just return all featured
-      return filtered.slice(0, 8);
-    }
+        const data = await res.json();
 
-    return filtered.slice(0, 8);
-  }, [activeCategory]);
+        if (data.success && data.data && data.data.data) {
+          setProducts(data.data.data);
+        }
+      } catch (err) {
+        console.error('[FeaturedProducts] Failed to fetch:', err);
+        // If featured fetch fails, try getting any active products
+        try {
+          const fallbackRes = await fetch(`/api/products?limit=8&isActive=true`, {
+            headers: { 'Accept-Language': locale },
+          });
+          if (fallbackRes.ok) {
+            const fallbackData = await fallbackRes.json();
+            if (fallbackData.success && fallbackData.data && fallbackData.data.data) {
+              setProducts(fallbackData.data.data);
+            }
+          }
+        } catch {
+          setProducts([]);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [locale]);
 
   // Intersection Observer for scroll animation
   useEffect(() => {
@@ -327,7 +339,7 @@ export function FeaturedProducts() {
           )}
           style={bg.cardEnabled ? { backgroundColor: hexToRgba(bg.cardColor || "#FFFFFF", (bg.cardOpacity ?? 80) / 100) } : undefined}
         >
-          <span className="inline-flex items-center gap-2 px-4 py-2 bg-wood-primary/10 rounded-full text-sm font-semibold mb-4" style={{ color: bg.titleColor }}>
+          <span className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600/10 rounded-full text-sm font-semibold mb-4" style={{ color: bg.titleColor }}>
             <ShoppingCart className="w-4 h-4" />
             {t("badge")}
           </span>
@@ -339,70 +351,84 @@ export function FeaturedProducts() {
           </p>
         </div>
 
-        {/* Category Tabs */}
-        <div
-          className={cn(
-            "flex items-center justify-center gap-3 mb-10 overflow-x-auto pb-2 scrollbar-hide",
-            isVisible ? "animate-fade-in-up" : "opacity-0"
-          )}
-          style={{ animationDelay: "100ms" }}
-        >
-          {displayedCategories.map((category) => (
-            <CategoryTab
-              key={category.id}
-              category={category}
-              isActive={activeCategory === category.id}
-              onClick={() => setActiveCategory(category.id)}
-              locale={locale}
-            />
-          ))}
-        </div>
+        {/* Loading State */}
+        {loading && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                <div className="relative w-full bg-gray-200" style={{ paddingBottom: '100%' }} />
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-3/4" />
+                  <div className="h-6 bg-gray-200 rounded w-1/2" />
+                  <div className="h-10 bg-gray-200 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Products Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {filteredProducts.map((product, index) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              locale={locale}
-              isRTL={isRTL}
-              t={t}
-              format={format}
-              addItem={addItem}
-              isVisible={isVisible}
-              index={index}
-            />
-          ))}
-        </div>
+        {!loading && products.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {products.map((product, index) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                locale={locale}
+                isRTL={isRTL}
+                t={t}
+                format={format}
+                addItem={addItem}
+                isVisible={isVisible}
+                index={index}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && products.length === 0 && (
+          <div className="text-center py-20 bg-white rounded-2xl shadow-md">
+            <Package size={80} className="mx-auto text-gray-300 mb-6" />
+            <h3 className="text-2xl font-bold text-gray-600 mb-3">
+              Nos produits arrivent bientôt!
+            </h3>
+            <p className="text-gray-400 max-w-md mx-auto">
+              Revenez nous visiter prochainement pour découvrir notre collection.
+            </p>
+          </div>
+        )}
 
         {/* View All Button */}
-        <div
-          className={cn(
-            "text-center mt-12",
-            isVisible ? "animate-fade-in-up" : "opacity-0"
-          )}
-          style={{ animationDelay: "400ms" }}
-        >
-          <Link
-            href={`/${locale}/boutique`}
+        {!loading && products.length > 0 && (
+          <div
             className={cn(
-              "inline-flex items-center gap-3 px-8 py-4",
-              "bg-wood-primary text-white rounded-xl",
-              "hover:bg-wood-dark transition-all duration-300",
-              "font-semibold text-base",
-              "shadow-lg shadow-wood-primary/30 hover:shadow-xl hover:shadow-wood-primary/40",
-              "transform hover:-translate-y-1",
-              isRTL && "flex-row-reverse"
+              "text-center mt-12",
+              isVisible ? "animate-fade-in-up" : "opacity-0"
             )}
+            style={{ animationDelay: "400ms" }}
           >
-            {t("viewAll")}
-            {isRTL ? (
-              <ArrowLeft className="w-5 h-5" />
-            ) : (
-              <ArrowRight className="w-5 h-5" />
-            )}
-          </Link>
-        </div>
+            <Link
+              href={`/${locale}/boutique`}
+              className={cn(
+                "inline-flex items-center gap-3 px-8 py-4",
+                "bg-amber-600 text-white rounded-xl",
+                "hover:bg-amber-700 transition-all duration-300",
+                "font-semibold text-base",
+                "shadow-lg shadow-amber-600/30 hover:shadow-xl hover:shadow-amber-600/40",
+                "transform hover:-translate-y-1",
+                isRTL && "flex-row-reverse"
+              )}
+            >
+              {t("viewAll")}
+              {isRTL ? (
+                <ArrowLeft className="w-5 h-5" />
+              ) : (
+                <ArrowRight className="w-5 h-5" />
+              )}
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   );
