@@ -114,7 +114,7 @@ function drawReferenceFields(
   // Réf. Bon de commande
   const bcRef = sourceDocuments?.bonCommande || '____________________';
   doc.text(`Réf. Bon de commande :  ${bcRef}`, header.leftX, fy);
-  fy -= LINE_H;
+  fy += LINE_H;  // FIXED: PDFKit Y increases downward
 
   // Réf. Bon de livraison
   const blRef = sourceDocuments?.bonLivraison || '____________________';
@@ -122,7 +122,7 @@ function drawReferenceFields(
 
   doc.restore();
 
-  return fy;  // Return bottom Y position
+  return fy;  // Return bottom Y position (largest value = lowest point)
 }
 
 /**
@@ -209,7 +209,8 @@ function drawPaymentSection(
 
   doc.restore();
 
-  return y - 8 * MM;  // Return next Y position
+  // FIXED: PDFKit Y increases downward
+  return y + 8 * MM;  // Return next Y position (below current element)
 }
 
 /**
@@ -225,7 +226,8 @@ function drawAcquitteeMention(
   }
 
   const margin = 25 * MM;
-  const y = 27 * MM;  // Bottom left area
+  // FIXED: Position at bottom of page (27mm from bottom)
+  const y = PAGE.HEIGHT - 27 * MM;
 
   const dateStr = formatDate(paymentDate);
   const text = `Acquittée le ${dateStr}`;
@@ -318,7 +320,8 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
 
       // ── Draw items table ──
       // Table starts below whichever is lower: left fields or client box
-      const tableY = Math.min(leftBottom, clientBottom) - 4 * MM;
+      // FIXED: In PDFKit, larger Y = lower on page, so use Math.max
+      const tableY = Math.max(leftBottom, clientBottom) + 4 * MM;
 
       // Convert FactureItem[] to TableItem[]
       const tableItems: TableItem[] = data.document.items.map((item) => {
@@ -346,24 +349,26 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
         true   // Show TVA
       );
 
-      // ── Draw amount in French words box ──
-      const amountBoxBottom = drawAmountInWordsBox(
-        doc,
-        tableResult.afterTableY + 3 * MM,
-        tableResult.totalTTC
-      );
+      // ── Sequential Y flow (FIXED: always descend) ──
+      let currentY = tableResult.afterTableY + 3 * MM;
 
-      // ── Draw payment section (if exists) ──
-      const paymentY = drawPaymentSection(
-        doc,
-        amountBoxBottom + 5 * MM,
-        data.document.paymentMethod,
-        data.document.bankInfo
-      );
+      // Amount in French words box
+      const amountBoxBottom = drawAmountInWordsBox(doc, currentY, tableResult.totalTTC);
+      currentY = amountBoxBottom + 5 * MM;
 
-      // ── Draw signature section ──
-      const signatureY = paymentY > 0 ? paymentY + 3 * MM : amountBoxBottom + 15 * MM;
-      drawSignatureSection(doc, signatureY);
+      // Payment section (if exists)
+      if (data.document.paymentMethod || data.document.bankInfo) {
+        currentY = drawPaymentSection(
+          doc,
+          currentY,
+          data.document.paymentMethod,
+          data.document.bankInfo
+        );
+        currentY += 3 * MM;
+      }
+
+      // Signature section
+      drawSignatureSection(doc, currentY + 10 * MM);
 
       // ── Draw "Acquittée" mention if paid ──
       drawAcquitteeMention(doc, data.document.paymentDate);

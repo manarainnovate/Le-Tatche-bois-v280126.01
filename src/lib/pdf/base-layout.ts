@@ -383,15 +383,15 @@ export function drawHeader(
      .text(`  •  ${COMPANY.activity}`, { continued: false });
   doc.restore();
 
-  // Contact info below
+  // Contact info below - FIXED: explicit positions with lineBreak: false
   const contactY = nameY + 30;
   doc.save();
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
      .fontSize(8.5)
-     .text(`Tél : ${COMPANY.tel1}  /  ${COMPANY.tel2}`, textX, contactY);
+     .text(`Tél : ${COMPANY.tel1}  /  ${COMPANY.tel2}`, textX, contactY, { lineBreak: false });
 
-  doc.text(`Email : ${COMPANY.email}`, textX, contactY + 11);
+  doc.text(`Email : ${COMPANY.email}`, textX, contactY + 11, { lineBreak: false });
   doc.restore();
 
   // ── Address (right aligned) ──
@@ -490,42 +490,19 @@ export function drawFooter(doc: PDFDocument): void {
      });
   doc.restore();
 
-  // Line 2: Legal identifiers with bold labels
+  // Line 2: Legal identifiers - simplified for reliability
+  // FIXED: Avoid continued:true complexity, use simple centered text
   y += 8;
   doc.save();
-
-  // Build the legal info line manually with bold/regular alternation
-  const legalParts = [
-    { label: 'RC : ', value: COMPANY.rc },
-    { label: '  |  IF : ', value: COMPANY.if },
-    { label: '  |  ICE : ', value: COMPANY.ice },
-    { label: '  |  PAT : ', value: COMPANY.pat },
-  ];
-
-  // Calculate total width to center it
-  let totalWidth = 0;
-  for (const part of legalParts) {
-    totalWidth += doc.font('Helvetica-Bold').fontSize(7).widthOfString(part.label);
-    totalWidth += doc.font('Helvetica').fontSize(7).widthOfString(part.value);
-  }
-
-  let xPos = (PAGE.WIDTH - totalWidth) / 2;
-
-  for (const part of legalParts) {
-    // Bold label
-    doc.fillColor(COLORS.BROWN_DARK)
-       .font('Helvetica-Bold')
-       .fontSize(7)
-       .text(part.label, xPos, y, { continued: true });
-    xPos += doc.widthOfString(part.label);
-
-    // Regular value
-    doc.fillColor(COLORS.GRAY_DARK)
-       .font('Helvetica')
-       .fontSize(7)
-       .text(part.value, { continued: false });
-    xPos += doc.widthOfString(part.value);
-  }
+  doc.font('Helvetica')
+     .fontSize(7)
+     .fillColor(COLORS.GRAY_DARK)
+     .text(
+       `RC : ${COMPANY.rc}  |  IF : ${COMPANY.if}  |  ICE : ${COMPANY.ice}  |  PAT : ${COMPANY.pat}`,
+       0,
+       y,
+       { width: PAGE.WIDTH, align: 'center' }
+     );
   doc.restore();
 
   // Line 3: Contact
