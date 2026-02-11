@@ -748,54 +748,74 @@ export default function ProductDetailPage() {
       </section>
 
       {/* Related Products */}
+      {/* Related Products */}
       {product.relatedProducts && product.relatedProducts.length > 0 && (
-        <section className="py-16 relative" style={sectionBg(theme.boutiqueRelated)}>
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-center mb-12" style={{ color: theme.boutiqueRelated.titleColor }}>
-              {t.relatedProducts}
-            </h2>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {product.relatedProducts.slice(0, 4).map((item) => {
-                return (
-                  <Link
-                    key={item.id}
-                    href={`/${locale}/boutique/${item.slug}`}
-                    className="group bg-white rounded-xl shadow-md hover:shadow-lg transition-all overflow-hidden"
-                  >
-                    {/* Image with fixed aspect ratio using padding-bottom technique */}
-                    <div className="relative w-full overflow-hidden bg-gray-100" style={{ paddingBottom: '100%' }}>
-                      <img
-                        src={fixImageUrl(item.images?.[0])}
-                        alt={item.name}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/images/placeholder.svg';
-                        }}
-                      />
+        <section className="py-16 px-4 max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-10" style={{ color: theme.boutiqueRelated.titleColor }}>
+            {t.relatedProducts}
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {product.relatedProducts.slice(0, 4).map((item: any) => {
+              const imgUrl = Array.isArray(item.images) ? item.images[0] : item.thumbnail || item.images;
+              const fixedImg = imgUrl?.startsWith('/uploads/') 
+                ? imgUrl.replace('/uploads/', '/api/uploads/') 
+                : imgUrl;
+              
+              return (
+                <Link
+                  key={item.id}
+                  href={`/${locale}/boutique/${item.slug}`}
+                  className="group bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300"
+                >
+                  {/* Image */}
+                  <div className="relative w-full overflow-hidden bg-gray-100" style={{ paddingBottom: '100%' }}>
+                    <img
+                      src={fixedImg || '/images/placeholder.svg'}
+                      alt={item.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder.svg'; }}
+                    />
+                    {item.comparePrice && item.comparePrice > item.price && (
+                      <span className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full z-10`}>
+                        -{Math.round((1 - item.price / item.comparePrice) * 100)}%
+                      </span>
+                    )}
+                  </div>
+                  {/* Product Info — WHITE background, clear text */}
+                  <div className="p-4">
+                    {product.category?.name && (
+                      <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider">
+                        {product.category.name}
+                      </span>
+                    )}
+                    <h3 className="font-medium text-gray-900 mt-1 line-clamp-2 text-sm min-h-[2.5rem]">
+                      {item.name}
+                    </h3>
+                    <div className="mt-2 flex items-center gap-2">
+                      <span className="text-lg font-bold text-amber-700">
+                        {formatPrice(item.price)}
+                      </span>
                       {item.comparePrice && item.comparePrice > item.price && (
-                        <span className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} px-2 py-1 bg-red-500 text-white text-xs font-bold rounded-full z-10`}>
-                          -{Math.round((1 - item.price / item.comparePrice) * 100)}%
+                        <span className="text-sm text-gray-400 line-through">
+                          {formatPrice(item.comparePrice)}
                         </span>
                       )}
                     </div>
-                    {/* Text content BELOW image */}
-                    <div className="p-4">
-                      <h3 className="font-bold text-gray-900 group-hover:text-amber-600 transition-colors line-clamp-2 min-h-[2.5rem]" style={{ color: theme.boutiqueRelated.titleColor }}>
-                        {item.name}
-                      </h3>
-                      <div className={cn("flex items-center gap-2 mt-2 flex-wrap", isRTL && "flex-row-reverse")}>
-                        <span className="font-bold text-amber-600 text-lg">{formatPrice(item.price)}</span>
-                        {item.comparePrice && item.comparePrice > item.price && (
-                          <span className="text-sm text-gray-400 line-through">{formatPrice(item.comparePrice)}</span>
-                        )}
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleAddToCart();
+                      }}
+                      className="mt-3 w-full bg-amber-600 hover:bg-amber-700 text-white py-2.5 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      {t.addToCart}
+                    </button>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}

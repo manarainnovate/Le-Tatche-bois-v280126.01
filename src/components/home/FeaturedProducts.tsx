@@ -235,44 +235,30 @@ export function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch real products from database with fallback strategy
+
+  // Fetch ALL active products - no isFeatured filtering
   useEffect(() => {
-    const fetchProducts = async () => {
+    const loadProducts = async () => {
       try {
         setLoading(true);
-
-        // Fetch ALL active products (not just featured)
-        const res = await fetch(`/api/products?limit=16&isActive=true`, {
-          headers: { 'Accept-Language': locale },
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const data = await res.json();
-
-        if (data.success && data.data && data.data.data) {
-          const allProducts = data.data.data as Product[];
-
-          // Prefer featured products, but fall back to all active products
-          const featured = allProducts.filter(p => p.isFeatured === true);
-          const displayProducts = featured.length > 0
-            ? featured.slice(0, 8)
-            : allProducts.slice(0, 8);
-
-          setProducts(displayProducts);
-        }
+        const res = await fetch('/api/products?limit=8');
+        const json = await res.json();
+        
+        // API returns { success, data: { data: [...products], pagination } }
+        const items = json?.data?.data || json?.data || json?.products || [];
+        console.log('[FeaturedProducts] Loaded:', items.length, 'products');
+        
+        setProducts(Array.isArray(items) ? items : []);
       } catch (err) {
-        console.error('[FeaturedProducts] Failed to fetch products:', err);
+        console.error('[FeaturedProducts] Error:', err);
         setProducts([]);
       } finally {
         setLoading(false);
       }
     };
+    loadProducts();
+  }, []);
 
-    fetchProducts();
-  }, [locale]);
 
   // Intersection Observer for scroll animation
   useEffect(() => {
