@@ -26,9 +26,13 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
 # Create uploads directory structure with correct permissions
-RUN mkdir -p /app/public/uploads/2026/02 && \
+RUN mkdir -p /app/public/uploads && \
     chown -R nextjs:nodejs /app/public && \
     chmod -R 755 /app/public
+
+# Declare volume for persistent uploads storage
+# This ensures uploaded files persist across container restarts/redeploys
+VOLUME ["/app/public/uploads"]
 
 USER nextjs
 EXPOSE 3000
