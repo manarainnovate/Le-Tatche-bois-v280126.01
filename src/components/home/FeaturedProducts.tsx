@@ -235,12 +235,14 @@ export function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch real products from database
+  // Fetch real products from database with fallback strategy
   useEffect(() => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`/api/products?limit=8&isActive=true&isFeatured=true`, {
+
+        // Fetch ALL active products (not just featured)
+        const res = await fetch(`/api/products?limit=16&isActive=true`, {
           headers: { 'Accept-Language': locale },
         });
 
@@ -251,24 +253,19 @@ export function FeaturedProducts() {
         const data = await res.json();
 
         if (data.success && data.data && data.data.data) {
-          setProducts(data.data.data);
+          const allProducts = data.data.data as Product[];
+
+          // Prefer featured products, but fall back to all active products
+          const featured = allProducts.filter(p => p.isFeatured === true);
+          const displayProducts = featured.length > 0
+            ? featured.slice(0, 8)
+            : allProducts.slice(0, 8);
+
+          setProducts(displayProducts);
         }
       } catch (err) {
-        console.error('[FeaturedProducts] Failed to fetch:', err);
-        // If featured fetch fails, try getting any active products
-        try {
-          const fallbackRes = await fetch(`/api/products?limit=8&isActive=true`, {
-            headers: { 'Accept-Language': locale },
-          });
-          if (fallbackRes.ok) {
-            const fallbackData = await fallbackRes.json();
-            if (fallbackData.success && fallbackData.data && fallbackData.data.data) {
-              setProducts(fallbackData.data.data);
-            }
-          }
-        } catch {
-          setProducts([]);
-        }
+        console.error('[FeaturedProducts] Failed to fetch products:', err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
