@@ -17,14 +17,34 @@ export {
 } from './facture';
 
 // ────────────────────────────────────────────────────────────────────────────────
-// FUTURE DOCUMENT TYPES
+// DEVIS (Quote)
 // ────────────────────────────────────────────────────────────────────────────────
 
-// TODO: Add when implemented
-// export { generateDevisPDF, type DevisData } from './devis';
-// export { generateBonLivraisonPDF, type BonLivraisonData } from './bon-livraison';
-// export { generateBonCommandePDF, type BonCommandeData } from './bon-commande';
-// export { generateAttachementPDF, type AttachementData } from './attachement';
+export { generateDevisPDF } from './devis';
+
+// ────────────────────────────────────────────────────────────────────────────────
+// BON DE COMMANDE (Purchase Order)
+// ────────────────────────────────────────────────────────────────────────────────
+
+export { generateBonCommandePDF } from './bon-commande';
+
+// ────────────────────────────────────────────────────────────────────────────────
+// BON DE LIVRAISON (Delivery Note)
+// ────────────────────────────────────────────────────────────────────────────────
+
+export { generateBonLivraisonPDF } from './bon-livraison';
+
+// ────────────────────────────────────────────────────────────────────────────────
+// PV DE RÉCEPTION (Reception Report)
+// ────────────────────────────────────────────────────────────────────────────────
+
+export { generatePVReceptionPDF } from './pv-reception';
+
+// ────────────────────────────────────────────────────────────────────────────────
+// AVOIR (Credit Note)
+// ────────────────────────────────────────────────────────────────────────────────
+
+export { generateAvoirPDF } from './avoir';
 
 // ────────────────────────────────────────────────────────────────────────────────
 // DEFAULT EXPORT

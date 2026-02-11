@@ -5,6 +5,11 @@
 
 import { prisma } from '@/lib/prisma';
 import { generateFacturePDF } from './document-types/facture';
+import { generateDevisPDF } from './document-types/devis';
+import { generateBonCommandePDF } from './document-types/bon-commande';
+import { generateBonLivraisonPDF } from './document-types/bon-livraison';
+import { generatePVReceptionPDF } from './document-types/pv-reception';
+import { generateAvoirPDF } from './document-types/avoir';
 
 /**
  * Generate PDF for any CRM document type
@@ -36,24 +41,14 @@ export async function generateDocumentPDF(
   }
 
   // 2. Transform data to match PDF generator interface
-  const pdfData = {
+  // Base data structure for most document types
+  const baseData = {
     document: {
       id: document.id,
       number: document.number,
       date: document.createdAt,
       dueDate: document.dueDate || undefined,
       status: document.status,
-      items: document.items.map((item) => ({
-        designation: item.designation,
-        description: item.description || undefined,
-        quantity: parseFloat(item.quantity.toString()),
-        unit: item.unit,
-        unitPriceHT: parseFloat(item.unitPriceHT.toString()),
-        discountPercent: item.discountPercent
-          ? parseFloat(item.discountPercent.toString())
-          : undefined,
-        tvaRate: parseFloat(item.tvaRate.toString()),
-      })),
       client: {
         fullName: document.client.fullName,
         address: document.client.billingAddress || undefined,
@@ -78,32 +73,138 @@ export async function generateDocumentPDF(
   switch (document.type) {
     case 'FACTURE':
     case 'FACTURE_ACOMPTE':
-      buffer = await generateFacturePDF(pdfData);
+      buffer = await generateFacturePDF({
+        ...baseData,
+        document: {
+          ...baseData.document,
+          items: document.items.map((item) => ({
+            designation: item.designation,
+            description: item.description || undefined,
+            quantity: parseFloat(item.quantity.toString()),
+            unit: item.unit,
+            unitPriceHT: parseFloat(item.unitPriceHT.toString()),
+            discountPercent: item.discountPercent
+              ? parseFloat(item.discountPercent.toString())
+              : undefined,
+            tvaRate: parseFloat(item.tvaRate.toString()),
+          })),
+        },
+      });
       break;
 
     case 'DEVIS':
-      // TODO: Implement devis generator
-      throw new Error('Génération PDF pour DEVIS pas encore implémentée');
+      buffer = await generateDevisPDF({
+        ...baseData,
+        document: {
+          ...baseData.document,
+          items: document.items.map((item) => ({
+            designation: item.designation,
+            description: item.description || undefined,
+            quantity: parseFloat(item.quantity.toString()),
+            unit: item.unit,
+            unitPriceHT: parseFloat(item.unitPriceHT.toString()),
+            discountPercent: item.discountPercent
+              ? parseFloat(item.discountPercent.toString())
+              : undefined,
+            tvaRate: parseFloat(item.tvaRate.toString()),
+          })),
+        },
+      });
+      break;
 
     case 'BON_COMMANDE':
-      // TODO: Implement bon commande generator
-      throw new Error('Génération PDF pour BON_COMMANDE pas encore implémentée');
+      buffer = await generateBonCommandePDF({
+        ...baseData,
+        document: {
+          ...baseData.document,
+          items: document.items.map((item) => ({
+            designation: item.designation,
+            description: item.description || undefined,
+            quantity: parseFloat(item.quantity.toString()),
+            unit: item.unit,
+            unitPriceHT: parseFloat(item.unitPriceHT.toString()),
+            discountPercent: item.discountPercent
+              ? parseFloat(item.discountPercent.toString())
+              : undefined,
+            tvaRate: parseFloat(item.tvaRate.toString()),
+          })),
+        },
+      });
+      break;
 
     case 'BON_LIVRAISON':
-      // TODO: Implement bon livraison generator
-      throw new Error('Génération PDF pour BON_LIVRAISON pas encore implémentée');
+      buffer = await generateBonLivraisonPDF({
+        ...baseData,
+        document: {
+          ...baseData.document,
+          items: document.items.map((item) => ({
+            designation: item.designation,
+            description: item.description || undefined,
+            quantity: parseFloat(item.quantity.toString()),
+            unit: item.unit,
+          })),
+        },
+      });
+      break;
 
     case 'PV_RECEPTION':
-      // TODO: Implement PV reception generator
-      throw new Error('Génération PDF pour PV_RECEPTION pas encore implémentée');
+      // PV de réception has a different item structure with 'etat' field
+      buffer = await generatePVReceptionPDF({
+        ...baseData,
+        document: {
+          ...baseData.document,
+          items: document.items.map((item) => ({
+            designation: item.designation,
+            description: item.description || undefined,
+            quantity: parseFloat(item.quantity.toString()),
+            etat: 'Conforme' as const, // Default state, can be customized later
+          })),
+          reserves: undefined, // TODO: Add reserves field to CRMDocument
+        },
+      });
+      break;
 
     case 'AVOIR':
-      // TODO: Implement avoir generator
-      throw new Error('Génération PDF pour AVOIR pas encore implémentée');
+      buffer = await generateAvoirPDF({
+        ...baseData,
+        document: {
+          ...baseData.document,
+          items: document.items.map((item) => ({
+            designation: item.designation,
+            description: item.description || undefined,
+            quantity: parseFloat(item.quantity.toString()),
+            unit: item.unit,
+            unitPriceHT: parseFloat(item.unitPriceHT.toString()),
+            discountPercent: item.discountPercent
+              ? parseFloat(item.discountPercent.toString())
+              : undefined,
+            tvaRate: parseFloat(item.tvaRate.toString()),
+          })),
+          refFactureOrigine: undefined, // TODO: Add refFactureOrigine field to CRMDocument
+          motif: undefined, // TODO: Add motif field to CRMDocument
+        },
+      });
+      break;
 
     default:
       // Fallback to facture layout for unknown types
-      buffer = await generateFacturePDF(pdfData);
+      buffer = await generateFacturePDF({
+        ...baseData,
+        document: {
+          ...baseData.document,
+          items: document.items.map((item) => ({
+            designation: item.designation,
+            description: item.description || undefined,
+            quantity: parseFloat(item.quantity.toString()),
+            unit: item.unit,
+            unitPriceHT: parseFloat(item.unitPriceHT.toString()),
+            discountPercent: item.discountPercent
+              ? parseFloat(item.discountPercent.toString())
+              : undefined,
+            tvaRate: parseFloat(item.tvaRate.toString()),
+          })),
+        },
+      });
   }
 
   // 4. Generate filename
