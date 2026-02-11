@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
     // Generate our custom order ID FIRST
-    const orderId = generateOrderId();
+    const orderId = await generateOrderId();
 
     // Map locale to Stripe-supported locale (Arabic not supported)
     const stripeLocales: Record<string, "fr" | "en" | "es"> = {

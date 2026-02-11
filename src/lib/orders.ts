@@ -1,43 +1,12 @@
-import fs from "fs";
-import path from "path";
-
-const COUNTER_FILE = path.join(process.cwd(), "data", "order-counter.json");
-
-interface CounterData {
-  lastDate: string;
-  counter: number;
-}
-
-function ensureDataDir() {
-  const dataDir = path.join(process.cwd(), "data");
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-  if (!fs.existsSync(COUNTER_FILE)) {
-    fs.writeFileSync(COUNTER_FILE, JSON.stringify({ lastDate: "", counter: 0 }));
-  }
-}
-
-function getCounterData(): CounterData {
-  ensureDataDir();
-  try {
-    const data = fs.readFileSync(COUNTER_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return { lastDate: "", counter: 0 };
-  }
-}
-
-function saveCounterData(data: CounterData) {
-  ensureDataDir();
-  fs.writeFileSync(COUNTER_FILE, JSON.stringify(data, null, 2));
-}
+import { prisma } from "@/lib/prisma";
 
 /**
  * Generate Order ID in format: TB + DDMMYY + 5-digit sequence
- * Example: TB0202250001
+ * Example: TB1102260001 (11 Feb 2026, sequence 1)
+ *
+ * Uses database for counter persistence (production-safe)
  */
-export function generateOrderId(): string {
+export async function generateOrderId(): Promise<string> {
   const now = new Date();
 
   // Format: DDMMYY
@@ -46,26 +15,34 @@ export function generateOrderId(): string {
   const year = String(now.getFullYear()).slice(-2);
   const dateStr = `${day}${month}${year}`;
 
-  // Get current counter
-  const counterData = getCounterData();
+  // Use DocumentSequence model to persist counter
+  // Type: ORDER-DDMMYY (e.g., ORDER-110226)
+  const sequenceType = `ORDER-${dateStr}`;
+  const currentYear = now.getFullYear();
 
-  let newCounter: number;
-
-  // If same date, increment counter; otherwise reset to 1
-  if (counterData.lastDate === dateStr) {
-    newCounter = counterData.counter + 1;
-  } else {
-    newCounter = 1;
-  }
-
-  // Save new counter
-  saveCounterData({
-    lastDate: dateStr,
-    counter: newCounter,
+  // Atomic increment using upsert
+  const sequence = await prisma.documentSequence.upsert({
+    where: {
+      type_year: {
+        type: sequenceType,
+        year: currentYear,
+      },
+    },
+    update: {
+      lastNumber: {
+        increment: 1,
+      },
+    },
+    create: {
+      type: sequenceType,
+      prefix: "TB",
+      year: currentYear,
+      lastNumber: 1,
+    },
   });
 
   // Format: TB + DDMMYY + 5-digit number (padded with zeros)
-  const orderNumber = String(newCounter).padStart(5, "0");
+  const orderNumber = String(sequence.lastNumber).padStart(5, "0");
 
   return `TB${dateStr}${orderNumber}`;
 }

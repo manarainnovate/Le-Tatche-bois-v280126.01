@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate order ID: TB + DDMMYY + 5-digit sequence
-    const orderId = generateOrderId();
+    const orderId = await generateOrderId();
 
     console.log("Order ID:", orderId);
     console.log("Customer:", body.customer.firstName, body.customer.lastName);
