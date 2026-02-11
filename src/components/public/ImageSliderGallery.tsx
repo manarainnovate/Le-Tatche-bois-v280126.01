@@ -12,8 +12,11 @@ export default function ImageSliderGallery({ images, title }: ImageSliderGallery
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [thumbnailStart, setThumbnailStart] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   const THUMBNAILS_VISIBLE = 6;
+  const MIN_SWIPE_DISTANCE = 50;
 
   // Handle empty images
   if (!images || images.length === 0) {
@@ -30,6 +33,30 @@ export default function ImageSliderGallery({ images, title }: ImageSliderGallery
 
   const goToSlide = (index: number) => {
     setCurrentIndex(index);
+  };
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0); // Reset
+    setTouchStart(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
+    const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
+
+    if (isLeftSwipe) {
+      goToNext(); // Swipe left → next image
+    }
+    if (isRightSwipe) {
+      goToPrevious(); // Swipe right → previous image
+    }
   };
 
   // Scroll thumbnails
@@ -72,7 +99,12 @@ export default function ImageSliderGallery({ images, title }: ImageSliderGallery
     <>
       <div className="w-full">
         {/* Main Image Slider */}
-        <div className="relative aspect-[4/3] md:aspect-[16/10] bg-stone-100 rounded-lg md:rounded-xl overflow-hidden group border-0 md:border md:border-gray-200">
+        <div
+          className="relative aspect-[4/3] md:aspect-[16/10] bg-stone-100 rounded-lg md:rounded-xl overflow-hidden group border-0 md:border md:border-gray-200"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           {/* Main Image - COVER on mobile, CONTAIN on desktop */}
           <img
             src={images[currentIndex]}

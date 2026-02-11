@@ -118,6 +118,10 @@ function ServiceImageSlider({
 }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const MIN_SWIPE_DISTANCE = 50;
 
   const nextSlide = useCallback(
     (e?: React.MouseEvent) => {
@@ -144,6 +148,30 @@ function ServiceImageSlider({
     return () => clearInterval(timer);
   }, [isHovering, nextSlide, images.length]);
 
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0);
+    setTouchStart(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
+    const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    }
+    if (isRightSwipe) {
+      prevSlide();
+    }
+  };
+
   if (images.length === 0) {
     return (
       <div className="relative h-64 w-full bg-wood-cream flex items-center justify-center">
@@ -157,6 +185,9 @@ function ServiceImageSlider({
       className="relative h-64 w-full overflow-hidden"
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Images */}
       {images.slice(0, 6).map((img, idx) => (
@@ -180,23 +211,20 @@ function ServiceImageSlider({
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-      {/* Navigation Arrows (show on hover) */}
+      {/* Navigation Arrows (always visible on mobile, show on hover on desktop) */}
       {images.length > 1 && (
-        <div
-          className={cn(
-            "absolute inset-0 flex items-center justify-between px-2 transition-opacity",
-            isHovering ? "opacity-100" : "opacity-0"
-          )}
-        >
+        <div className="absolute inset-0 flex items-center justify-between px-2 md:transition-opacity md:opacity-0 md:hover:opacity-100">
           <button
             onClick={prevSlide}
             className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors z-10"
+            aria-label="Previous image"
           >
             <ChevronLeft size={20} className="text-wood-dark" />
           </button>
           <button
             onClick={nextSlide}
             className="p-2 bg-white/90 rounded-full shadow-lg hover:bg-white transition-colors z-10"
+            aria-label="Next image"
           >
             <ChevronRight size={20} className="text-wood-dark" />
           </button>

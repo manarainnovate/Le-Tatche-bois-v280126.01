@@ -143,10 +143,13 @@ export function TestimonialsSection() {
   const sectionRef = useRef<HTMLElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
 
   // Items to show based on screen size (simplified for SSR)
   const itemsPerView = 3;
   const maxIndex = Math.max(0, testimonials.length - itemsPerView);
+  const MIN_SWIPE_DISTANCE = 50;
 
   // Intersection Observer for scroll animation
   useEffect(() => {
@@ -175,6 +178,32 @@ export function TestimonialsSection() {
   const prevSlide = useCallback(() => {
     setCurrentIndex((prev) => Math.max(prev - 1, 0));
   }, []);
+
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0); // Reset
+    setTouchStart(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
+    const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
+
+    if (isLeftSwipe) {
+      // Swipe left → next (RTL reverses this)
+      isRTL ? prevSlide() : nextSlide();
+    }
+    if (isRightSwipe) {
+      // Swipe right → previous (RTL reverses this)
+      isRTL ? nextSlide() : prevSlide();
+    }
+  };
 
   const isImageBg = bg.type === "image" && bg.image;
 
@@ -267,7 +296,12 @@ export function TestimonialsSection() {
           </button>
 
           {/* Testimonials Grid */}
-          <div className="overflow-hidden mx-8">
+          <div
+            className="overflow-hidden mx-8"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div
               className={cn(
                 "flex transition-transform duration-500 ease-out gap-6",
