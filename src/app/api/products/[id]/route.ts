@@ -169,6 +169,11 @@ export const PUT = withAuth(
     try {
       const { id } = await params;
       const body: unknown = await req.json();
+
+      // Log incoming request for debugging
+      console.log('[Products PUT] Product ID:', id);
+      console.log('[Products PUT] Body keys:', Object.keys(body as any));
+
       const result = updateProductSchema.safeParse(body);
 
       if (!result.success) {
@@ -176,6 +181,8 @@ export const PUT = withAuth(
           field: issue.path.join("."),
           message: issue.message,
         }));
+        console.error('[Products PUT] ❌ Validation failed:', JSON.stringify(errors, null, 2));
+        console.error('[Products PUT] Body received:', JSON.stringify(body, null, 2));
         return apiError("Validation failed", 400, errors);
       }
 
@@ -268,8 +275,16 @@ export const PUT = withAuth(
         },
       });
 
+      console.log('[Products PUT] ✅ Product updated successfully:', product.id);
       return apiSuccess(product);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Products PUT] ❌ Error:', error);
+      console.error('[Products PUT] Error name:', error?.name);
+      console.error('[Products PUT] Error message:', error?.message);
+      console.error('[Products PUT] Error code:', error?.code);
+      if (error?.meta) {
+        console.error('[Products PUT] Error meta:', JSON.stringify(error.meta, null, 2));
+      }
       return handleApiError(error, "Product PUT");
     }
   },
@@ -282,6 +297,11 @@ export const PATCH = withAuth(
     try {
       const { id } = await params;
       const body: unknown = await req.json();
+
+      // Log incoming request for debugging
+      console.log('[Products PATCH] Product ID:', id);
+      console.log('[Products PATCH] Body:', JSON.stringify(body, null, 2));
+
       const result = partialProductSchema.safeParse(body);
 
       if (!result.success) {
@@ -289,6 +309,7 @@ export const PATCH = withAuth(
           field: issue.path.join("."),
           message: issue.message,
         }));
+        console.error('[Products PATCH] ❌ Validation failed:', JSON.stringify(errors, null, 2));
         return apiError("Validation failed", 400, errors);
       }
 
@@ -319,8 +340,16 @@ export const PATCH = withAuth(
         },
       });
 
+      console.log('[Products PATCH] ✅ Product updated successfully:', product.id);
       return apiSuccess(product);
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Products PATCH] ❌ Error:', error);
+      console.error('[Products PATCH] Error details:', {
+        name: error?.name,
+        message: error?.message,
+        code: error?.code,
+        meta: error?.meta,
+      });
       return handleApiError(error, "Product PATCH");
     }
   },
