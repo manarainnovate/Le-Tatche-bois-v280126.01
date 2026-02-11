@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import { prisma } from "@/lib/prisma";
 import { NewPaymentFormClient } from "./NewPaymentFormClient";
 

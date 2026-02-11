@@ -355,6 +355,7 @@ export function BoutiqueContent({ locale, translations }: BoutiqueContentProps) 
   // State
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
@@ -369,60 +370,70 @@ export function BoutiqueContent({ locale, translations }: BoutiqueContentProps) 
   const [isVisible, setIsVisible] = useState(false);
 
   // Fetch products from API
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/products?limit=100&isActive=true`, {
-          headers: { 'Accept-Language': locale },
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+
+      const res = await fetch(`/api/products?limit=100&isActive=true`, {
+        headers: { 'Accept-Language': locale },
+      });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      const data = await res.json();
+
+      if (data.success && data.data && data.data.data) {
+        // Transform API products to match component format
+        const transformed = data.data.data.map((p: any) => {
+          // Ensure we have a valid name - use translation name or format the slug
+          const displayName = p.name && p.name.trim() && p.name !== p.slug
+            ? p.name
+            : formatSlugAsName(p.slug);
+
+          return {
+            id: p.id,
+            slug: p.slug,
+            name: displayName,
+            description: p.shortDescription || p.description || '',
+            category: p.category?.slug || 'other',
+            categoryName: p.category?.name || '',
+            price: Number(p.price) || 0,
+            comparePrice: p.comparePrice ? Number(p.comparePrice) : undefined,
+            image: p.thumbnail || (p.images && p.images[0]) || '/images/placeholder.svg',
+            images: p.images || [],
+            inStock: p.trackStock ? (p.stockQty > 0) : true,
+            stockCount: p.stockQty || 0,
+            isNew: p.isNew || false,
+            isBestSeller: p.isFeatured || false,
+            rating: 4.5,
+            reviews: p.soldCount || 0,
+            material: '',
+          };
         });
 
-        if (!res.ok) throw new Error('Failed to fetch products');
-
-        const data = await res.json();
-        if (data.success && data.data && data.data.data) {
-          // Transform API products to match component format
-          const transformed = data.data.data.map((p: any) => {
-            // Ensure we have a valid name - use translation name or format the slug
-            const displayName = p.name && p.name.trim() && p.name !== p.slug
-              ? p.name
-              : formatSlugAsName(p.slug);
-
-            return {
-              id: p.id,
-              slug: p.slug,
-              name: displayName,
-              description: p.shortDescription || p.description || '',
-              category: p.category?.slug || 'other',
-              categoryName: p.category?.name || '',
-              price: Number(p.price) || 0,
-              comparePrice: p.comparePrice ? Number(p.comparePrice) : undefined,
-              image: p.thumbnail || (p.images && p.images[0]) || '/images/placeholder.svg',
-              images: p.images || [],
-              inStock: p.trackStock ? (p.stockQty > 0) : true,
-              stockCount: p.stockQty || 0,
-              isNew: p.isNew || false,
-              isBestSeller: p.isFeatured || false,
-              rating: 4.5,
-              reviews: p.soldCount || 0,
-              material: '',
-            };
-          });
-
-          setProducts(transformed);
-          setIsVisible(true);
-        }
-      } catch (error) {
-        console.error('Error fetching products:', error);
-        toastError('Erreur', 'Impossible de charger les produits');
-        setProducts([]);
-      } finally {
-        setLoading(false);
+        setProducts(transformed);
+        setIsVisible(true);
+      } else {
+        throw new Error('Invalid API response format');
       }
-    };
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError(true);
+      setProducts([]);
+      toastError('Erreur', 'Impossible de charger les produits');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  // Fetch products on mount - ONLY ONCE
+  useEffect(() => {
     fetchProducts();
-  }, [locale, toastError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -697,8 +708,32 @@ export function BoutiqueContent({ locale, translations }: BoutiqueContentProps) 
           </div>
         )}
 
-        {/* Loading State */}
-        {loading ? (
+        {/* Error State */}
+        {error ? (
+          <div className="text-center py-20 bg-white rounded-2xl shadow-md border-2 border-red-100">
+            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Package size={40} className="text-red-500" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              Impossible de charger les produits
+            </h3>
+            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+              Une erreur s&apos;est produite lors du chargement des produits. Veuillez réessayer.
+            </p>
+            <button
+              onClick={fetchProducts}
+              className={cn(
+                "inline-flex items-center gap-2 px-6 py-3",
+                "bg-amber-700 text-white rounded-lg font-semibold shadow-md",
+                "hover:bg-amber-800 transition-all transform hover:scale-105 active:scale-95",
+                isRTL && "flex-row-reverse"
+              )}
+            >
+              <RotateCcw size={18} />
+              Réessayer
+            </button>
+          </div>
+        ) : loading ? (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-white rounded-xl overflow-hidden shadow-md animate-pulse">
@@ -750,20 +785,24 @@ export function BoutiqueContent({ locale, translations }: BoutiqueContentProps) 
                   {translations.noProducts}
                 </h3>
                 <p className="text-gray-400 mb-6 max-w-md mx-auto">
-                  Aucun produit ne correspond à vos critères. Essayez de modifier vos filtres.
+                  {filteredProducts.length === 0 && products.length > 0
+                    ? 'Aucun produit ne correspond à vos critères. Essayez de modifier vos filtres.'
+                    : 'Aucun produit disponible pour le moment.'}
                 </p>
-                <button
-                  onClick={resetFilters}
-                  className={cn(
-                    "inline-flex items-center gap-2 px-6 py-3",
-                    "bg-amber-700 text-white rounded-lg font-semibold shadow-md",
-                    "hover:bg-amber-800 transition-all transform hover:scale-105",
-                    isRTL && "flex-row-reverse"
-                  )}
-                >
-                  <RotateCcw size={18} />
-                  {translations.resetFilters}
-                </button>
+                {filteredProducts.length === 0 && products.length > 0 && (
+                  <button
+                    onClick={resetFilters}
+                    className={cn(
+                      "inline-flex items-center gap-2 px-6 py-3",
+                      "bg-amber-700 text-white rounded-lg font-semibold shadow-md",
+                      "hover:bg-amber-800 transition-all transform hover:scale-105",
+                      isRTL && "flex-row-reverse"
+                    )}
+                  >
+                    <RotateCcw size={18} />
+                    {translations.resetFilters}
+                  </button>
+                )}
               </div>
             )}
           </>

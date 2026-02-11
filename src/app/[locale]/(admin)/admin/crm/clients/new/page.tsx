@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import { getLocale } from "next-intl/server";
 import Link from "next/link";
 import { ArrowLeft, Building2 } from "lucide-react";

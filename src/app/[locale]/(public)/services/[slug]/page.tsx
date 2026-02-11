@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import { getTranslations } from "next-intl/server";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";

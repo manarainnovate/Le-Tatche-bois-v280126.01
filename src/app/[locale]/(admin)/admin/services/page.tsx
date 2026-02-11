@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import Link from "next/link";
 import { Wrench, Plus, Construction } from "lucide-react";
 

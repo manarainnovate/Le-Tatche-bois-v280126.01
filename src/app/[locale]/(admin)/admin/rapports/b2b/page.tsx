@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import { B2BReportClient } from "./B2BReportClient";
 
 // ═══════════════════════════════════════════════════════════

@@ -1367,8 +1367,6 @@ export default function ThemeSettingsPage() {
           </div>
         </div>
       )}
-
-
       {/* Bottom Save */}
       <div className="flex justify-end mt-8">
         <Button

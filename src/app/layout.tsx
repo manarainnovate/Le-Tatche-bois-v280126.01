@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import type { Metadata, Viewport } from "next";
 import "@/app/globals.css";
 import { prisma } from "@/lib/prisma";

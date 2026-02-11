@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { ArrowLeft } from "lucide-react";

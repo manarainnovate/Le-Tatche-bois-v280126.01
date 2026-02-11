@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import { notFound } from "next/navigation";
 import { UserForm } from "@/components/admin/forms/UserForm";
 

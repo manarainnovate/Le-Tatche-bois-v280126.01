@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import { Suspense } from "react";
 import { getLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";

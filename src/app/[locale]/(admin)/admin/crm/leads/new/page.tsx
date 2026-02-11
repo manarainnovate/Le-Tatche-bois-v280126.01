@@ -1,3 +1,6 @@
+export const dynamic = 'force-dynamic';
+
+
 import { getLocale } from "next-intl/server";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";

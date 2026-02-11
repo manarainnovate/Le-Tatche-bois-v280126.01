@@ -102,6 +102,7 @@ export async function GET(req: NextRequest) {
       orderBy = { createdAt: sort.order };
     }
 
+    // Fetch products and total count
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
@@ -165,6 +166,11 @@ export async function GET(req: NextRequest) {
 
     return apiSuccess(paginatedResponse(localizedProducts, total, { page, limit, skip }));
   } catch (error) {
+    console.error('[API /api/products GET] Database error:', error);
+    console.error('[API /api/products GET] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return handleApiError(error, "Products GET");
   }
 }
