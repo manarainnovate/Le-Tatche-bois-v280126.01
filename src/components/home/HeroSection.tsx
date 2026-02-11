@@ -508,17 +508,17 @@ export function HeroSection({
         </div>
       </div>
 
-      {/* Navigation Arrows - Hidden on small mobile */}
+      {/* Navigation Arrows - Visible on ALL screen sizes */}
       {slides.length > 1 && (
         <>
           <button
             onClick={isRTL ? nextSlide : prevSlide}
             className={cn(
-              "hidden sm:flex absolute top-1/2 -translate-y-1/2 z-30",
+              "flex absolute top-1/2 -translate-y-1/2 z-30",
               "w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full",
-              "bg-black/30 hover:bg-black/50",
+              "bg-white/90 hover:bg-white shadow-lg",
               "items-center justify-center",
-              "text-white transition-colors",
+              "text-gray-700 transition-all",
               isRTL ? "right-2 md:right-4" : "left-2 md:left-4"
             )}
             aria-label="Previous slide"
@@ -528,11 +528,11 @@ export function HeroSection({
           <button
             onClick={isRTL ? prevSlide : nextSlide}
             className={cn(
-              "hidden sm:flex absolute top-1/2 -translate-y-1/2 z-30",
+              "flex absolute top-1/2 -translate-y-1/2 z-30",
               "w-10 h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 rounded-full",
-              "bg-black/30 hover:bg-black/50",
+              "bg-white/90 hover:bg-white shadow-lg",
               "items-center justify-center",
-              "text-white transition-colors",
+              "text-gray-700 transition-all",
               isRTL ? "left-2 md:left-4" : "right-2 md:right-4"
             )}
             aria-label="Next slide"
