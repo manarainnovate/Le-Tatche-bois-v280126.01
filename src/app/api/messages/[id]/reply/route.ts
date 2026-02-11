@@ -112,7 +112,6 @@ export const POST = withAuth(
       // Use beautiful email template with Moroccan branding
       const htmlContent = EmailTemplates.getAdminReplyEmail(
         {
-          id: originalMessage.id,
           name: originalMessage.name,
           email: originalMessage.email,
           phone: originalMessage.phone,

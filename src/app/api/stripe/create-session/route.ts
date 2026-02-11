@@ -171,16 +171,19 @@ export async function POST(req: NextRequest) {
       orderNumber: orderId,
       customerName: `${customer.firstName} ${customer.lastName}`,
       customerEmail: customer.email,
+      customerPhone: customer.phone,
       items: items.map((item) => ({
         name: item.name,
         quantity: item.quantity,
         price: item.price,
       })),
       subtotal,
-      shippingCost,
+      shipping: shippingCost,
       total: subtotal + shippingCost,
       shippingAddress: `${customer.address}, ${customer.city} ${customer.postalCode}`,
       paymentMethod: "STRIPE",
+      locale,
+      createdAt: new Date(),
     };
 
     // Send confirmation email (async, don't wait)

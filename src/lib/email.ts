@@ -23,7 +23,7 @@ function getTransporter(): Transporter | null {
   }
 
   try {
-    transporter = nodemailer.createTransporter({
+    transporter = nodemailer.createTransport({
       host,
       port,
       secure,

@@ -112,6 +112,8 @@ export function GeoDetectionBanner() {
 
       return () => clearTimeout(timer);
     }
+
+    return undefined; // Explicit return for all code paths
   }, []);
 
   const handleDismiss = () => {
