@@ -129,18 +129,8 @@ const navigationSections: NavSection[] = [
         icon: Tags,
         roles: ["ADMIN", "MANAGER"],
       },
-      {
-        name: { fr: "Réalisations", en: "Portfolio", es: "Realizaciones", ar: "الإنجازات" },
-        href: "/admin/realisations",
-        icon: FolderKanban,
-        roles: ["ADMIN", "MANAGER"],
-      },
-      {
-        name: { fr: "Services du site (pages)", en: "Site Services (pages)", es: "Servicios del sitio (páginas)", ar: "خدمات الموقع (صفحات)" },
-        href: "/admin/services",
-        icon: Wrench,
-        roles: ["ADMIN", "MANAGER"],
-      },
+      // NOTE: "Réalisations/Portfolio" and "Services du site" moved to "Contenu" section below
+      // to avoid duplication in sidebar navigation
       {
         name: { fr: "Messages", en: "Messages", es: "Mensajes", ar: "الرسائل" },
         href: "/admin/messages",
