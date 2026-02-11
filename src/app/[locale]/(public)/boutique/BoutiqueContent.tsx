@@ -349,7 +349,7 @@ function ProductCard({ product, locale, isRTL, translations, onAddToCart, isVisi
 export function BoutiqueContent({ locale, translations }: BoutiqueContentProps) {
   const direction = useDirection();
   const isRTL = direction === "rtl";
-  const { toastSuccess, toastError } = useToast();
+  const { success: toastSuccess, error: toastError } = useToast();
   const { addItem } = useCartStore();
 
   // State
