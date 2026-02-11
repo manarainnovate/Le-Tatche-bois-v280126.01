@@ -173,6 +173,8 @@
       "subtitle": "Piezas artesanales listas para realzar tu interior",
       "viewAll": "Ver tienda completa",
       "addToCart": "Añadir al carrito",
+      "addedToCart": "Añadido al carrito",
+      "inStock": "En stock",
       "outOfStock": "Agotado",
       "lowStock": "Solo quedan {count} en stock",
       "wishlist": "Añadir a favoritos",

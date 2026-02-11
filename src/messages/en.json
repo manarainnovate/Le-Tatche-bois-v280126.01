@@ -173,6 +173,8 @@
       "subtitle": "Handcrafted pieces ready to enhance your interior",
       "viewAll": "View Full Shop",
       "addToCart": "Add to Cart",
+      "addedToCart": "Added to Cart",
+      "inStock": "In Stock",
       "outOfStock": "Out of Stock",
       "lowStock": "Only {count} left in stock",
       "wishlist": "Add to Wishlist",
