@@ -23,6 +23,10 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+
+# Create uploads directory and set permissions
+RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
+
 USER nextjs
 EXPOSE 3000
 CMD ["npx", "next", "start"]
