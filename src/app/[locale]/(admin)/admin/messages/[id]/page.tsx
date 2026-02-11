@@ -22,6 +22,27 @@ import {
 import { MessageActions } from "./MessageActions";
 
 // ═══════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════
+
+/**
+ * Fix attachment URLs for production Docker environment
+ * Old attachments use /uploads/, new ones use /api/uploads/
+ */
+function getFileUrl(url: string): string {
+  if (!url) return '';
+  // Already using API route — good
+  if (url.startsWith('/api/uploads/')) return url;
+  // Old format — fix it
+  if (url.startsWith('/uploads/')) return url.replace('/uploads/', '/api/uploads/');
+  // HTTP/HTTPS URLs — return as-is
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  // Relative path without leading slash
+  if (!url.startsWith('/')) return '/api/uploads/' + url;
+  return url;
+}
+
+// ═══════════════════════════════════════════════════════════
 // Translations
 // ═══════════════════════════════════════════════════════════
 
@@ -388,10 +409,12 @@ export default async function MessageDetailPage({ params }: PageProps) {
                 <div className="space-y-2">
                   {message.attachments.map((file, index) => {
                     const FileIcon = getFileIcon(file.type);
+                    const fileUrl = getFileUrl(file.url);
                     return (
                       <a
                         key={index}
-                        href={file.url}
+                        href={fileUrl}
+                        download={file.name}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-between gap-3 rounded-xl border-2 border-gray-200 bg-white p-4 transition-all hover:border-amber-300 hover:bg-amber-50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-amber-600 dark:hover:bg-gray-700"
