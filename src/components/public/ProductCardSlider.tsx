@@ -51,20 +51,24 @@ function getCategoryKey(cat?: string): string {
 export default function ProductCardSlider({ images, productName, category }: ProductCardSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const MIN_SWIPE_DISTANCE = 50;
 
   const displayImages = images && images.length > 0
     ? images
     : DEMO_IMAGES[getCategoryKey(category)] || DEMO_IMAGES.default;
 
-  const goToPrevious = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const goToPrevious = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     setCurrentIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
   };
 
-  const goToNext = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const goToNext = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
     setCurrentIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1));
   };
 
@@ -74,12 +78,39 @@ export default function ProductCardSlider({ images, productName, category }: Pro
     setCurrentIndex(index);
   };
 
+  // Touch handlers for mobile swipe
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(0);
+    setTouchStart(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > MIN_SWIPE_DISTANCE;
+    const isRightSwipe = distance < -MIN_SWIPE_DISTANCE;
+
+    if (isLeftSwipe) {
+      goToNext();
+    }
+    if (isRightSwipe) {
+      goToPrevious();
+    }
+  };
+
   return (
     <div
       className="relative w-full overflow-hidden bg-gradient-to-br from-amber-50 to-orange-50"
       style={{ paddingBottom: '100%' }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Images */}
       {displayImages.map((image, index) => (
@@ -94,31 +125,29 @@ export default function ProductCardSlider({ images, productName, category }: Pro
         />
       ))}
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - Always visible on mobile, show on hover on desktop */}
       {displayImages.length > 1 && (
         <>
           <button
             onClick={goToPrevious}
-            className={`absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all z-10 ${
-              isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-2'
-            }`}
+            className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-9 md:h-9 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            aria-label="Previous image"
           >
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
           <button
             onClick={goToNext}
-            className={`absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all z-10 ${
-              isHovered ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-2'
-            }`}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 md:w-9 md:h-9 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition-all z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100"
+            aria-label="Next image"
           >
             <ChevronRight className="w-5 h-5 text-gray-700" />
           </button>
         </>
       )}
 
-      {/* Dot Indicators */}
+      {/* Dot Indicators - Clickable with proper touch targets */}
       {displayImages.length > 1 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 py-2">
           {displayImages.map((_, index) => (
             <button
               key={index}
@@ -128,6 +157,7 @@ export default function ProductCardSlider({ images, productName, category }: Pro
                   ? 'bg-white w-4'
                   : 'bg-white/50 hover:bg-white/80 w-2'
               }`}
+              aria-label={`Go to image ${index + 1}`}
             />
           ))}
         </div>
