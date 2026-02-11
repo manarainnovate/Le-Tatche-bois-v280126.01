@@ -173,6 +173,8 @@
       "subtitle": "Pièces artisanales prêtes à sublimer votre intérieur",
       "viewAll": "Voir toute la boutique",
       "addToCart": "Ajouter au panier",
+      "addedToCart": "Ajouté au panier",
+      "inStock": "En stock",
       "outOfStock": "Rupture de stock",
       "lowStock": "Plus que {count} en stock",
       "wishlist": "Ajouter aux favoris",

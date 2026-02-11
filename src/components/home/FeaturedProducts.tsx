@@ -14,6 +14,8 @@ import {
   ArrowRight,
   ArrowLeft,
   Package,
+  Star,
+  Check,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════
@@ -34,8 +36,11 @@ interface Product {
   images?: string[];
   inStock: boolean;
   stockQty: number;
+  trackStock: boolean;
   isFeatured?: boolean;
   isNew?: boolean;
+  rating?: number;
+  reviews?: number;
 }
 
 interface ProductCardProps {
@@ -53,12 +58,16 @@ interface ProductCardProps {
   }) => void;
   isVisible: boolean;
   index: number;
+  addedToCart: string | null;
 }
 
 // ═══════════════════════════════════════════════════════════
-// HELPER - Fix image URL for production
+// HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════
 
+/**
+ * Fix image URL for production
+ */
 function fixImageUrl(url: string | undefined): string {
   if (!url) return '/images/placeholder.svg';
   if (url.startsWith('http')) return url;
@@ -67,8 +76,39 @@ function fixImageUrl(url: string | undefined): string {
   return url;
 }
 
+/**
+ * Format product name - convert slug to readable name if needed
+ * Example: "tajine-decoratif-en-bois" → "Tajine Décoratif En Bois"
+ */
+function formatProductName(name: string, slug: string): string {
+  // If name is the same as slug or looks like a slug (contains hyphens, no spaces)
+  if (name === slug || (name.includes('-') && !name.includes(' '))) {
+    return slug
+      .replace(/-/g, ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+  return name;
+}
+
+/**
+ * Check if product is in stock
+ */
+function isProductInStock(product: Product): boolean {
+  // If stock tracking is disabled, always consider in stock
+  if (!product.trackStock) return true;
+
+  // Check stockQty (handle both number and string)
+  const qty = typeof product.stockQty === 'string'
+    ? parseInt(product.stockQty, 10)
+    : product.stockQty;
+
+  return qty > 0;
+}
+
 // ═══════════════════════════════════════════════════════════
-// PRODUCT CARD COMPONENT
+// PRODUCT CARD COMPONENT (Matching Boutique Style)
 // ═══════════════════════════════════════════════════════════
 
 function ProductCard({
@@ -80,138 +120,194 @@ function ProductCard({
   addItem,
   isVisible,
   index,
+  addedToCart,
 }: ProductCardProps) {
+  const imageUrl = fixImageUrl(product.thumbnail || product.images?.[0]);
+  const displayName = formatProductName(product.name, product.slug);
+  const productUrl = `/${locale}/boutique/${product.slug}`;
+  const categoryName = product.category?.name || '';
+
+  // Check stock status
+  const inStock = isProductInStock(product);
+  const stockQty = typeof product.stockQty === 'string'
+    ? parseInt(product.stockQty, 10)
+    : product.stockQty;
+  const showLowStockBadge = inStock && product.trackStock && stockQty > 0 && stockQty <= 10;
+
+  // Calculate discount
+  const discountPercent = product.comparePrice && product.comparePrice > product.price
+    ? Math.round((1 - product.price / product.comparePrice) * 100)
+    : 0;
+
+  // Rating (use product rating or default to 4.5)
+  const rating = product.rating || 4.5;
+  const reviewCount = product.reviews || 0;
+
+  // Check if just added to cart
+  const justAdded = addedToCart === product.id;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+
+    if (!inStock || justAdded) return;
+
     addItem({
       productId: product.id,
-      name: product.name,
+      name: displayName,
       price: product.price,
       quantity: 1,
-      image: fixImageUrl(product.thumbnail || product.images?.[0]),
+      image: imageUrl,
     });
   };
-
-  const productUrl = `/${locale}/boutique/${product.slug}`;
-  const categoryName = product.category?.name || '';
-  const imageUrl = fixImageUrl(product.thumbnail || product.images?.[0]);
 
   return (
     <div
       className={cn(
-        "group bg-white rounded-2xl overflow-hidden",
-        "shadow-sm hover:shadow-xl transition-all duration-300",
-        "border border-gray-100",
+        "group bg-white rounded-xl overflow-hidden border border-gray-100",
+        "shadow-md hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1",
         isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
       )}
       style={{ transitionDelay: `${index * 100}ms` }}
     >
       {/* Product Image */}
-      <Link href={productUrl}>
-        <div className="relative w-full overflow-hidden bg-gray-100" style={{ paddingBottom: '100%' }}>
-          <img
-            src={imageUrl}
-            alt={product.name}
-            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/images/placeholder.svg';
-            }}
-          />
+      <Link
+        href={productUrl}
+        className="relative block overflow-hidden bg-gray-100 rounded-t-xl"
+        style={{ paddingBottom: '100%' }}
+      >
+        <img
+          src={imageUrl}
+          alt={displayName}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading={index < 4 ? 'eager' : 'lazy'}
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== '/images/placeholder.svg') {
+              target.src = '/images/placeholder.svg';
+            }
+          }}
+        />
 
-          {/* Sale Badge */}
-          {product.comparePrice && product.comparePrice > product.price && (
-            <span
-              className={cn(
-                "absolute top-3 px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full z-20",
-                isRTL ? "right-3" : "left-3"
-              )}
-            >
-              -{Math.round(((product.comparePrice - product.price) / product.comparePrice) * 100)}%
-            </span>
-          )}
+        {/* Overlay on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
+        {/* Badges */}
+        <div className={cn("absolute top-3 flex flex-col gap-2 z-10", isRTL ? "right-3" : "left-3")}>
           {/* New Badge */}
           {product.isNew && (
-            <span
-              className={cn(
-                "absolute px-3 py-1 bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-bold rounded-full z-20",
-                isRTL ? "right-3" : "left-3",
-                product.comparePrice && product.comparePrice > product.price ? "top-10" : "top-3"
-              )}
-            >
-              {t("badges.new")}
+            <span className="px-3 py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white text-xs font-bold rounded-full shadow-lg">
+              ✨ {t("badges.new")}
             </span>
           )}
 
-          {/* Low Stock Badge */}
-          {product.stockQty > 0 && product.stockQty <= 5 && (
-            <span
-              className={cn(
-                "absolute top-3 px-2 py-1 bg-orange-500 text-white text-xs rounded-full z-20",
-                isRTL ? "left-3" : "right-3"
-              )}
-            >
-              {t("lowStock", { count: product.stockQty })}
+          {/* Discount Badge */}
+          {discountPercent > 0 && (
+            <span className="px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold rounded-full shadow-lg">
+              -{discountPercent}%
+            </span>
+          )}
+
+          {/* Out of Stock Badge */}
+          {!inStock && (
+            <span className="px-3 py-1.5 bg-gray-800 text-white text-xs font-bold rounded-full shadow-lg">
+              {t("outOfStock")}
             </span>
           )}
         </div>
       </Link>
 
       {/* Product Info */}
-      <div className={cn("p-4", isRTL && "text-right")}>
+      <div className="p-5 flex flex-col">
         {/* Category */}
         {categoryName && (
-          <p className="text-xs text-amber-600 font-semibold uppercase tracking-wider mb-1">
+          <p className="text-xs text-amber-700 font-semibold uppercase tracking-wide mb-2">
             {categoryName}
           </p>
         )}
 
-        {/* Title */}
+        {/* Product Name */}
         <Link href={productUrl}>
-          <h3 className="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-amber-600 transition-colors min-h-[2.5rem]">
-            {product.name}
+          <h3 className="font-bold text-base sm:text-lg text-gray-900 group-hover:text-amber-800 transition-colors line-clamp-2 min-h-[3rem] mb-2">
+            {displayName}
           </h3>
         </Link>
 
-        {/* Price */}
-        <div
-          className={cn(
-            "flex items-center gap-2 mb-4",
-            isRTL && "flex-row-reverse justify-end"
+        {/* Rating */}
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                size={16}
+                className={i < Math.floor(rating) ? "fill-amber-400 text-amber-400" : "fill-gray-200 text-gray-200"}
+              />
+            ))}
+          </div>
+          <span className="text-sm text-gray-500 font-medium">
+            {rating.toFixed(1)}
+          </span>
+          {reviewCount > 0 && (
+            <span className="text-xs text-gray-400">
+              ({reviewCount})
+            </span>
           )}
-        >
-          <span className="text-xl font-bold text-amber-600">
+        </div>
+
+        {/* Price Section */}
+        <div className="flex items-baseline gap-2 mb-3">
+          <span className="text-2xl font-bold text-amber-800">
             {format(product.price)}
           </span>
           {product.comparePrice && product.comparePrice > product.price && (
-            <span className="text-sm text-gray-400 line-through">
+            <span className="text-sm text-gray-400 line-through font-medium">
               {format(product.comparePrice)}
             </span>
           )}
         </div>
 
-        {/* Out of Stock */}
-        {!product.inStock && (
-          <p className="text-xs text-red-500 mb-3 font-medium">
-            {t("outOfStock")}
-          </p>
+        {/* Stock Info - Low Stock Badge */}
+        {showLowStockBadge && (
+          <div className="flex items-center gap-1.5 text-orange-600 text-xs font-medium mb-3 bg-orange-50 px-3 py-1.5 rounded-lg">
+            <Package size={14} />
+            <span>
+              {t("lowStock", { count: stockQty })}
+            </span>
+          </div>
+        )}
+
+        {/* In Stock Badge (when stock is good) */}
+        {inStock && !showLowStockBadge && product.trackStock && (
+          <div className="flex items-center gap-1.5 text-green-600 text-xs font-medium mb-3 bg-green-50 px-3 py-1.5 rounded-lg">
+            <Check size={14} />
+            <span>{t("inStock")}</span>
+          </div>
         )}
 
         {/* Add to Cart Button */}
         <button
           onClick={handleAddToCart}
-          disabled={!product.inStock}
+          disabled={!inStock || justAdded}
           className={cn(
-            "w-full py-3 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2",
-            product.inStock
-              ? "bg-amber-600 hover:bg-amber-700 text-white"
-              : "bg-gray-200 text-gray-400 cursor-not-allowed"
+            "w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-semibold text-sm transition-all transform active:scale-95",
+            justAdded
+              ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg"
+              : inStock
+              ? "bg-gradient-to-r from-amber-700 to-amber-800 text-white hover:from-amber-800 hover:to-amber-900 shadow-md hover:shadow-lg"
+              : "bg-gray-200 text-gray-500 cursor-not-allowed"
           )}
         >
-          <ShoppingCart className="w-5 h-5" />
-          {t("addToCart")}
+          {justAdded ? (
+            <>
+              <Check size={18} strokeWidth={3} />
+              <span>{t("addedToCart")}</span>
+            </>
+          ) : (
+            <>
+              <ShoppingCart size={18} />
+              <span>{t("addToCart")}</span>
+            </>
+          )}
         </button>
       </div>
     </div>
@@ -234,7 +330,7 @@ export function FeaturedProducts() {
   const [isVisible, setIsVisible] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [addedToCart, setAddedToCart] = useState<string | null>(null);
 
   // Fetch ALL active products - no isFeatured filtering
   useEffect(() => {
@@ -243,11 +339,11 @@ export function FeaturedProducts() {
         setLoading(true);
         const res = await fetch('/api/products?limit=8');
         const json = await res.json();
-        
+
         // API returns { success, data: { data: [...products], pagination } }
         const items = json?.data?.data || json?.data || json?.products || [];
         console.log('[FeaturedProducts] Loaded:', items.length, 'products');
-        
+
         setProducts(Array.isArray(items) ? items : []);
       } catch (err) {
         console.error('[FeaturedProducts] Error:', err);
@@ -258,7 +354,6 @@ export function FeaturedProducts() {
     };
     loadProducts();
   }, []);
-
 
   // Intersection Observer for scroll animation
   useEffect(() => {
@@ -279,6 +374,23 @@ export function FeaturedProducts() {
 
     return () => observer.disconnect();
   }, []);
+
+  // Handle add to cart with visual feedback
+  const handleAddToCart = (item: {
+    productId: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image: string;
+  }) => {
+    addItem(item);
+    setAddedToCart(item.productId);
+
+    // Reset after 2 seconds
+    setTimeout(() => {
+      setAddedToCart(null);
+    }, 2000);
+  };
 
   const isImageBg = bg.type === "image" && bg.image;
 
@@ -361,9 +473,10 @@ export function FeaturedProducts() {
                 isRTL={isRTL}
                 t={t}
                 format={format}
-                addItem={addItem}
+                addItem={handleAddToCart}
                 isVisible={isVisible}
                 index={index}
+                addedToCart={addedToCart}
               />
             ))}
           </div>
