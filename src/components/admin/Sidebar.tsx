@@ -63,9 +63,19 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
   roles: UserRole[];
   badge?: number;
+  isSubheader?: boolean; // For non-clickable group labels
 }
 
 interface NavSection {
+  id: string;
+  title: LocalizedString;
+  icon: React.ComponentType<{ className?: string }>;
+  roles: UserRole[];
+  items: NavItem[];
+  subsections?: NavSubSection[]; // For nested sections
+}
+
+interface NavSubSection {
   id: string;
   title: LocalizedString;
   icon: React.ComponentType<{ className?: string }>;
@@ -141,125 +151,130 @@ const navigationSections: NavSection[] = [
   },
 
   // ═══════════════════════════════════════════════════════════
-  // B2B - CRM & FACTURATION (Professional Sales)
+  // B2B - UNIFIED SECTION (CRM, Projects, Invoicing, Payments)
   // ═══════════════════════════════════════════════════════════
-
-  // ─────────────────────────────────────────────────────────
-  // CRM Section (B2B)
-  // ─────────────────────────────────────────────────────────
   {
-    id: "b2b-crm",
-    title: { fr: "CRM (B2B)", en: "CRM (B2B)", es: "CRM (B2B)", ar: "إدارة العملاء" },
-    icon: Users,
-    roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
-    items: [
+    id: "b2b",
+    title: { fr: "B2B", en: "B2B", es: "B2B", ar: "B2B" },
+    icon: Building2,
+    roles: ["ADMIN", "MANAGER", "COMMERCIAL", "CHEF_ATELIER", "COMPTABLE"],
+    items: [],
+    subsections: [
+      // ─────────────────────────────────────────────────────────
+      // CRM Sub-section
+      // ─────────────────────────────────────────────────────────
       {
-        name: { fr: "Leads", en: "Leads", es: "Prospectos", ar: "العملاء المحتملون" },
-        href: "/admin/crm/leads",
-        icon: Target,
+        id: "b2b-crm",
+        title: { fr: "CRM", en: "CRM", es: "CRM", ar: "إدارة العملاء" },
+        icon: Users,
         roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
+        items: [
+          {
+            name: { fr: "Leads", en: "Leads", es: "Prospectos", ar: "العملاء المحتملون" },
+            href: "/admin/crm/leads",
+            icon: Target,
+            roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
+          },
+          {
+            name: { fr: "Clients", en: "Clients", es: "Clientes", ar: "العملاء" },
+            href: "/admin/crm/clients",
+            icon: Building2,
+            roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
+          },
+          {
+            name: { fr: "Rendez-vous", en: "Appointments", es: "Citas", ar: "المواعيد" },
+            href: "/admin/crm/rendez-vous",
+            icon: Calendar,
+            roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
+          },
+        ],
       },
+      // ─────────────────────────────────────────────────────────
+      // Projects Sub-section
+      // ─────────────────────────────────────────────────────────
       {
-        name: { fr: "Clients (B2B)", en: "Clients (B2B)", es: "Clientes (B2B)", ar: "العملاء (B2B)" },
-        href: "/admin/crm/clients",
-        icon: Building2,
-        roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
-      },
-      {
-        name: { fr: "Rendez-vous", en: "Appointments", es: "Citas", ar: "المواعيد" },
-        href: "/admin/crm/rendez-vous",
-        icon: Calendar,
-        roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
-      },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────
-  // Projects Section (B2B)
-  // ─────────────────────────────────────────────────────────
-  {
-    id: "b2b-projets",
-    title: { fr: "Chantiers (B2B)", en: "Projects (B2B)", es: "Proyectos (B2B)", ar: "المشاريع" },
-    icon: FolderKanban,
-    roles: ["ADMIN", "MANAGER", "COMMERCIAL", "CHEF_ATELIER"],
-    items: [
-      {
-        name: { fr: "Tous les projets", en: "All Projects", es: "Todos", ar: "كل المشاريع" },
-        href: "/admin/projets",
+        id: "b2b-projets",
+        title: { fr: "Chantiers", en: "Projects", es: "Proyectos", ar: "المشاريع" },
         icon: FolderKanban,
         roles: ["ADMIN", "MANAGER", "COMMERCIAL", "CHEF_ATELIER"],
+        items: [
+          {
+            name: { fr: "Tous les projets", en: "All Projects", es: "Todos", ar: "كل المشاريع" },
+            href: "/admin/projets",
+            icon: FolderKanban,
+            roles: ["ADMIN", "MANAGER", "COMMERCIAL", "CHEF_ATELIER"],
+          },
+        ],
       },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────
-  // Facturation Section (B2B)
-  // ─────────────────────────────────────────────────────────
-  {
-    id: "b2b-facturation",
-    title: { fr: "Facturation (B2B)", en: "Invoicing (B2B)", es: "Facturación (B2B)", ar: "الفواتير" },
-    icon: FileText,
-    roles: ["ADMIN", "MANAGER", "COMMERCIAL", "COMPTABLE"],
-    items: [
+      // ─────────────────────────────────────────────────────────
+      // Invoicing Sub-section
+      // ─────────────────────────────────────────────────────────
       {
-        name: { fr: "Devis", en: "Quotes", es: "Presupuestos", ar: "عروض الأسعار" },
-        href: "/admin/facturation/devis",
+        id: "b2b-facturation",
+        title: { fr: "Facturation", en: "Invoicing", es: "Facturación", ar: "الفواتير" },
         icon: FileText,
-        roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
+        roles: ["ADMIN", "MANAGER", "COMMERCIAL", "COMPTABLE"],
+        items: [
+          {
+            name: { fr: "Devis", en: "Quotes", es: "Presupuestos", ar: "عروض الأسعار" },
+            href: "/admin/facturation/devis",
+            icon: FileText,
+            roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
+          },
+          {
+            name: { fr: "Bons de commande", en: "Purchase Orders", es: "Órdenes de compra", ar: "أوامر الشراء" },
+            href: "/admin/facturation/bc",
+            icon: FileCheck,
+            roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
+          },
+          {
+            name: { fr: "Bons de livraison", en: "Delivery Notes", es: "Albaranes de entrega", ar: "سندات التسليم" },
+            href: "/admin/facturation/bl",
+            icon: Truck,
+            roles: ["ADMIN", "MANAGER", "CHEF_ATELIER"],
+          },
+          {
+            name: { fr: "PV de réception", en: "Reception Reports", es: "Actas de recepción", ar: "محاضر الاستلام" },
+            href: "/admin/facturation/rft",
+            icon: ClipboardCheck,
+            roles: ["ADMIN", "MANAGER", "CHEF_ATELIER"],
+          },
+          {
+            name: { fr: "Factures", en: "Invoices", es: "Facturas", ar: "الفواتير" },
+            href: "/admin/facturation/factures",
+            icon: Receipt,
+            roles: ["ADMIN", "MANAGER", "COMPTABLE"],
+          },
+          {
+            name: { fr: "Avoirs", en: "Credit Notes", es: "Abonos", ar: "الإشعارات الدائنة" },
+            href: "/admin/facturation/avoirs",
+            icon: Receipt,
+            roles: ["ADMIN", "MANAGER", "COMPTABLE"],
+          },
+        ],
       },
+      // ─────────────────────────────────────────────────────────
+      // Payments Sub-section
+      // ─────────────────────────────────────────────────────────
       {
-        name: { fr: "Bons de commande", en: "Purchase Orders", es: "Órdenes de compra", ar: "أوامر الشراء" },
-        href: "/admin/facturation/bc",
-        icon: FileCheck,
-        roles: ["ADMIN", "MANAGER", "COMMERCIAL"],
-      },
-      {
-        name: { fr: "Bons de livraison", en: "Delivery Notes", es: "Albaranes de entrega", ar: "سندات التسليم" },
-        href: "/admin/facturation/bl",
-        icon: Truck,
-        roles: ["ADMIN", "MANAGER", "CHEF_ATELIER"],
-      },
-      {
-        name: { fr: "PV de réception", en: "Reception Reports", es: "Actas de recepción", ar: "محاضر الاستلام" },
-        href: "/admin/facturation/rft",
-        icon: ClipboardCheck,
-        roles: ["ADMIN", "MANAGER", "CHEF_ATELIER"],
-      },
-      {
-        name: { fr: "Factures", en: "Invoices", es: "Facturas", ar: "الفواتير" },
-        href: "/admin/facturation/factures",
-        icon: Receipt,
-        roles: ["ADMIN", "MANAGER", "COMPTABLE"],
-      },
-      {
-        name: { fr: "Avoirs", en: "Credit Notes", es: "Abonos", ar: "الإشعارات الدائنة" },
-        href: "/admin/facturation/avoirs",
-        icon: Receipt,
-        roles: ["ADMIN", "MANAGER", "COMPTABLE"],
-      },
-    ],
-  },
-
-  // ─────────────────────────────────────────────────────────
-  // Payments Section (B2B)
-  // ─────────────────────────────────────────────────────────
-  {
-    id: "b2b-paiements",
-    title: { fr: "Paiements (B2B)", en: "Payments (B2B)", es: "Pagos (B2B)", ar: "المدفوعات" },
-    icon: CreditCard,
-    roles: ["ADMIN", "MANAGER", "COMPTABLE"],
-    items: [
-      {
-        name: { fr: "Tous les paiements", en: "All Payments", es: "Todos", ar: "كل المدفوعات" },
-        href: "/admin/facturation/paiements",
+        id: "b2b-paiements",
+        title: { fr: "Paiements", en: "Payments", es: "Pagos", ar: "المدفوعات" },
         icon: CreditCard,
         roles: ["ADMIN", "MANAGER", "COMPTABLE"],
-      },
-      {
-        name: { fr: "Impayés", en: "Unpaid", es: "Impagados", ar: "غير مدفوع" },
-        href: "/admin/facturation/impayes",
-        icon: Receipt,
-        roles: ["ADMIN", "MANAGER", "COMPTABLE"],
+        items: [
+          {
+            name: { fr: "Tous les paiements", en: "All Payments", es: "Todos", ar: "كل المدفوعات" },
+            href: "/admin/facturation/paiements",
+            icon: CreditCard,
+            roles: ["ADMIN", "MANAGER", "COMPTABLE"],
+          },
+          {
+            name: { fr: "Impayés", en: "Unpaid", es: "Impagados", ar: "غير مدفوع" },
+            href: "/admin/facturation/impayes",
+            icon: Receipt,
+            roles: ["ADMIN", "MANAGER", "COMPTABLE"],
+          },
+        ],
       },
     ],
   },
@@ -483,8 +498,9 @@ export function Sidebar({ locale }: SidebarProps) {
     useAdmin();
   const { logoHeader, siteName } = useSiteSettings();
 
-  // Track expanded sections
+  // Track expanded sections and subsections
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set(["dashboard"]));
+  const [expandedSubSections, setExpandedSubSections] = useState<Set<string>>(new Set());
 
   // Filter navigation based on user role
   const filteredSections = navigationSections
@@ -492,8 +508,15 @@ export function Sidebar({ locale }: SidebarProps) {
     .map((section) => ({
       ...section,
       items: section.items.filter((item) => item.roles.includes(user.role as UserRole)),
+      subsections: section.subsections
+        ?.filter((subsection) => subsection.roles.includes(user.role as UserRole))
+        .map((subsection) => ({
+          ...subsection,
+          items: subsection.items.filter((item) => item.roles.includes(user.role as UserRole)),
+        }))
+        .filter((subsection) => subsection.items.length > 0),
     }))
-    .filter((section) => section.items.length > 0);
+    .filter((section) => section.items.length > 0 || (section.subsections && section.subsections.length > 0));
 
   // Get localized name
   const getLocalizedName = (names: LocalizedString) => {
@@ -509,9 +532,18 @@ export function Sidebar({ locale }: SidebarProps) {
     return pathname.startsWith(localizedHref);
   };
 
-  // Check if section has active item
+  // Check if section has active item (including subsections)
   const sectionHasActiveItem = (section: NavSection) => {
-    return section.items.some((item) => isActive(item.href));
+    const hasDirectActive = section.items.some((item) => isActive(item.href));
+    const hasSubsectionActive = section.subsections?.some((subsection) =>
+      subsection.items.some((item) => isActive(item.href))
+    );
+    return hasDirectActive || !!hasSubsectionActive;
+  };
+
+  // Check if subsection has active item
+  const subsectionHasActiveItem = (subsection: NavSubSection) => {
+    return subsection.items.some((item) => isActive(item.href));
   };
 
   // Toggle section expansion
@@ -527,10 +559,29 @@ export function Sidebar({ locale }: SidebarProps) {
     });
   };
 
+  // Toggle subsection expansion
+  const toggleSubSection = (subsectionId: string) => {
+    setExpandedSubSections((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(subsectionId)) {
+        newSet.delete(subsectionId);
+      } else {
+        newSet.add(subsectionId);
+      }
+      return newSet;
+    });
+  };
+
   // Auto-expand section with active item
   const isSectionExpanded = (section: NavSection) => {
     if (sidebarCollapsed) return false;
     return expandedSections.has(section.id) || sectionHasActiveItem(section);
+  };
+
+  // Auto-expand subsection with active item
+  const isSubSectionExpanded = (subsection: NavSubSection) => {
+    if (sidebarCollapsed) return false;
+    return expandedSubSections.has(subsection.id) || subsectionHasActiveItem(subsection);
   };
 
   return (
@@ -696,9 +747,10 @@ export function Sidebar({ locale }: SidebarProps) {
                   )}
                 </button>
 
-                {/* Section Items */}
+                {/* Section Content - Items or Subsections */}
                 {isExpanded && !sidebarCollapsed && (
                   <div className="mt-1 space-y-0.5 pl-4">
+                    {/* Direct Items */}
                     {section.items.map((item) => {
                       const Icon = item.icon;
                       const active = isActive(item.href);
@@ -723,6 +775,71 @@ export function Sidebar({ locale }: SidebarProps) {
                             </span>
                           )}
                         </Link>
+                      );
+                    })}
+
+                    {/* Subsections */}
+                    {section.subsections?.map((subsection) => {
+                      const SubIcon = subsection.icon;
+                      const isSubExpanded = isSubSectionExpanded(subsection);
+                      const hasSubActive = subsectionHasActiveItem(subsection);
+
+                      return (
+                        <div key={subsection.id} className="space-y-0.5">
+                          {/* Subsection Header */}
+                          <button
+                            type="button"
+                            onClick={() => toggleSubSection(subsection.id)}
+                            className={cn(
+                              "w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                              hasSubActive
+                                ? "bg-amber-800/50 text-white"
+                                : "text-amber-200 hover:bg-amber-800/30 hover:text-white"
+                            )}
+                          >
+                            <SubIcon className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate flex-1 text-left">
+                              {getLocalizedName(subsection.title)}
+                            </span>
+                            {isSubExpanded ? (
+                              <ChevronDown className="h-3 w-3" />
+                            ) : (
+                              <ChevronRight className="h-3 w-3" />
+                            )}
+                          </button>
+
+                          {/* Subsection Items */}
+                          {isSubExpanded && (
+                            <div className="space-y-0.5 pl-4">
+                              {subsection.items.map((item) => {
+                                const Icon = item.icon;
+                                const active = isActive(item.href);
+
+                                return (
+                                  <Link
+                                    key={item.href}
+                                    href={`/${locale}${item.href}`}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={cn(
+                                      "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs transition-colors",
+                                      active
+                                        ? "bg-amber-700 text-white"
+                                        : "text-amber-200 hover:bg-amber-800/50 hover:text-white"
+                                    )}
+                                  >
+                                    <Icon className="h-3 w-3 flex-shrink-0" />
+                                    <span className="truncate">{getLocalizedName(item.name)}</span>
+                                    {item.badge && item.badge > 0 && (
+                                      <span className="ml-auto inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-xs font-medium text-white">
+                                        {item.badge > 99 ? "99+" : item.badge}
+                                      </span>
+                                    )}
+                                  </Link>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
