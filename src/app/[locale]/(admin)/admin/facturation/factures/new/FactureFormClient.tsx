@@ -16,6 +16,8 @@ import {
   Building2,
   CreditCard,
   AlertTriangle,
+  X,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/stores/currency";
@@ -394,6 +396,60 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 // ═══════════════════════════════════════════════════════════
+// Helper: Convert number to French words
+// ═══════════════════════════════════════════════════════════
+
+function numberToFrenchWords(n: number): string {
+  const units = ['', 'un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf',
+    'dix', 'onze', 'douze', 'treize', 'quatorze', 'quinze', 'seize', 'dix-sept', 'dix-huit', 'dix-neuf'];
+  const tens = ['', '', 'vingt', 'trente', 'quarante', 'cinquante', 'soixante', 'soixante', 'quatre-vingt', 'quatre-vingt'];
+
+  if (n === 0) return 'zéro';
+
+  function convert(num: number): string {
+    if (num < 20) return units[num];
+    if (num < 100) {
+      const t = Math.floor(num / 10);
+      const u = num % 10;
+      if (t === 7 || t === 9) {
+        return tens[t] + '-' + units[10 + u];
+      }
+      if (u === 0) return tens[t] + (t === 8 ? 's' : '');
+      if (u === 1 && t !== 8) return tens[t] + ' et un';
+      return tens[t] + '-' + units[u];
+    }
+    if (num < 1000) {
+      const h = Math.floor(num / 100);
+      const rest = num % 100;
+      let str = h === 1 ? 'cent' : units[h] + ' cent';
+      if (rest === 0 && h > 1) str += 's';
+      if (rest > 0) str += ' ' + convert(rest);
+      return str;
+    }
+    if (num < 1000000) {
+      const t = Math.floor(num / 1000);
+      const rest = num % 1000;
+      let str = t === 1 ? 'mille' : convert(t) + ' mille';
+      if (rest > 0) str += ' ' + convert(rest);
+      return str;
+    }
+    const m = Math.floor(num / 1000000);
+    const rest = num % 1000000;
+    let str = convert(m) + (m === 1 ? ' million' : ' millions');
+    if (rest > 0) str += ' ' + convert(rest);
+    return str;
+  }
+
+  const intPart = Math.floor(n);
+  const decPart = Math.round((n - intPart) * 100);
+
+  let result = convert(intPart) + ' dirhams';
+  if (decPart > 0) result += ' et ' + convert(decPart) + ' centimes';
+
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
+// ═══════════════════════════════════════════════════════════
 // Component
 // ═══════════════════════════════════════════════════════════
 
@@ -443,6 +499,17 @@ export function FactureFormClient({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
+  // Quick client creation modal
+  const [showQuickClientModal, setShowQuickClientModal] = useState(false);
+  const [quickClientData, setQuickClientData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    company: "",
+    ice: "",
+  });
+  const [isCreatingClient, setIsCreatingClient] = useState(false);
+
   // Get selected client
   const selectedClient = clients.find((c) => c.id === selectedClientId);
 
@@ -484,11 +551,12 @@ export function FactureFormClient({
   };
 
   // Add new line item
-  const addItem = () => {
+  const addItem = (focusFirst: boolean = false) => {
+    const newId = crypto.randomUUID();
     setItems([
       ...items,
       {
-        id: crypto.randomUUID(),
+        id: newId,
         reference: "",
         designation: "",
         description: "",
@@ -499,6 +567,24 @@ export function FactureFormClient({
         tvaRate: 20,
       },
     ]);
+
+    // Focus first input of new row after render
+    if (focusFirst) {
+      setTimeout(() => {
+        const newRow = document.querySelector(`[data-row-id="${newId}"] input`);
+        if (newRow instanceof HTMLInputElement) {
+          newRow.focus();
+        }
+      }, 100);
+    }
+  };
+
+  // Handle Enter key on last field
+  const handleItemKeyDown = (e: React.KeyboardEvent, itemId: string, isLastField: boolean) => {
+    if (e.key === 'Enter' && isLastField) {
+      e.preventDefault();
+      addItem(true);
+    }
   };
 
   // Remove line item
@@ -562,6 +648,50 @@ export function FactureFormClient({
 
   // Format currency
   const { format: formatCurrency } = useCurrency();
+
+  // Quick create client
+  const handleQuickCreateClient = async () => {
+    if (!quickClientData.fullName.trim()) {
+      alert("Le nom complet est requis");
+      return;
+    }
+
+    setIsCreatingClient(true);
+    try {
+      const response = await fetch("/api/crm/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: quickClientData.fullName,
+          email: quickClientData.email || null,
+          phone: quickClientData.phone || "+212",
+          company: quickClientData.company || null,
+          ice: quickClientData.ice || null,
+          type: "PARTICULIER",
+          status: "ACTIF",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Add new client to the clients array
+        clients.push(data.data);
+        // Select the newly created client
+        setSelectedClientId(data.data.id);
+        // Close modal and reset form
+        setShowQuickClientModal(false);
+        setQuickClientData({ fullName: "", email: "", phone: "", company: "", ice: "" });
+      } else {
+        alert(data.error || "Erreur lors de la création du client");
+      }
+    } catch (error) {
+      console.error("Error creating client:", error);
+      alert("Erreur de connexion au serveur");
+    } finally {
+      setIsCreatingClient(false);
+    }
+  };
 
   // Validate form
   const validate = (): boolean => {
@@ -699,18 +829,27 @@ export function FactureFormClient({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {t.selectClient} *
                 </label>
-                <select
-                  value={selectedClientId}
-                  onChange={(e) => setSelectedClientId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
-                >
-                  <option value="">{t.selectClient}</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.clientNumber} - {client.fullName}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedClientId}
+                    onChange={(e) => {
+                      if (e.target.value === "__new__") {
+                        setShowQuickClientModal(true);
+                      } else {
+                        setSelectedClientId(e.target.value);
+                      }
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
+                  >
+                    <option value="">{t.selectClient}</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.clientNumber} - {client.fullName}
+                      </option>
+                    ))}
+                    <option value="__new__" className="font-medium text-amber-600">+ Nouveau client</option>
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -815,7 +954,7 @@ export function FactureFormClient({
               </h2>
               <button
                 type="button"
-                onClick={addItem}
+                onClick={() => addItem(false)}
                 className="flex items-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors text-sm"
               >
                 <Plus className="h-4 w-4" />
@@ -840,7 +979,7 @@ export function FactureFormClient({
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {items.map((item) => (
-                    <tr key={item.id}>
+                    <tr key={item.id} data-row-id={item.id}>
                       <td className="px-2 py-2">
                         <div className="space-y-1">
                           <select
@@ -911,6 +1050,7 @@ export function FactureFormClient({
                         <select
                           value={item.tvaRate}
                           onChange={(e) => updateItem(item.id, "tvaRate", parseFloat(e.target.value))}
+                          onKeyDown={(e) => handleItemKeyDown(e, item.id, true)}
                           className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
                         >
                           <option value={0}>0%</option>
@@ -1069,6 +1209,16 @@ export function FactureFormClient({
               </div>
             </div>
 
+            {/* Amount in French words */}
+            {totalTTC > 0 && (
+              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Montant en lettres :</span>{' '}
+                  <span className="italic">{numberToFrenchWords(totalTTC)}</span>
+                </p>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="mt-6 space-y-3">
               <button
@@ -1099,6 +1249,95 @@ export function FactureFormClient({
           </div>
         </div>
       </div>
+
+      {/* Quick Client Creation Modal */}
+      {showQuickClientModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
+                <UserPlus className="h-5 w-5 text-amber-600" />
+                Nouveau client rapide
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowQuickClientModal(false)}
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <input
+                  type="text"
+                  placeholder="Nom complet *"
+                  value={quickClientData.fullName}
+                  onChange={(e) => setQuickClientData({ ...quickClientData, fullName: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
+                  required
+                />
+              </div>
+              <div>
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={quickClientData.email}
+                  onChange={(e) => setQuickClientData({ ...quickClientData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
+                />
+              </div>
+              <div>
+                <input
+                  type="tel"
+                  placeholder="Téléphone"
+                  value={quickClientData.phone}
+                  onChange={(e) => setQuickClientData({ ...quickClientData, phone: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="Entreprise"
+                  value={quickClientData.company}
+                  onChange={(e) => setQuickClientData({ ...quickClientData, company: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  placeholder="ICE (identifiant fiscal)"
+                  value={quickClientData.ice}
+                  onChange={(e) => setQuickClientData({ ...quickClientData, ice: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={handleQuickCreateClient}
+                disabled={isCreatingClient || !quickClientData.fullName.trim()}
+                className="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isCreatingClient ? "Création..." : "Créer & sélectionner"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowQuickClientModal(false)}
+                disabled={isCreatingClient}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
