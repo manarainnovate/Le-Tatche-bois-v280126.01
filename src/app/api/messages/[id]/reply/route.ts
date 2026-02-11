@@ -21,11 +21,13 @@ export const POST = withAuth(
 
       const { to, subject, message, attachments = [] } = body;
 
-      if (!to || !subject || !message) {
-        return apiError("Missing required fields", 400);
+      if (!to || !message) {
+        return apiError("Missing required fields: to and message are required", 400);
       }
 
-      // Get original message for template context
+      // ═══════════════════════════════════════════════════════════
+      // STEP 1: Find original message
+      // ═══════════════════════════════════════════════════════════
       const originalMessage = await prisma.message.findUnique({
         where: { id },
       });
@@ -34,211 +36,151 @@ export const POST = withAuth(
         return apiError("Original message not found", 404);
       }
 
-      // Get admin user info (from session or default)
-      const adminName = "LE TATCHE BOIS Admin"; // TODO: Get from session
+      // ═══════════════════════════════════════════════════════════
+      // STEP 2: Save reply to database FIRST (CRITICAL!)
+      // ═══════════════════════════════════════════════════════════
+      const adminName = "LE TATCHE BOIS Admin";
       const adminEmail = process.env.SMTP_FROM ?? "contact@letatchebois.com";
 
-      // Get SMTP config
-      const host = process.env.SMTP_HOST;
-      const port = parseInt(process.env.SMTP_PORT ?? "465", 10);
-      const user = process.env.SMTP_USER;
-      const pass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS; // Support both variable names
-      const secure = process.env.SMTP_SECURE === "true";
-      const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "contact@letatchebois.com";
-
-      if (!host || !user || !pass) {
-        console.error("[Reply Email] SMTP not configured properly");
-        console.error(`[Reply Email] host=${host}, port=${port}, user=${user ? "set" : "NOT SET"}, pass=${pass ? "set" : "NOT SET"}`);
-
-        // For development: just log and return success
-        if (process.env.NODE_ENV === "development") {
-          console.log(`[Reply Email] DEV MODE - Would send to ${to}: ${subject}`);
-          console.log(`[Reply Email] DEV MODE - Message: ${message}`);
-          console.log(`[Reply Email] DEV MODE - Attachments: ${attachments.length} files`);
-
-          // Still save to database in dev mode
-          try {
-            await prisma.message.create({
-              data: {
-                name: adminName,
-                email: adminEmail,
-                subject,
-                content: message,
-                attachments: attachments.length > 0 ? attachments : undefined,
-                type: "SENT",
-                inReplyToId: id,
-                read: true,
-                starred: false,
-                locale: "fr",
-              },
-            });
-          } catch (dbError) {
-            console.error(`[Reply Email] DEV MODE - Failed to save to database:`, dbError);
-          }
-
-          return apiSuccess({
-            message: "Reply sent successfully (dev mode - email not actually sent)",
-            to,
-            subject,
-            devMode: true,
-          });
-        }
-
-        return apiError("Email system not configured. Please contact administrator.", 500);
-      }
-
-      // Create transporter
-      const transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure,
-        auth: {
-          user,
-          pass,
-        },
-        logger: true, // Enable logging
-        debug: process.env.NODE_ENV === "development", // Enable debug in dev
-      });
-
-      // Verify connection
-      try {
-        await transporter.verify();
-        console.log(`[Reply Email] ✅ SMTP connection verified successfully`);
-      } catch (verifyError) {
-        console.error(`[Reply Email] ❌ SMTP connection failed:`, verifyError);
-        return apiError("Email server connection failed. Please try again later.", 500);
-      }
-
-      // Use beautiful email template with Moroccan branding
-      const htmlContent = EmailTemplates.getAdminReplyEmail(
-        {
-          name: originalMessage.name,
-          email: originalMessage.email,
-          phone: originalMessage.phone,
-          subject: originalMessage.subject,
-          content: originalMessage.content,
-          locale: originalMessage.locale || "fr",
-          createdAt: originalMessage.createdAt,
-        },
-        message, // The reply content
-        adminName // Admin name for signature
-      );
-
-      // Prepare email with attachments
-      const mailOptions: any = {
-        from: `"LE TATCHE BOIS" <${fromEmail}>`,
-        replyTo: fromEmail,
-        to,
-        subject,
-        html: htmlContent,
-        headers: {
-          'X-Mailer': 'LE TATCHE BOIS CRM',
-          'X-Priority': '3',
-        },
-      };
-
-      // Add attachments if any
-      if (attachments && attachments.length > 0) {
-        console.log(`[Reply Email] Processing ${attachments.length} attachments`);
-        mailOptions.attachments = attachments.map((file: any) => {
-          console.log(`[Reply Email] Attachment: ${file.name} (${file.size} bytes) - URL: ${file.url}`);
-
-          // Convert relative URL to absolute file path
-          // file.url is like "/api/uploads/2026/02/filename.pdf" or "/uploads/2026/02/filename.pdf"
-          let filePath: string;
-          if (file.url.startsWith('http://') || file.url.startsWith('https://')) {
-            // External URL - nodemailer will download it
-            filePath = file.url;
-          } else {
-            // Local file - strip /api prefix and convert to absolute path
-            const normalizedUrl = file.url.replace(/^\/api/, '');
-            filePath = path.join(process.cwd(), 'public', normalizedUrl);
-            console.log(`[Reply Email] Converted to absolute path: ${filePath}`);
-          }
-
-          return {
-            filename: file.name,
-            path: filePath,
-          };
-        });
-      }
-
-      // Save sent message to database FIRST (so UI can update immediately)
       let savedMessageId: string | undefined;
       try {
         const savedMessage = await prisma.message.create({
           data: {
             name: adminName,
             email: adminEmail,
-            subject,
+            subject: subject || `Re: ${originalMessage.subject || "Votre message"}`,
             content: message,
             attachments: attachments.length > 0 ? attachments : undefined,
             type: "SENT",
             inReplyToId: id,
             read: true,
             starred: false,
-            locale: "fr",
+            locale: originalMessage.locale || "fr",
           },
         });
         savedMessageId = savedMessage.id;
-        console.log(`[Reply Email] ✅ Saved to database as SENT message (ID: ${savedMessageId})`);
+        console.log(`[Reply API] ✅ Reply saved to database (ID: ${savedMessageId})`);
       } catch (dbError) {
-        console.error(`[Reply Email] ⚠️  Failed to save to database:`, dbError);
-        // Continue anyway - we'll still try to send the email
+        console.error(`[Reply API] ❌ Failed to save reply to database:`, dbError);
+        return apiError("Failed to save reply to database", 500);
       }
 
-      // Send email in background with timeout (don't block the response)
-      console.log(`[Reply Email] Starting email send to ${to} via ${host}:${port}`);
-      console.log(`[Reply Email] From: ${fromEmail}, User: ${user}`);
-      if (attachments && attachments.length > 0) {
-        console.log(`[Reply Email] Email includes ${attachments.length} attachment(s)`);
-      }
+      // ═══════════════════════════════════════════════════════════
+      // STEP 3: Try to send email — DON'T block the response
+      // ═══════════════════════════════════════════════════════════
+      const host = process.env.SMTP_HOST;
+      const port = parseInt(process.env.SMTP_PORT ?? "465", 10);
+      const user = process.env.SMTP_USER;
+      const pass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
+      const secure = process.env.SMTP_SECURE === "true";
+      const fromEmail = process.env.SMTP_FROM ?? process.env.SMTP_USER ?? "contact@letatchebois.com";
 
-      // Create a promise with timeout
-      const sendEmailWithTimeout = async () => {
-        const TIMEOUT_MS = 30000; // 30 seconds timeout
+      let emailSent = false;
+      let emailError: string | null = null;
 
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Email send timeout after 30s')), TIMEOUT_MS);
+      // Send email in background (non-blocking)
+      if (!host || !user || !pass) {
+        emailError = "SMTP not configured";
+        console.warn(`[Reply API] ⚠️  SMTP not configured - reply saved but email not sent`);
+      } else {
+        // Fire and forget - send email in background
+        const sendEmailInBackground = async () => {
+          try {
+            console.log(`[Reply API] 📧 Sending email to ${to} via ${host}:${port}...`);
+
+            const transporter = nodemailer.createTransport({
+              host,
+              port,
+              secure,
+              auth: { user, pass },
+            });
+
+            // Use beautiful email template
+            const htmlContent = EmailTemplates.getAdminReplyEmail(
+              {
+                name: originalMessage.name,
+                email: originalMessage.email,
+                phone: originalMessage.phone,
+                subject: originalMessage.subject,
+                content: originalMessage.content,
+                locale: originalMessage.locale || "fr",
+                createdAt: originalMessage.createdAt,
+              },
+              message,
+              adminName
+            );
+
+            const mailOptions: any = {
+              from: `"LE TATCHE BOIS" <${fromEmail}>`,
+              replyTo: fromEmail,
+              to,
+              subject: subject || `Re: ${originalMessage.subject || "Votre message"}`,
+              html: htmlContent,
+              headers: {
+                'X-Mailer': 'LE TATCHE BOIS CRM',
+                'X-Priority': '3',
+              },
+            };
+
+            // Add attachments if provided
+            if (attachments && attachments.length > 0) {
+              console.log(`[Reply API] 📎 Processing ${attachments.length} attachment(s)`);
+              mailOptions.attachments = attachments.map((file: any) => {
+                let filePath: string;
+                if (file.url.startsWith('http://') || file.url.startsWith('https://')) {
+                  filePath = file.url;
+                } else {
+                  const normalizedUrl = file.url.replace(/^\/api/, '');
+                  filePath = path.join(process.cwd(), 'public', normalizedUrl);
+                }
+                return {
+                  filename: file.name,
+                  path: filePath,
+                };
+              });
+            }
+
+            // Send with timeout
+            const TIMEOUT_MS = 30000; // 30 seconds
+            const timeoutPromise = new Promise((_, reject) => {
+              setTimeout(() => reject(new Error('Email timeout after 30s')), TIMEOUT_MS);
+            });
+
+            await Promise.race([
+              transporter.sendMail(mailOptions),
+              timeoutPromise
+            ]);
+
+            console.log(`[Reply API] ✅ Email sent successfully to ${to}`);
+          } catch (error) {
+            console.error(`[Reply API] ❌ Email failed (reply still saved):`, error);
+          }
+        };
+
+        // Fire in background - don't await
+        sendEmailInBackground().catch(err => {
+          console.error(`[Reply API] Background email error:`, err);
         });
 
-        try {
-          const info = await Promise.race([
-            transporter.sendMail(mailOptions),
-            timeoutPromise
-          ]);
-          console.log(`[Reply Email] ✅ Successfully sent to ${to}: ${subject}`);
-          console.log(`[Reply Email] Message ID: ${(info as any).messageId}`);
-          return { success: true, messageId: (info as any).messageId };
-        } catch (error) {
-          console.error(`[Reply Email] ❌ Failed to send email:`, error);
-          return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
-        }
-      };
-
-      // Fire email send in background (don't await)
-      sendEmailWithTimeout().catch(err => {
-        console.error(`[Reply Email] Background email send failed:`, err);
-      });
-
-      // Return success immediately (email is being sent in background)
-      return apiSuccess({
-        message: "Reply queued successfully",
-        to,
-        subject,
-        messageId: savedMessageId,
-        note: "Email is being sent in the background",
-      });
-    } catch (error) {
-      console.error(`[Reply Email] ❌ Failed to send email:`, error);
-
-      // Log specific error details
-      if (error instanceof Error) {
-        console.error(`[Reply Email] Error name: ${error.name}`);
-        console.error(`[Reply Email] Error message: ${error.message}`);
-        console.error(`[Reply Email] Error stack:`, error.stack);
+        emailSent = true; // Optimistic - we queued it
       }
 
+      // ═══════════════════════════════════════════════════════════
+      // STEP 4: Return success IMMEDIATELY
+      // ═══════════════════════════════════════════════════════════
+      return apiSuccess({
+        message: emailSent
+          ? "Réponse envoyée avec succès"
+          : "Réponse enregistrée mais l'email n'a pas pu être envoyé (SMTP non configuré)",
+        messageId: savedMessageId,
+        to,
+        subject: subject || `Re: ${originalMessage.subject || "Votre message"}`,
+        emailQueued: emailSent,
+        emailError,
+      });
+
+    } catch (error) {
+      console.error(`[Reply API] ❌ Critical error:`, error);
       return handleApiError(error, "Message Reply POST");
     }
   },

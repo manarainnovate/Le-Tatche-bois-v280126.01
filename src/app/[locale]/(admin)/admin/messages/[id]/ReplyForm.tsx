@@ -118,21 +118,30 @@ export function ReplyForm({
         }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
+        // Success - reply was saved (email may or may not have been sent)
         setShowSuccess(true);
+
+        // Log warning if email wasn't sent
+        if (data.emailError) {
+          console.warn("[ReplyForm] Reply saved but email failed:", data.emailError);
+        }
+
         // Close success modal after 3 seconds and call onSuccess
         setTimeout(() => {
           setShowSuccess(false);
           onSuccess();
         }, 3000);
       } else {
-        const data = await response.json();
         setError(data.error || t.error);
       }
     } catch (err) {
       console.error("Failed to send reply:", err);
       setError(t.error);
     } finally {
+      // ALWAYS reset loading state
       setIsSending(false);
     }
   };
