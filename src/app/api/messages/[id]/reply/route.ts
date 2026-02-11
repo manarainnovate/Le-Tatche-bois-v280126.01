@@ -163,22 +163,10 @@ export const POST = withAuth(
         });
       }
 
-      // Send email
-      console.log(`[Reply Email] Attempting to send to ${to} via ${host}:${port}`);
-      console.log(`[Reply Email] From: ${fromEmail}, User: ${user}`);
-      if (attachments && attachments.length > 0) {
-        console.log(`[Reply Email] Email includes ${attachments.length} attachment(s)`);
-      }
-
-      const info = await transporter.sendMail(mailOptions);
-
-      console.log(`[Reply Email] ✅ Successfully sent to ${to}: ${subject}`);
-      console.log(`[Reply Email] Message ID: ${info.messageId}`);
-      console.log(`[Reply Email] Response: ${info.response}`);
-
-      // Save sent message to database
+      // Save sent message to database FIRST (so UI can update immediately)
+      let savedMessageId: string | undefined;
       try {
-        await prisma.message.create({
+        const savedMessage = await prisma.message.create({
           data: {
             name: adminName,
             email: adminEmail,
@@ -192,18 +180,54 @@ export const POST = withAuth(
             locale: "fr",
           },
         });
-        console.log(`[Reply Email] Saved to database as SENT message`);
+        savedMessageId = savedMessage.id;
+        console.log(`[Reply Email] ✅ Saved to database as SENT message (ID: ${savedMessageId})`);
       } catch (dbError) {
-        // If database save fails (e.g., schema not updated), log but don't fail the email send
         console.error(`[Reply Email] ⚠️  Failed to save to database:`, dbError);
-        console.log(`[Reply Email] Email was sent successfully, but not saved to database`);
+        // Continue anyway - we'll still try to send the email
       }
 
+      // Send email in background with timeout (don't block the response)
+      console.log(`[Reply Email] Starting email send to ${to} via ${host}:${port}`);
+      console.log(`[Reply Email] From: ${fromEmail}, User: ${user}`);
+      if (attachments && attachments.length > 0) {
+        console.log(`[Reply Email] Email includes ${attachments.length} attachment(s)`);
+      }
+
+      // Create a promise with timeout
+      const sendEmailWithTimeout = async () => {
+        const TIMEOUT_MS = 30000; // 30 seconds timeout
+
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Email send timeout after 30s')), TIMEOUT_MS);
+        });
+
+        try {
+          const info = await Promise.race([
+            transporter.sendMail(mailOptions),
+            timeoutPromise
+          ]);
+          console.log(`[Reply Email] ✅ Successfully sent to ${to}: ${subject}`);
+          console.log(`[Reply Email] Message ID: ${(info as any).messageId}`);
+          return { success: true, messageId: (info as any).messageId };
+        } catch (error) {
+          console.error(`[Reply Email] ❌ Failed to send email:`, error);
+          return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+        }
+      };
+
+      // Fire email send in background (don't await)
+      sendEmailWithTimeout().catch(err => {
+        console.error(`[Reply Email] Background email send failed:`, err);
+      });
+
+      // Return success immediately (email is being sent in background)
       return apiSuccess({
-        message: "Reply sent successfully",
+        message: "Reply queued successfully",
         to,
         subject,
-        messageId: info.messageId,
+        messageId: savedMessageId,
+        note: "Email is being sent in the background",
       });
     } catch (error) {
       console.error(`[Reply Email] ❌ Failed to send email:`, error);
