@@ -18,14 +18,17 @@ WORKDIR /app
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
 
-# Create uploads directory and set permissions
-RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
+COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+
+# Create uploads directory structure with correct permissions
+RUN mkdir -p /app/public/uploads/2026/02 && \
+    chown -R nextjs:nodejs /app/public && \
+    chmod -R 755 /app/public
 
 USER nextjs
 EXPOSE 3000
