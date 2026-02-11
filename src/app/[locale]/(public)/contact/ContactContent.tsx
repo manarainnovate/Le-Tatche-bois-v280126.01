@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
   Phone,
@@ -17,11 +17,13 @@ import {
   Youtube,
   MessageCircle,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { cn, hexToRgba } from "@/lib/utils";
 import { useThemeSettings } from "@/stores/themeSettings";
 import { HoneypotFields } from "@/components/forms/SecurityFields";
 import { CONTACT, getPhoneLink, getEmailLink, getWhatsAppLink } from "@/config/contact";
+import { MultiFileUpload } from "@/components/admin/MultiFileUpload";
 
 // ═══════════════════════════════════════════════════════════
 // TYPES
@@ -180,9 +182,11 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
     website: "",
     _timestamp: 0,
   });
+  const [attachments, setAttachments] = useState<Array<{name: string; url: string; size: number; type: string}>>([]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Set timestamp on mount (for bot detection)
   useEffect(() => {
@@ -254,6 +258,7 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
           phone: formData.phone || undefined,
           subject: formData.subject,
           content: formData.message,
+          attachments: attachments.length > 0 ? attachments : undefined,
           locale,
           // Security (honeypot)
           honeypot: formData.honeypot,
@@ -268,6 +273,7 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
       }
 
       setSubmitStatus("success");
+      setShowSuccessModal(true);
       setFormData({
         name: "",
         email: "",
@@ -279,6 +285,7 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
         website: "",
         _timestamp: Date.now(),
       });
+      setAttachments([]);
     } catch {
       setSubmitStatus("error");
     } finally {
@@ -289,9 +296,108 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
   // WhatsApp link
   const whatsappLink = getWhatsAppLink(translations.whatsapp.message);
 
+  const successModalTranslations = {
+    fr: {
+      title: "Message envoyé avec succès!",
+      message: "Merci de nous avoir contacté. Nous reviendrons vers vous dans les 24 heures.",
+      close: "Fermer"
+    },
+    en: {
+      title: "Message sent successfully!",
+      message: "Thank you for contacting us. We will get back to you within 24 hours.",
+      close: "Close"
+    },
+    es: {
+      title: "¡Mensaje enviado con éxito!",
+      message: "Gracias por contactarnos. Nos pondremos en contacto contigo en 24 horas.",
+      close: "Cerrar"
+    },
+    ar: {
+      title: "تم إرسال الرسالة بنجاح!",
+      message: "شكراً لتواصلك معنا. سنرد عليك خلال 24 ساعة.",
+      close: "إغلاق"
+    }
+  };
+
+  const modalText = successModalTranslations[locale as keyof typeof successModalTranslations] ?? successModalTranslations.fr;
+
   return (
-    <main className={cn("min-h-screen bg-wood-light", isRTL && "rtl")}>
-      {/* Hero Section */}
+    <>
+      {/* Success Modal */}
+      <AnimatePresence>
+        {showSuccessModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+            onClick={() => setShowSuccessModal(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.5 }}
+              className="relative w-full max-w-md rounded-3xl bg-white shadow-2xl dark:bg-gray-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className="absolute top-4 right-4 rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              <div className="p-8 text-center">
+                {/* Success Icon */}
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-emerald-600 shadow-lg shadow-green-500/30"
+                >
+                  <CheckCircle className="h-14 w-14 text-white" />
+                </motion.div>
+
+                {/* Title */}
+                <motion.h3
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="mb-4 text-2xl font-bold text-gray-900 dark:text-white"
+                >
+                  {modalText.title}
+                </motion.h3>
+
+                {/* Message */}
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="mb-8 text-base leading-relaxed text-gray-600 dark:text-gray-400"
+                >
+                  {modalText.message}
+                </motion.p>
+
+                {/* Close Button */}
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 }}
+                  onClick={() => setShowSuccessModal(false)}
+                  className="w-full rounded-xl bg-gradient-to-r from-wood-primary to-wood-dark px-8 py-4 font-semibold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl"
+                >
+                  {modalText.close}
+                </motion.button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <main className={cn("min-h-screen bg-wood-light", isRTL && "rtl")}>
+        {/* Hero Section */}
       <section
         className="relative py-20 lg:py-28"
         style={{
@@ -577,6 +683,20 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
                     )}
                   </div>
 
+                  {/* File Attachments */}
+                  <div>
+                    <label className="block text-sm font-medium text-wood-dark mb-2">
+                      {locale === "fr" ? "Pièces jointes" : locale === "en" ? "Attachments" : locale === "es" ? "Archivos adjuntos" : "المرفقات"} ({locale === "fr" ? "optionnel" : locale === "en" ? "optional" : locale === "es" ? "opcional" : "اختياري"})
+                    </label>
+                    <MultiFileUpload
+                      value={attachments}
+                      onChange={setAttachments}
+                      maxSize={100}
+                      maxFiles={10}
+                      locale={locale}
+                    />
+                  </div>
+
                   {/* Submit Button */}
                   <button
                     type="submit"
@@ -824,6 +944,7 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
         <MessageCircle className="w-6 h-6" />
         <span className="font-medium hidden sm:block">{translations.whatsapp.button}</span>
       </a>
-    </main>
+      </main>
+    </>
   );
 }

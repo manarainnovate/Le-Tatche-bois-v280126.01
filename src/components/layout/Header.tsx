@@ -177,6 +177,11 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
 
   // Handle language change
   const handleLanguageChange = (langCode: string) => {
+    // Save user's MANUAL language choice (highest priority)
+    // This overrides auto-detection permanently
+    const maxAge = 365 * 24 * 60 * 60; // 1 year in seconds
+    document.cookie = `preferred-locale=${langCode}; path=/; max-age=${maxAge}; samesite=lax`;
+
     const pathWithoutLocale = pathname.replace(`/${locale}`, "") || "/";
     router.push(`/${langCode}${pathWithoutLocale}`);
     setLangOpen(false);
@@ -184,6 +189,10 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
 
   // Handle currency change
   const handleCurrencyChange = (currencyCode: CurrencyCode) => {
+    // Save user's MANUAL currency choice (highest priority)
+    // This overrides auto-detection permanently
+    localStorage.setItem("manual-currency-choice", currencyCode);
+
     setCurrency(currencyCode);
     setCurrencyOpen(false);
   };
@@ -196,24 +205,84 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
       )}
     >
       <div className="max-w-7xl mx-auto px-4">
+        {/* MOBILE HEADER: Hamburger LEFT | Logo CENTER | Cart RIGHT */}
+        <div className="flex lg:hidden items-center justify-between h-16">
+          {/* Left: Hamburger Menu (Mobile Only) */}
+          <div className="w-10 flex items-center justify-start">
+            <button
+              onClick={onMobileMenuOpen}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Open menu"
+            >
+              <Menu className="w-6 h-6 text-gray-700" />
+            </button>
+          </div>
+
+          {/* Center: Logo (Mobile Only) */}
+          <div className="flex-1 flex items-center justify-center">
+            <Link href={`/${locale}`} className="flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={logoHeader || "/images/logo.png"}
+                alt={siteName}
+                className={cn(
+                  "h-12 w-auto object-contain transition-opacity duration-300",
+                  !settingsLoaded && "opacity-0"
+                )}
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = "none";
+                  const fallback = img.nextElementSibling;
+                  if (fallback) (fallback as HTMLElement).style.display = "inline";
+                }}
+              />
+              <span className="text-xl font-bold text-wood-primary hidden">
+                {siteName}
+              </span>
+            </Link>
+          </div>
+
+          {/* Right: Cart Icon (Mobile Only) */}
+          <div className="w-10 flex items-center justify-end">
+            <Link
+              href={`/${locale}/cart`}
+              className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label={t("cart")}
+            >
+              <ShoppingCart className="w-6 h-6 text-gray-700" />
+              {cartCount > 0 && (
+                <span
+                  className={cn(
+                    "absolute -top-1 bg-wood-primary text-white text-xs",
+                    "w-5 h-5 flex items-center justify-center rounded-full font-medium",
+                    isRTL ? "-left-1" : "-right-1"
+                  )}
+                >
+                  {cartCount > 9 ? "9+" : cartCount}
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
+
+        {/* DESKTOP HEADER: Original Layout */}
         <div
           className={cn(
-            "flex items-center justify-between h-16 md:h-20",
+            "hidden lg:flex items-center justify-between h-20",
             isRTL && "flex-row-reverse"
           )}
         >
-          {/* Logo - 50% larger */}
-          <Link href={`/${locale}`} className="flex-shrink-0 flex items-center min-w-[120px] min-h-[56px] md:min-h-[64px] lg:min-h-[80px]">
+          {/* Logo - Desktop */}
+          <Link href={`/${locale}`} className="flex-shrink-0 flex items-center min-w-[120px] min-h-[64px] lg:min-h-[80px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={logoHeader || "/images/logo.png"}
               alt={siteName}
               className={cn(
-                "h-14 md:h-16 lg:h-20 w-auto object-contain transition-opacity duration-300",
+                "h-16 lg:h-20 w-auto object-contain transition-opacity duration-300",
                 !settingsLoaded && "opacity-0"
               )}
               onError={(e) => {
-                // Hide broken image and show text fallback
                 const img = e.target as HTMLImageElement;
                 img.style.display = "none";
                 const fallback = img.nextElementSibling;
@@ -230,7 +299,7 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
           {/* Desktop Navigation */}
           <nav
             className={cn(
-              "hidden lg:flex items-center gap-1",
+              "flex items-center gap-1",
               isRTL && "flex-row-reverse"
             )}
           >
@@ -253,15 +322,15 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
             ))}
           </nav>
 
-          {/* Right Actions */}
+          {/* Right Actions - Desktop */}
           <div
             className={cn(
-              "flex items-center gap-1 md:gap-2",
+              "flex items-center gap-2",
               isRTL && "flex-row-reverse"
             )}
           >
             {/* Currency Switcher - Desktop */}
-            <div className="hidden md:block">
+            <div>
               <Dropdown
                 trigger={
                   <>
@@ -296,7 +365,7 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
             </div>
 
             {/* Language Switcher - Desktop */}
-            <div className="hidden md:block">
+            <div>
               <Dropdown
                 trigger={
                   <>
@@ -330,13 +399,13 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
               </Dropdown>
             </div>
 
-            {/* Cart Icon */}
+            {/* Cart Icon - Desktop */}
             <Link
               href={`/${locale}/cart`}
               className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
               aria-label={t("cart")}
             >
-              <ShoppingCart className="w-5 h-5 md:w-6 md:h-6 text-gray-700" />
+              <ShoppingCart className="w-6 h-6 text-gray-700" />
               {cartCount > 0 && (
                 <span
                   className={cn(
@@ -354,7 +423,7 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
             <Link
               href={`/${locale}/devis`}
               className={cn(
-                "hidden md:inline-flex items-center justify-center",
+                "inline-flex items-center justify-center",
                 "h-10 px-4 text-base rounded-lg gap-2",
                 "bg-gradient-to-r from-wood-primary to-wood-secondary",
                 "text-white shadow-md font-medium",
@@ -364,15 +433,6 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
               <FileText className={cn("w-4 h-4", isRTL ? "ml-2" : "mr-2")} />
               {t("quote")}
             </Link>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={onMobileMenuOpen}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Open menu"
-            >
-              <Menu className="w-6 h-6 text-gray-700" />
-            </button>
           </div>
         </div>
       </div>

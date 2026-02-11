@@ -27,13 +27,18 @@ export async function GET(req: NextRequest) {
     if (isActive !== null) where.isActive = isActive === "true";
     if (isFeatured !== null) where.isFeatured = isFeatured === "true";
 
+    // Check if requesting all translations (for admin)
+    const allTranslations = searchParams.get("allTranslations") === "true";
+
     const [categories, total] = await Promise.all([
       prisma.category.findMany({
         where,
         include: {
-          translations: {
-            where: { locale },
-          },
+          translations: allTranslations
+            ? true // Include all translations for admin
+            : {
+                where: { locale },
+              },
           _count: {
             select: {
               products: true,
@@ -46,6 +51,11 @@ export async function GET(req: NextRequest) {
       }),
       prisma.category.count({ where }),
     ]);
+
+    // If requesting all translations, return raw categories with translations array
+    if (allTranslations) {
+      return apiSuccess(paginatedResponse(categories, total, { page, limit, skip }));
+    }
 
     // Transform to include localized data
     const localizedCategories = categories.map((cat) => ({

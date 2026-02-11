@@ -8,16 +8,23 @@ import sharp from "sharp";
 // Configuration
 // ═══════════════════════════════════════════════════════════
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-const ALLOWED_TYPES = [
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB (increased for message attachments)
+
+// Blocked file types (for security)
+const BLOCKED_TYPES = [
+  "application/x-msdownload", // .exe
+  "application/x-msdos-program",
+  "application/x-executable",
+];
+
+// For image optimization only
+const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
   "image/png",
   "image/gif",
   "image/webp",
   "image/svg+xml",
-  "video/mp4",
-  "video/webm",
 ];
 
 // Image optimization settings
@@ -25,7 +32,7 @@ const OPT_MAX_WIDTH = 1920;
 const OPT_MAX_HEIGHT = 1080;
 const OPT_JPEG_QUALITY = 80;
 const OPT_PNG_QUALITY = 80;
-// Types that should be auto-optimized (skip SVG, GIF, video)
+// Types that should be auto-optimized (skip SVG, GIF, video, documents)
 const OPTIMIZABLE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
 // ═══════════════════════════════════════════════════════════
@@ -142,12 +149,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate file type
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    // Check for blocked file types (security)
+    if (BLOCKED_TYPES.includes(file.type) || file.name.toLowerCase().endsWith('.exe')) {
       return NextResponse.json(
-        {
-          error: `Type de fichier non autorisé. Utilisez: JPG, PNG, GIF, WebP, SVG`,
-        },
+        { error: "Type de fichier bloqué pour des raisons de sécurité (.exe non autorisé)" },
         { status: 400 }
       );
     }
@@ -155,7 +160,7 @@ export async function POST(request: NextRequest) {
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "Fichier trop volumineux. Maximum: 50MB" },
+        { error: "Fichier trop volumineux. Maximum: 100MB" },
         { status: 400 }
       );
     }
@@ -250,14 +255,15 @@ async function handleMultipleFiles(files: File[]) {
   // Process each file
   for (const file of files) {
     try {
-      // Validate type
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        errors.push(`${file.name}: Type non autorisé`);
+      // Check for blocked file types (security)
+      if (BLOCKED_TYPES.includes(file.type) || file.name.toLowerCase().endsWith('.exe')) {
+        errors.push(`${file.name}: Type bloqué pour sécurité`);
         continue;
       }
+
       // Validate size
       if (file.size > MAX_FILE_SIZE) {
-        errors.push(`${file.name}: Trop volumineux (max 50MB)`);
+        errors.push(`${file.name}: Trop volumineux (max 100MB)`);
         continue;
       }
 
@@ -353,7 +359,8 @@ export function GET() {
   return NextResponse.json({
     maxFileSize: MAX_FILE_SIZE,
     maxFileSizeMB: MAX_FILE_SIZE / 1024 / 1024,
-    allowedTypes: ALLOWED_TYPES,
+    allowedTypes: "all (except .exe)",
+    blockedTypes: BLOCKED_TYPES,
     storage: "local",
     uploadPath: "/uploads/{year}/{month}/{filename}",
   });

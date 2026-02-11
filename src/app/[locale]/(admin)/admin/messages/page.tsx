@@ -7,13 +7,13 @@ import { fr, enUS, es, ar } from "date-fns/locale";
 import {
   Mail,
   MailOpen,
-  Star,
-  StarOff,
   Search,
   RefreshCw,
   Trash2,
   Circle,
   Inbox,
+  Send,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ const translations = {
     all: "Tous",
     unread: "Non lus",
     read: "Lus",
+    sent: "Envoyés",
     starred: "Favoris",
     noMessages: "Aucun message",
     markAsRead: "Marquer comme lu",
@@ -50,6 +51,7 @@ const translations = {
     all: "All",
     unread: "Unread",
     read: "Read",
+    sent: "Sent",
     starred: "Starred",
     noMessages: "No messages",
     markAsRead: "Mark as read",
@@ -69,7 +71,8 @@ const translations = {
     all: "Todos",
     unread: "No leidos",
     read: "Leidos",
-    starred: "Favoritos",
+    sent: "Enviados",
+    starred: "Destacados",
     noMessages: "Sin mensajes",
     markAsRead: "Marcar como leido",
     markAsUnread: "Marcar como no leido",
@@ -88,7 +91,8 @@ const translations = {
     all: "الكل",
     unread: "غير مقروء",
     read: "مقروء",
-    starred: "المميزة",
+    sent: "المرسلة",
+    starred: "المفضلة",
     noMessages: "لا توجد رسائل",
     markAsRead: "تحديد كمقروء",
     markAsUnread: "تحديد كغير مقروء",
@@ -116,6 +120,7 @@ interface Message {
   content: string;
   read: boolean;
   starred: boolean;
+  type: "RECEIVED" | "SENT";
   createdAt: string;
 }
 
@@ -124,7 +129,7 @@ interface MessagesResponse {
   total: number;
 }
 
-type FilterType = "all" | "unread" | "read" | "starred";
+type FilterType = "all" | "unread" | "read" | "sent" | "starred";
 
 // ═══════════════════════════════════════════════════════════
 // Messages Inbox Page
@@ -155,14 +160,18 @@ export default function MessagesInboxPage({ params }: PageProps) {
       const params = new URLSearchParams();
       if (filter === "unread") params.set("read", "false");
       if (filter === "read") params.set("read", "true");
+      if (filter === "sent") params.set("type", "SENT");
       if (filter === "starred") params.set("starred", "true");
       if (searchQuery) params.set("search", searchQuery);
 
       const response = await fetch(`/api/messages?${params.toString()}`);
       if (response.ok) {
-        const data = (await response.json()) as MessagesResponse;
-        setMessages(data.messages ?? []);
-        setTotal(data.total ?? 0);
+        const result = await response.json();
+        // API returns { success: true, data: { data: [...], pagination: {...}, unreadCount: ... } }
+        if (result.success && result.data) {
+          setMessages(result.data.data ?? []);
+          setTotal(result.data.pagination?.total ?? 0);
+        }
       }
     } catch (err) {
       console.error("Failed to fetch messages:", err);
@@ -198,33 +207,6 @@ export default function MessagesInboxPage({ params }: PageProps) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(messages.map((m) => m.id)));
-    }
-  };
-
-  // Toggle star
-  const toggleStar = async (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const message = messages.find((m) => m.id === id);
-    if (!message) return;
-
-    // Optimistic update
-    setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, starred: !m.starred } : m))
-    );
-
-    try {
-      await fetch(`/api/messages/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ starred: !message.starred }),
-      });
-    } catch {
-      // Revert on error
-      setMessages((prev) =>
-        prev.map((m) => (m.id === id ? { ...m, starred: message.starred } : m))
-      );
     }
   };
 
@@ -274,14 +256,16 @@ export default function MessagesInboxPage({ params }: PageProps) {
   };
 
   // Filter counts
-  const unreadCount = messages.filter((m) => !m.read).length;
+  const unreadCount = messages.filter((m) => !m.read && m.type === "RECEIVED").length;
+  const sentCount = messages.filter((m) => m.type === "SENT").length;
   const starredCount = messages.filter((m) => m.starred).length;
 
   const filters: { key: FilterType; label: string; count?: number; icon: typeof Mail }[] = [
     { key: "all", label: t.all, count: total, icon: Inbox },
     { key: "unread", label: t.unread, count: unreadCount, icon: Mail },
-    { key: "read", label: t.read, icon: MailOpen },
     { key: "starred", label: t.starred, count: starredCount, icon: Star },
+    { key: "sent", label: t.sent, count: sentCount, icon: Send },
+    { key: "read", label: t.read, icon: MailOpen },
   ];
 
   return (
@@ -434,19 +418,6 @@ export default function MessagesInboxPage({ params }: PageProps) {
                       onClick={(e) => e.stopPropagation()}
                       className="mt-1 h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
                     />
-
-                    {/* Star */}
-                    <button
-                      type="button"
-                      onClick={(e) => void toggleStar(message.id, e)}
-                      className="mt-1"
-                    >
-                      {message.starred ? (
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                      ) : (
-                        <StarOff className="h-4 w-4 text-gray-300 hover:text-yellow-400" />
-                      )}
-                    </button>
 
                     {/* Read indicator */}
                     <div className="mt-1.5">

@@ -6,6 +6,8 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { TrackingScripts, GTMNoScript } from "@/components/TrackingScripts";
+import { CurrencyInitializer } from "@/components/providers/CurrencyInitializer";
+import { GeoDetectionBanner } from "@/components/ui/GeoDetectionBanner";
 import { useUIStore } from "@/stores/ui";
 import { useThemeSettings } from "@/stores/themeSettings";
 import type { PageKey } from "@/stores/themeSettings";
@@ -124,6 +126,12 @@ export default function PublicLayout({ children }: Props) {
         pinterestTagEnabled={trackingSettings.pinterestTagEnabled}
       />
       <GTMNoScript gtmId={trackingSettings.googleTagManagerEnabled ? trackingSettings.googleTagManagerId : undefined} />
+
+      {/* Currency Initializer - Auto-set currency on first visit */}
+      <CurrencyInitializer />
+
+      {/* Geo Detection Banner - Shows country/language/currency detection */}
+      <GeoDetectionBanner />
 
       <Header onMobileMenuOpen={openMobileMenu} />
       <MobileMenu />

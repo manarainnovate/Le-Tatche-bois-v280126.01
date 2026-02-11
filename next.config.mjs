@@ -10,7 +10,7 @@ const ContentSecurityPolicy = `
   default-src 'self';
   script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com https://static.cloudflareinsights.com;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  img-src 'self' blob: data: https://res.cloudinary.com https://images.unsplash.com https://*.stripe.com;
+  img-src 'self' blob: data: https://res.cloudinary.com https://images.unsplash.com https://*.stripe.com http://localhost:3000;
   font-src 'self' https://fonts.gstatic.com;
   connect-src 'self' https://api.stripe.com https://vitals.vercel-insights.com https://www.google-analytics.com https://cloudflareinsights.com;
   frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com https://maps.google.com;

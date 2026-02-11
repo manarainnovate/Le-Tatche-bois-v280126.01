@@ -9,6 +9,12 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
+  Paperclip,
+  Download,
+  FileText,
+  FileImage,
+  FileVideo,
+  File,
 } from "lucide-react";
 import { MessageActions } from "./MessageActions";
 
@@ -28,6 +34,7 @@ const translations = {
     phone: "Telephone",
     noPhone: "Non renseigne",
     messageContent: "Message",
+    attachments: "Pieces jointes",
     actions: "Actions",
     markAsUnread: "Marquer comme non lu",
     star: "Ajouter aux favoris",
@@ -49,6 +56,7 @@ const translations = {
     phone: "Phone",
     noPhone: "Not provided",
     messageContent: "Message",
+    attachments: "Attachments",
     actions: "Actions",
     markAsUnread: "Mark as unread",
     star: "Star",
@@ -70,6 +78,7 @@ const translations = {
     phone: "Telefono",
     noPhone: "No proporcionado",
     messageContent: "Mensaje",
+    attachments: "Archivos adjuntos",
     actions: "Acciones",
     markAsUnread: "Marcar como no leido",
     star: "Destacar",
@@ -91,6 +100,7 @@ const translations = {
     phone: "الهاتف",
     noPhone: "غير متوفر",
     messageContent: "الرسالة",
+    attachments: "المرفقات",
     actions: "الإجراءات",
     markAsUnread: "تحديد كغير مقروء",
     star: "إضافة للمفضلة",
@@ -116,6 +126,7 @@ interface Message {
   content: string;
   read: boolean;
   starred: boolean;
+  attachments?: Array<{name: string; url: string; size: number; type: string}>;
   createdAt: Date;
 }
 
@@ -142,7 +153,8 @@ async function getMessage(id: string): Promise<Message | null> {
     subject: message.subject,
     content: message.content,
     read: true, // We just marked it as read
-    starred: false, // Starred field doesn't exist in schema, default to false
+    starred: message.starred,
+    attachments: message.attachments as any,
     createdAt: message.createdAt,
   };
 }
@@ -196,6 +208,19 @@ export default async function MessageDetailPage({ params }: PageProps) {
     }).format(date);
   };
 
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return FileImage;
+    if (type.startsWith("video/")) return FileVideo;
+    if (type.includes("pdf") || type.includes("document") || type.includes("text")) return FileText;
+    return File;
+  };
+
   return (
     <div dir={isRTL ? "rtl" : "ltr"} className="space-y-6">
       {/* Header */}
@@ -203,23 +228,23 @@ export default async function MessageDetailPage({ params }: PageProps) {
         <div>
           <Link
             href={`/${locale}/admin/messages`}
-            className="mb-2 inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-amber-600 transition-colors hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300"
           >
             <ArrowLeft className="h-4 w-4" />
             {t.backToInbox}
           </Link>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
             {message.subject ?? t.noSubject}
           </h1>
         </div>
 
         {/* Navigation */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {adjacentMessages.previousId ? (
             <Link href={`/${locale}/admin/messages/${adjacentMessages.previousId}`}>
               <button
                 type="button"
-                className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                className="flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-amber-300 hover:bg-amber-50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-amber-600 dark:hover:bg-gray-700"
               >
                 <ChevronLeft className="h-4 w-4" />
                 {t.previous}
@@ -229,7 +254,7 @@ export default async function MessageDetailPage({ params }: PageProps) {
             <button
               type="button"
               disabled
-              className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300 dark:border-gray-700 dark:text-gray-600"
+              className="flex items-center gap-2 rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-700"
             >
               <ChevronLeft className="h-4 w-4" />
               {t.previous}
@@ -239,7 +264,7 @@ export default async function MessageDetailPage({ params }: PageProps) {
             <Link href={`/${locale}/admin/messages/${adjacentMessages.nextId}`}>
               <button
                 type="button"
-                className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                className="flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-amber-300 hover:bg-amber-50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:border-amber-600 dark:hover:bg-gray-700"
               >
                 {t.next}
                 <ChevronRight className="h-4 w-4" />
@@ -249,7 +274,7 @@ export default async function MessageDetailPage({ params }: PageProps) {
             <button
               type="button"
               disabled
-              className="flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-300 dark:border-gray-700 dark:text-gray-600"
+              className="flex items-center gap-2 rounded-xl border-2 border-gray-100 bg-gray-50 px-4 py-2.5 text-sm font-medium text-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-700"
             >
               {t.next}
               <ChevronRight className="h-4 w-4" />
@@ -258,99 +283,136 @@ export default async function MessageDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Main Content */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Message Header */}
-          <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <div className="mb-4 flex items-start justify-between">
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                  <User className="h-6 w-6" />
+      {/* Main Content - Full Width with Horizontal Layout */}
+      <div className="space-y-6">
+        <div className="overflow-hidden rounded-2xl border-2 border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+          {/* Top gradient bar */}
+          <div className="h-2 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600"></div>
+
+          <div className="p-6 sm:p-8">
+            {/* Sender Info - Horizontal Layout */}
+            <div className="mb-6 flex flex-col gap-4 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 p-5 dark:from-amber-900/10 dark:to-orange-900/10 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-6">
+                {/* Avatar + Name */}
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-100 to-orange-100 text-amber-700 shadow-md dark:from-amber-900/30 dark:to-orange-900/30 dark:text-amber-400">
+                    <User className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      {t.name}
+                    </p>
+                    <p className="text-base font-bold text-gray-900 dark:text-white sm:text-lg">{message.name}</p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="font-semibold text-gray-900 dark:text-white">{message.name}</h2>
-                  <p className="text-sm text-gray-500">{message.email}</p>
+
+                {/* Email */}
+                <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 dark:bg-gray-800/50">
+                  <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <a
+                    href={`mailto:${message.email}`}
+                    className="text-sm font-semibold text-amber-600 hover:text-amber-700 hover:underline dark:text-amber-400 dark:hover:text-amber-300"
+                  >
+                    {message.email}
+                  </a>
+                </div>
+
+                {/* Phone */}
+                <div className="flex items-center gap-2 rounded-lg bg-white px-3 py-2 dark:bg-gray-800/50">
+                  <Phone className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  {message.phone ? (
+                    <a
+                      href={`tel:${message.phone}`}
+                      className="text-sm font-semibold text-gray-900 hover:text-amber-600 dark:text-white dark:hover:text-amber-400"
+                    >
+                      {message.phone}
+                    </a>
+                  ) : (
+                    <p className="text-sm italic text-gray-400 dark:text-gray-600">{t.noPhone}</p>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
+
+              {/* Date */}
+              <div className="flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm text-gray-600 dark:bg-gray-800/50 dark:text-gray-400">
                 <Calendar className="h-4 w-4" />
-                {formatDate(message.createdAt)}
+                <span className="whitespace-nowrap">{formatDate(message.createdAt)}</span>
               </div>
             </div>
 
+            {/* Actions - Horizontal Layout ABOVE Content */}
+            <div className="mb-6">
+              <MessageActions
+                messageId={message.id}
+                isRead={message.read}
+                isStarred={message.starred}
+                customerEmail={message.email}
+                customerName={message.name}
+                originalSubject={message.subject}
+                locale={locale}
+              />
+            </div>
+
             {/* Subject */}
-            <div className="mb-4 border-b border-gray-200 pb-4 dark:border-gray-700">
-              <p className="text-sm text-gray-500">{t.subject}</p>
-              <p className="font-medium text-gray-900 dark:text-white">
+            <div className="mb-6 rounded-xl bg-gray-50 p-5 dark:bg-gray-900/50">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {t.subject}
+              </p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-white">
                 {message.subject ?? t.noSubject}
               </p>
             </div>
 
             {/* Message Content */}
             <div>
-              <p className="text-sm text-gray-500">{t.messageContent}</p>
-              <div className="mt-2 whitespace-pre-wrap text-gray-600 dark:text-gray-400">
-                {message.content}
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                {t.messageContent}
+              </p>
+              <div className="rounded-xl bg-gray-50 p-6 text-base leading-relaxed text-gray-700 dark:bg-gray-900/50 dark:text-gray-300">
+                <div className="whitespace-pre-wrap">{message.content}</div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Actions */}
-          <MessageActions
-            messageId={message.id}
-            isRead={message.read}
-            isStarred={message.starred}
-            customerEmail={message.email}
-            locale={locale}
-          />
-
-          {/* Sender Details */}
-          <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-            <h2 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-              <User className="h-5 w-5 text-amber-600" />
-              {t.senderDetails}
-            </h2>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <User className="mt-0.5 h-4 w-4 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500">{t.name}</p>
-                  <p className="font-medium text-gray-900 dark:text-white">{message.name}</p>
+            {/* Attachments */}
+            {message.attachments && message.attachments.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-3 flex items-center gap-2">
+                  <Paperclip className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {t.attachments} ({message.attachments.length})
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  {message.attachments.map((file, index) => {
+                    const FileIcon = getFileIcon(file.type);
+                    return (
+                      <a
+                        key={index}
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between gap-3 rounded-xl border-2 border-gray-200 bg-white p-4 transition-all hover:border-amber-300 hover:bg-amber-50 hover:shadow-md dark:border-gray-700 dark:bg-gray-800 dark:hover:border-amber-600 dark:hover:bg-gray-700"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30">
+                            <FileIcon className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {formatFileSize(file.size)}
+                            </p>
+                          </div>
+                        </div>
+                        <Download className="h-5 w-5 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <Mail className="mt-0.5 h-4 w-4 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500">{t.email}</p>
-                  <a
-                    href={`mailto:${message.email}`}
-                    className="font-medium text-amber-600 hover:underline"
-                  >
-                    {message.email}
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <Phone className="mt-0.5 h-4 w-4 text-gray-400" />
-                <div>
-                  <p className="text-xs text-gray-500">{t.phone}</p>
-                  {message.phone ? (
-                    <a
-                      href={`tel:${message.phone}`}
-                      className="font-medium text-gray-900 dark:text-white"
-                    >
-                      {message.phone}
-                    </a>
-                  ) : (
-                    <p className="text-gray-400">{t.noPhone}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

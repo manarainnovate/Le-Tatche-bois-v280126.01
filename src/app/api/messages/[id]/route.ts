@@ -95,6 +95,10 @@ export const PATCH = withAuth(
         }
       }
 
+      if (data.starred !== undefined) {
+        updateData.starred = data.starred;
+      }
+
       const message = await prisma.message.update({
         where: { id },
         data: updateData,
@@ -106,6 +110,7 @@ export const PATCH = withAuth(
         email: message.email,
         read: message.read,
         readAt: message.readAt,
+        starred: message.starred,
         updatedAt: new Date(),
       });
     } catch (error) {

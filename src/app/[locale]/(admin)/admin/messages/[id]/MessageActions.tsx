@@ -13,6 +13,7 @@ import {
   Archive,
   Flag,
 } from "lucide-react";
+import { ReplyForm } from "./ReplyForm";
 
 // ═══════════════════════════════════════════════════════════
 // Translations
@@ -90,6 +91,8 @@ interface MessageActionsProps {
   isRead: boolean;
   isStarred: boolean;
   customerEmail: string;
+  customerName: string;
+  originalSubject: string | null;
   locale: string;
 }
 
@@ -98,6 +101,8 @@ export function MessageActions({
   isRead,
   isStarred,
   customerEmail,
+  customerName,
+  originalSubject,
   locale,
 }: MessageActionsProps) {
   const router = useRouter();
@@ -106,6 +111,7 @@ export function MessageActions({
   const [starred, setStarred] = useState(isStarred);
   const [read, setRead] = useState(isRead);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -155,9 +161,9 @@ export function MessageActions({
     }
   };
 
-  // Reply via email client
+  // Reply via inline form
   const handleReply = () => {
-    window.open(`mailto:${customerEmail}`, "_blank");
+    setShowReplyForm(true);
   };
 
   // Delete message
@@ -178,97 +184,119 @@ export function MessageActions({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-      <h2 className="mb-4 flex items-center gap-2 font-semibold text-gray-900 dark:text-white">
-        <Flag className="h-5 w-5 text-amber-600" />
-        {t.actions}
-      </h2>
-      <div className="space-y-3">
+    <>
+      {/* Horizontal Action Buttons - Modern Design */}
+      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
         {/* Mark as Read/Unread */}
-        <Button
-          variant="outline"
-          className="w-full justify-start"
+        <button
           onClick={() => void handleToggleRead()}
           disabled={isUpdating}
+          className="group flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 px-4 py-3 font-semibold text-gray-700 shadow-md transition-all hover:scale-105 hover:border-amber-400 hover:from-amber-50 hover:to-orange-50 hover:text-amber-700 hover:shadow-lg disabled:opacity-50 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-300 dark:hover:border-amber-600 dark:hover:from-amber-900/20 dark:hover:to-orange-900/20 dark:hover:text-amber-400"
         >
-          <MailOpen className="me-2 h-4 w-4" />
-          {read ? t.markAsUnread : t.markAsRead}
-        </Button>
+          <MailOpen className="h-5 w-5 transition-transform group-hover:scale-110" />
+          <span className="hidden sm:inline">{read ? t.markAsUnread : t.markAsRead}</span>
+        </button>
 
         {/* Star/Unstar */}
-        <Button
-          variant="outline"
-          className="w-full justify-start"
+        <button
           onClick={() => void handleToggleStar()}
           disabled={isUpdating}
+          className="group flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 px-4 py-3 font-semibold text-gray-700 shadow-md transition-all hover:scale-105 hover:border-yellow-400 hover:from-yellow-50 hover:to-amber-50 hover:text-yellow-700 hover:shadow-lg disabled:opacity-50 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-300 dark:hover:border-yellow-600 dark:hover:from-yellow-900/20 dark:hover:to-amber-900/20 dark:hover:text-yellow-400"
         >
           {starred ? (
             <>
-              <StarOff className="me-2 h-4 w-4" />
-              {t.unstar}
+              <StarOff className="h-5 w-5 transition-transform group-hover:scale-110" />
+              <span className="hidden sm:inline">{t.unstar}</span>
             </>
           ) : (
             <>
-              <Star className="me-2 h-4 w-4" />
-              {t.star}
+              <Star className="h-5 w-5 transition-transform group-hover:scale-110" />
+              <span className="hidden sm:inline">{t.star}</span>
             </>
           )}
-        </Button>
+        </button>
 
-        {/* Reply */}
-        <Button
-          variant="outline"
-          className="w-full justify-start"
+        {/* Reply - Primary Action */}
+        <button
           onClick={handleReply}
+          className="group flex items-center gap-2 rounded-xl border-2 border-green-500 bg-gradient-to-br from-green-500 to-emerald-600 px-6 py-3 font-bold text-white shadow-lg shadow-green-500/30 transition-all hover:scale-105 hover:border-green-600 hover:from-green-600 hover:to-emerald-700 hover:shadow-xl hover:shadow-green-500/40"
         >
-          <Reply className="me-2 h-4 w-4" />
-          {t.reply}
-        </Button>
+          <Reply className="h-5 w-5 transition-transform group-hover:scale-110" />
+          <span>{t.reply}</span>
+        </button>
 
         {/* Archive */}
-        <Button
-          variant="outline"
-          className="w-full justify-start"
-        >
-          <Archive className="me-2 h-4 w-4" />
-          {t.archive}
-        </Button>
+        <button className="group flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 px-4 py-3 font-semibold text-gray-700 shadow-md transition-all hover:scale-105 hover:border-blue-400 hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 hover:shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 dark:hover:text-blue-400">
+          <Archive className="h-5 w-5 transition-transform group-hover:scale-110" />
+          <span className="hidden sm:inline">{t.archive}</span>
+        </button>
 
-        {/* Delete */}
-        <Button
-          variant="outline"
-          className="w-full justify-start text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20"
+        {/* Delete - Danger Action */}
+        <button
           onClick={() => setShowDeleteConfirm(true)}
+          className="group flex items-center gap-2 rounded-xl border-2 border-red-500 bg-gradient-to-br from-red-500 to-rose-600 px-4 py-3 font-bold text-white shadow-lg shadow-red-500/30 transition-all hover:scale-105 hover:border-red-600 hover:from-red-600 hover:to-rose-700 hover:shadow-xl hover:shadow-red-500/40"
         >
-          <Trash2 className="me-2 h-4 w-4" />
-          {t.delete}
-        </Button>
+          <Trash2 className="h-5 w-5 transition-transform group-hover:scale-110" />
+          <span className="hidden sm:inline">{t.delete}</span>
+        </button>
       </div>
+
+      {/* Reply Form Modal */}
+      {showReplyForm && (
+        <ReplyForm
+          customerEmail={customerEmail}
+          customerName={customerName}
+          originalSubject={originalSubject}
+          messageId={messageId}
+          locale={locale}
+          onClose={() => setShowReplyForm(false)}
+          onSuccess={() => {
+            setShowReplyForm(false);
+            router.refresh();
+          }}
+        />
+      )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 dark:bg-gray-800">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
-              {t.delete}
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">{t.confirmDelete}</p>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowDeleteConfirm(false)}>
-                {t.cancel}
-              </Button>
-              <Button
-                variant="danger"
-                onClick={() => void handleDelete()}
-                disabled={isDeleting}
-              >
-                {isDeleting && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
-                {isDeleting ? t.deleting : t.delete}
-              </Button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-gray-800">
+            <div className="border-b-2 border-red-200 bg-gradient-to-r from-red-50 to-orange-50 px-6 py-5 dark:border-red-900/50 dark:from-red-900/10 dark:to-orange-900/10">
+              <div className="flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                  <Trash2 className="h-6 w-6" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                  {t.delete}
+                </h3>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-base leading-relaxed text-gray-700 dark:text-gray-300">
+                {t.confirmDelete}
+              </p>
+              <div className="mt-8 flex justify-end gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-6 py-2.5 font-semibold"
+                >
+                  {t.cancel}
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={() => void handleDelete()}
+                  disabled={isDeleting}
+                  className="bg-gradient-to-r from-red-600 to-red-700 px-6 py-2.5 font-semibold shadow-lg shadow-red-500/30 transition-all hover:shadow-xl hover:shadow-red-500/40 disabled:opacity-50"
+                >
+                  {isDeleting && <Loader2 className="me-2 h-5 w-5 animate-spin" />}
+                  {isDeleting ? t.deleting : t.delete}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }

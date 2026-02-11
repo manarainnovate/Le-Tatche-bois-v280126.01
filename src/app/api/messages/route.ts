@@ -76,6 +76,9 @@ export async function POST(req: NextRequest) {
 
     const data: CreateMessageInput = result.data;
 
+    // Get attachments if provided
+    const attachments = (body as any).attachments;
+
     // Create message
     const message = await prisma.message.create({
       data: {
@@ -84,16 +87,35 @@ export async function POST(req: NextRequest) {
         phone: data.phone,
         subject: data.subject,
         content: data.content,
+        attachments: attachments && Array.isArray(attachments) && attachments.length > 0 ? attachments : undefined,
         locale: data.locale ?? "fr",
         read: false,
       },
     });
 
-    // TODO: Send confirmation email to sender
-    // await sendMessageConfirmationEmail(message);
+    // Send emails (non-blocking - errors are logged but don't fail the request)
+    const { sendMessageNotificationToAdmin, sendMessageConfirmationToVisitor } = await import("@/lib/email");
 
-    // TODO: Send notification email to admin
-    // await sendMessageNotificationEmail(message);
+    const emailData = {
+      id: message.id,
+      name: message.name,
+      email: message.email,
+      phone: message.phone,
+      subject: message.subject,
+      content: message.content,
+      locale: message.locale,
+      createdAt: message.createdAt,
+    };
+
+    // Send admin notification email
+    sendMessageNotificationToAdmin(emailData).catch((err) => {
+      console.error("Failed to send admin notification email:", err);
+    });
+
+    // Send visitor confirmation email
+    sendMessageConfirmationToVisitor(emailData).catch((err) => {
+      console.error("Failed to send visitor confirmation email:", err);
+    });
 
     return apiSuccess(
       {
@@ -125,6 +147,8 @@ export const GET = withAuth(
 
       // Build filters
       const read = searchParams.get("read");
+      const starred = searchParams.get("starred");
+      const type = searchParams.get("type");
       const search = searchParams.get("search");
       const dateFrom = searchParams.get("dateFrom");
       const dateTo = searchParams.get("dateTo");
@@ -133,6 +157,14 @@ export const GET = withAuth(
 
       if (read !== null && read !== undefined && read !== "") {
         where.read = read === "true";
+      }
+
+      if (starred !== null && starred !== undefined && starred !== "") {
+        where.starred = starred === "true";
+      }
+
+      if (type && (type === "RECEIVED" || type === "SENT")) {
+        where.type = type;
       }
 
       // Search in name, email, subject, content
@@ -187,6 +219,8 @@ export const GET = withAuth(
         content: msg.content,
         read: msg.read,
         readAt: msg.readAt,
+        starred: msg.starred,
+        type: msg.type,
         locale: msg.locale,
         createdAt: msg.createdAt,
       }));

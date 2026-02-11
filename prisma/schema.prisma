@@ -1263,15 +1263,37 @@ model Message {
   subject String?
   content String  @db.Text
 
-  read   Boolean   @default(false)
-  readAt DateTime?
+  // File attachments (JSON array of {name, url, size, type})
+  attachments Json?
+
+  // Status
+  read    Boolean   @default(false)
+  readAt  DateTime?
+  starred Boolean   @default(false)
+
+  // Type: RECEIVED (from contact form) or SENT (admin reply)
+  type MessageType @default(RECEIVED)
+
+  // For SENT messages: reference to original message
+  inReplyToId String?
+  inReplyTo   Message?  @relation("MessageReplies", fields: [inReplyToId], references: [id], onDelete: SetNull)
+  replies     Message[] @relation("MessageReplies")
 
   locale String @default("fr")
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([read])
+  @@index([starred])
   @@index([email])
+  @@index([type])
+  @@index([createdAt])
+}
+
+enum MessageType {
+  RECEIVED // From contact form
+  SENT     // Admin reply
 }
 
 // ============================================

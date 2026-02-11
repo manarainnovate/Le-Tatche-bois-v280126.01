@@ -135,6 +135,7 @@ export const createMessageSchema = z.object({
 
 export const updateMessageSchema = z.object({
   read: z.boolean().optional(),
+  starred: z.boolean().optional(),
 });
 
 // ═══════════════════════════════════════════════════════════

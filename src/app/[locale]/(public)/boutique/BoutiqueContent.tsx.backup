@@ -1,0 +1,790 @@
+"use client";
+
+import { useState, useMemo, useEffect, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { useDirection } from "@/hooks/useDirection";
+import { cn } from "@/lib/utils";
+import { useCartStore } from "@/stores/cart";
+import { useToast } from "@/hooks/useToast";
+import { useCurrency } from "@/stores/currency";
+import {
+  Search,
+  ShoppingCart,
+  SlidersHorizontal,
+  X,
+  Eye,
+  Heart,
+  Package,
+  Filter,
+  Grid3X3,
+  LayoutList,
+  Star,
+  Check,
+  Truck,
+  Shield,
+  RotateCcw,
+  Award,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
+
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+
+const PRODUCTS_PER_PAGE = 12;
+
+// ═══════════════════════════════════════════════════════════
+// TYPES
+// ═══════════════════════════════════════════════════════════
+
+interface Product {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  category: string;
+  price: number;
+  comparePrice?: number;
+  image: string;
+  inStock: boolean;
+  stockCount: number;
+  isNew?: boolean;
+  isBestSeller?: boolean;
+  rating: number;
+  reviews: number;
+  material: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  count: number;
+}
+
+interface BoutiqueContentProps {
+  locale: string;
+  translations: {
+    search: string;
+    filterByCategory: string;
+    sortBy: string;
+    filters: string;
+    productsFound: string;
+    noProducts: string;
+    resetFilters: string;
+    addToCart: string;
+    addedToCart: string;
+    outOfStock: string;
+    lowStock: string;
+    viewProduct: string;
+    categories: Record<string, string>;
+    sortOptions: Record<string, string>;
+  };
+}
+
+// ═══════════════════════════════════════════════════════════
+// DATA - Categories and Sort Options
+// ═══════════════════════════════════════════════════════════
+
+const categoriesData = [
+  { id: "all", name: "Toutes", count: 0 },
+  { id: "decoration", name: "Décoration", count: 0 },
+  { id: "mobilier", name: "Mobilier", count: 0 },
+  { id: "accessoires", name: "Accessoires", count: 0 },
+];
+
+const sortOptionsData = [
+  { id: "newest", name: "Plus récents" },
+  { id: "priceAsc", name: "Prix: Croissant" },
+  { id: "priceDesc", name: "Prix: Décroissant" },
+  { id: "popular", name: "Populaires" },
+];
+
+// ═══════════════════════════════════════════════════════════
+// PRODUCT CARD COMPONENT
+// ═══════════════════════════════════════════════════════════
+
+interface ProductCardProps {
+  product: Product;
+  locale: string;
+  isRTL: boolean;
+  translations: any;
+  onAddToCart: () => void;
+  isVisible: boolean;
+  index: number;
+  viewMode: "grid" | "list";
+  wishlist: string[];
+  onToggleWishlist: (id: string) => void;
+  addedToCart: string | null;
+}
+
+function ProductCard({ product, locale, isRTL, translations, onAddToCart, isVisible, index, viewMode, wishlist, onToggleWishlist, addedToCart }: ProductCardProps) {
+  const { format: formatPrice } = useCurrency();
+  const isInWishlist = wishlist.includes(product.id);
+  const justAdded = addedToCart === product.id;
+
+  console.log('🎨 ProductCard rendering:');
+  console.log('  - name:', product.name, '(type:', typeof product.name, ')');
+  console.log('  - image:', product.image);
+  console.log('  - slug:', product.slug);
+  console.log('  - Full product object:', product);
+
+  return (
+    <div
+      className={cn(
+        "group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300",
+        viewMode === "list" && "flex gap-6"
+      )}
+    >
+      {/* Product Image */}
+      <Link
+        href={`/${locale}/boutique/${product.slug}`}
+        className={cn(
+          "relative overflow-hidden bg-gray-100",
+          viewMode === "grid" ? "aspect-square" : "w-48 h-48 flex-shrink-0"
+        )}
+      >
+        <Image
+          src={product.image}
+          alt={product.name}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-110"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        />
+
+        {/* Badges */}
+        <div className={cn("absolute top-3 flex flex-col gap-2", isRTL ? "right-3" : "left-3")}>
+          {product.isNew && (
+            <span className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
+              NEW
+            </span>
+          )}
+          {product.comparePrice && (
+            <span className="px-3 py-1 bg-red-500 text-white text-xs font-bold rounded-full">
+              -{Math.round((1 - product.price / product.comparePrice) * 100)}%
+            </span>
+          )}
+          {!product.inStock && (
+            <span className="px-3 py-1 bg-gray-800 text-white text-xs font-bold rounded-full">
+              {translations.outOfStock}
+            </span>
+          )}
+        </div>
+
+        {/* Wishlist Button */}
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            onToggleWishlist(product.id);
+          }}
+          className={cn(
+            "absolute top-3 p-2 rounded-full transition-all",
+            "opacity-0 group-hover:opacity-100",
+            isRTL ? "left-3" : "right-3",
+            isInWishlist ? "bg-red-500 text-white" : "bg-white/90 text-gray-600 hover:bg-red-500 hover:text-white"
+          )}
+        >
+          <Heart size={18} fill={isInWishlist ? "currentColor" : "none"} />
+        </button>
+      </Link>
+
+      {/* Product Info */}
+      <div className={cn("p-4 flex flex-col", viewMode === "list" && "flex-1")}>
+        <Link href={`/${locale}/boutique/${product.slug}`}>
+          <h3 className="font-bold text-lg text-gray-900 group-hover:text-wood-primary transition-colors line-clamp-1">
+            {product.name}
+          </h3>
+        </Link>
+
+        <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+          {product.description}
+        </p>
+
+        {/* Rating */}
+        <div className="flex items-center gap-2 mt-2">
+          <div className="flex">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                size={14}
+                className={i < Math.floor(product.rating) ? "fill-amber-400 text-amber-400" : "text-gray-200"}
+              />
+            ))}
+          </div>
+          <span className="text-xs text-gray-500">({product.reviews})</span>
+        </div>
+
+        {/* Price */}
+        <div className="flex items-end gap-2 mt-3">
+          <span className="text-2xl font-bold text-wood-primary">
+            {formatPrice(product.price)}
+          </span>
+          {product.comparePrice && (
+            <span className="text-sm text-gray-400 line-through">
+              {formatPrice(product.comparePrice)}
+            </span>
+          )}
+        </div>
+
+        {/* Stock Info */}
+        {product.inStock && product.stockCount <= 5 && (
+          <p className="text-xs text-orange-600 mt-2">
+            {translations.lowStock.replace("{count}", String(product.stockCount))}
+          </p>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={onAddToCart}
+            disabled={!product.inStock || justAdded}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg font-medium transition-all",
+              justAdded
+                ? "bg-green-500 text-white"
+                : product.inStock
+                ? "bg-wood-primary text-white hover:bg-wood-secondary hover:shadow-lg"
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
+            )}
+          >
+            {justAdded ? (
+              <>
+                <Check size={18} />
+                {translations.addedToCart}
+              </>
+            ) : (
+              <>
+                <ShoppingCart size={18} />
+                {translations.addToCart}
+              </>
+            )}
+          </button>
+
+          <Link
+            href={`/${locale}/boutique/${product.slug}`}
+            className="p-2.5 border-2 border-gray-200 rounded-lg hover:border-wood-primary hover:text-wood-primary transition-colors"
+          >
+            <Eye size={18} />
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═══════════════════════════════════════════════════════════
+
+export function BoutiqueContent({ locale, translations }: BoutiqueContentProps) {
+  const direction = useDirection();
+  const isRTL = direction === "rtl";
+  const { addItem } = useCartStore();
+  const { success } = useToast();
+  const { format: formatPrice } = useCurrency();
+
+  // State
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [addedToCart, setAddedToCart] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Animation state
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/products?limit=100&isActive=true`, {
+          headers: { 'Accept-Language': locale },
+        });
+
+        if (!res.ok) throw new Error('Failed to fetch products');
+
+        const data = await res.json();
+        console.log('🔍 API Response:', data);
+        if (data.success && data.data && data.data.data) {
+          // Transform API products to match component format
+          const transformed = data.data.data.map((p: any) => {
+            console.log('🔄 Transforming product:');
+            console.log('  - p.name:', p.name, '(type:', typeof p.name, ')');
+            console.log('  - p.thumbnail:', p.thumbnail);
+            console.log('  - p.images:', p.images);
+            console.log('  - Full API product:', p);
+            return {
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            description: p.shortDescription || p.description || '',
+            category: p.category?.slug || 'other',
+            price: p.price,
+            comparePrice: p.comparePrice,
+            image: p.thumbnail || (p.images && p.images[0]) || '/placeholder.jpg',
+            inStock: p.trackStock ? p.stockQty > 0 : true,
+            stockCount: p.stockQty || 0,
+            isNew: p.isNew,
+            isBestSeller: p.isFeatured,
+            rating: 4.5,
+            reviews: p.soldCount || 0,
+            material: '',
+          }});
+          console.log('✅ Transformed products:', transformed);
+          setProducts(transformed);
+          setIsVisible(true); // Show products immediately after loading
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [locale]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (gridRef.current) {
+      observer.observe(gridRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    let result = products.filter((p) => {
+      const categoryMatch = selectedCategory === "all" || p.category === selectedCategory;
+      const searchMatch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase());
+      return categoryMatch && searchMatch;
+    });
+
+    // Sort
+    switch (sortBy) {
+      case "priceAsc":
+        result = [...result].sort((a, b) => a.price - b.price);
+        break;
+      case "priceDesc":
+        result = [...result].sort((a, b) => b.price - a.price);
+        break;
+      case "popular":
+        result = [...result].sort((a, b) => b.reviews - a.reviews);
+        break;
+      case "rating":
+        result = [...result].sort((a, b) => b.rating - a.rating);
+        break;
+      case "newest":
+      default:
+        result = [...result].sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+        break;
+    }
+
+    return result;
+  }, [products, selectedCategory, searchQuery, sortBy]);
+
+  // Pagination calculations
+  const totalProducts = filteredProducts.length;
+  const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+  const endIndex = Math.min(startIndex + PRODUCTS_PER_PAGE, totalProducts);
+  const paginatedProducts = filteredProducts.slice(startIndex, endIndex);
+
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery, sortBy]);
+
+  // Generate page numbers for pagination UI
+  const getPageNumbers = (): (number | string)[] => {
+    const pages: (number | string)[] = [];
+    const maxVisiblePages = 5;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push("...");
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    // Scroll to top of products
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // Handlers
+  const handleAddToCart = (product: Product) => {
+    if (!product.inStock) return;
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: 1,
+      image: product.image,
+    });
+    setAddedToCart(product.id);
+    setTimeout(() => setAddedToCart(null), 2000);
+    success(translations.addedToCart, product.name);
+  };
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
+
+  const resetFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("all");
+    setSortBy("newest");
+  };
+
+  return (
+    <>
+      {/* Main Content */}
+      <section className="py-8 md:py-12">
+        <div className="max-w-7xl mx-auto px-4">
+          {/* Products Area */}
+          <div className="w-full">
+              {/* Toolbar */}
+              <div className={cn(
+                "flex flex-wrap items-center justify-between gap-4 mb-6 bg-white rounded-xl p-4 shadow-sm",
+                isRTL && "flex-row-reverse"
+              )}>
+                {/* Search */}
+                <div className="relative flex-1 min-w-[200px] max-w-md">
+                  <Search className={cn(
+                    "absolute top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400",
+                    isRTL ? "right-3" : "left-3"
+                  )} />
+                  <input
+                    type="search"
+                    placeholder={translations.search}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className={cn(
+                      "w-full py-2.5 border border-gray-200 rounded-lg bg-white",
+                      "focus:outline-none focus:ring-2 focus:ring-wood-primary/50",
+                      isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4"
+                    )}
+                  />
+                </div>
+
+                {/* Mobile Filter Button */}
+                <button
+                  onClick={() => setShowMobileFilters(!showMobileFilters)}
+                  className={cn(
+                    "lg:hidden flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg",
+                    isRTL && "flex-row-reverse"
+                  )}
+                >
+                  <SlidersHorizontal size={18} />
+                  {translations.filters}
+                </button>
+
+                {/* Results Count */}
+                <p className="text-wood-dark/70 hidden sm:block">
+                  <span className="font-semibold text-wood-dark">{startIndex + 1}-{endIndex}</span>{" "}
+                  sur <span className="font-semibold text-wood-dark">{totalProducts}</span>{" "}
+                  {translations.productsFound}
+                </p>
+
+                {/* Sort & View */}
+                <div className={cn(
+                  "flex items-center gap-3",
+                  isRTL && "flex-row-reverse"
+                )}>
+                  {/* Sort Dropdown */}
+                  <div className="relative">
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className={cn(
+                        "appearance-none px-4 py-2.5 pr-10 border border-gray-200 rounded-lg bg-white",
+                        "focus:outline-none focus:ring-2 focus:ring-wood-primary/50 cursor-pointer",
+                        isRTL && "text-right"
+                      )}
+                    >
+                      {sortOptionsData.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+
+                  {/* View Toggle */}
+                  <div className="hidden sm:flex border border-gray-200 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setViewMode("grid")}
+                      className={cn(
+                        "p-2.5 transition-colors",
+                        viewMode === "grid"
+                          ? "bg-wood-primary text-white"
+                          : "bg-white text-gray-500 hover:bg-gray-50"
+                      )}
+                    >
+                      <Grid3X3 size={18} />
+                    </button>
+                    <button
+                      onClick={() => setViewMode("list")}
+                      className={cn(
+                        "p-2.5 transition-colors",
+                        viewMode === "list"
+                          ? "bg-wood-primary text-white"
+                          : "bg-white text-gray-500 hover:bg-gray-50"
+                      )}
+                    >
+                      <LayoutList size={18} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Filters */}
+              {showMobileFilters && (
+                <div className="lg:hidden mb-6 bg-white rounded-xl p-4 shadow-sm">
+                  <div className="flex flex-wrap gap-2">
+                    {categoriesData.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={cn(
+                          "px-4 py-2 rounded-full text-sm font-medium transition-colors",
+                          selectedCategory === cat.id
+                            ? "bg-wood-primary text-white"
+                            : "bg-gray-100 text-wood-dark hover:bg-gray-200"
+                        )}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Loading State */}
+              {loading ? (
+                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm animate-pulse">
+                      <div className="aspect-square bg-gray-200" />
+                      <div className="p-4 space-y-3">
+                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 rounded w-1/2" />
+                        <div className="h-6 bg-gray-200 rounded w-1/3" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                  {/* Products Grid */}
+                  <div
+                    ref={gridRef}
+                    className={cn(
+                      "grid gap-6",
+                      viewMode === "grid"
+                        ? "grid-cols-1 sm:grid-cols-2 xl:grid-cols-3"
+                        : "grid-cols-1"
+                    )}
+                  >
+                    {paginatedProducts.map((product, index) => (
+                      <ProductCard
+                        key={product.id}
+                        product={product}
+                        locale={locale}
+                        isRTL={isRTL}
+                        translations={translations}
+                        onAddToCart={() => handleAddToCart(product)}
+                        isVisible={isVisible}
+                        index={index}
+                        viewMode={viewMode}
+                        wishlist={wishlist}
+                        onToggleWishlist={toggleWishlist}
+                        addedToCart={addedToCart}
+                      />
+                    ))}
+                  </div>
+
+                  {/* No Products */}
+                  {paginatedProducts.length === 0 && (
+                <div className="text-center py-16 bg-white rounded-2xl">
+                  <Package size={64} className="mx-auto text-gray-300 mb-4" />
+                  <h3 className="text-xl font-bold text-gray-600 mb-2">
+                    {translations.noProducts}
+                  </h3>
+                  <p className="text-gray-400 mb-4">Essayez de modifier vos filtres</p>
+                  <button
+                    onClick={resetFilters}
+                    className={cn(
+                      "inline-flex items-center gap-2 px-6 py-3",
+                      "bg-wood-primary text-white rounded-lg font-medium",
+                      "hover:bg-wood-secondary transition-colors",
+                      isRTL && "flex-row-reverse"
+                    )}
+                  >
+                    <X size={18} />
+                    {translations.resetFilters}
+                  </button>
+                </div>
+              )}
+                </>
+              )}
+
+              {/* ═══════════════════════════════════════════════════════════ */}
+              {/* PAGINATION                                                  */}
+              {/* ═══════════════════════════════════════════════════════════ */}
+              {!loading && totalPages > 1 && (
+                <div className={cn(
+                  "mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white rounded-xl p-4 shadow-sm",
+                  isRTL && "flex-row-reverse"
+                )}>
+                  {/* Results Info */}
+                  <p className="text-sm text-gray-500">
+                    Page <span className="font-semibold text-wood-dark">{currentPage}</span> sur{" "}
+                    <span className="font-semibold text-wood-dark">{totalPages}</span>{" "}
+                    ({totalProducts} produits)
+                  </p>
+
+                  {/* Pagination Controls */}
+                  <div className={cn("flex items-center gap-1", isRTL && "flex-row-reverse")}>
+                    {/* First Page */}
+                    <button
+                      onClick={() => handlePageChange(1)}
+                      disabled={currentPage === 1}
+                      className={cn(
+                        "p-2 rounded-lg transition-colors",
+                        currentPage === 1
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-600 hover:bg-wood-primary/10 hover:text-wood-primary"
+                      )}
+                      title="Première page"
+                    >
+                      <ChevronsLeft size={20} />
+                    </button>
+
+                    {/* Previous */}
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={cn(
+                        "p-2 rounded-lg transition-colors",
+                        currentPage === 1
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-600 hover:bg-wood-primary/10 hover:text-wood-primary"
+                      )}
+                      title="Page précédente"
+                    >
+                      <ChevronLeft size={20} />
+                    </button>
+
+                    {/* Page Numbers */}
+                    <div className={cn("flex items-center gap-1 mx-2", isRTL && "flex-row-reverse")}>
+                      {getPageNumbers().map((page, idx) =>
+                        typeof page === "number" ? (
+                          <button
+                            key={idx}
+                            onClick={() => handlePageChange(page)}
+                            className={cn(
+                              "min-w-[40px] h-10 rounded-lg font-medium transition-all",
+                              page === currentPage
+                                ? "bg-wood-primary text-white shadow-lg shadow-wood-primary/30"
+                                : "text-gray-600 hover:bg-wood-primary/10 hover:text-wood-primary"
+                            )}
+                          >
+                            {page}
+                          </button>
+                        ) : (
+                          <span key={idx} className="px-2 text-gray-400">
+                            {page}
+                          </span>
+                        )
+                      )}
+                    </div>
+
+                    {/* Next */}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className={cn(
+                        "p-2 rounded-lg transition-colors",
+                        currentPage === totalPages
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-600 hover:bg-wood-primary/10 hover:text-wood-primary"
+                      )}
+                      title="Page suivante"
+                    >
+                      <ChevronRight size={20} />
+                    </button>
+
+                    {/* Last Page */}
+                    <button
+                      onClick={() => handlePageChange(totalPages)}
+                      disabled={currentPage === totalPages}
+                      className={cn(
+                        "p-2 rounded-lg transition-colors",
+                        currentPage === totalPages
+                          ? "text-gray-300 cursor-not-allowed"
+                          : "text-gray-600 hover:bg-wood-primary/10 hover:text-wood-primary"
+                      )}
+                      title="Dernière page"
+                    >
+                      <ChevronsRight size={20} />
+                    </button>
+                  </div>
+                </div>
+              )}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+BoutiqueContent.displayName = "BoutiqueContent";

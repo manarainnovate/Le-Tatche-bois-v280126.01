@@ -357,6 +357,7 @@ export function CheckoutContent({ locale, translations }: CheckoutContentProps) 
 
   // Form submission
   const onSubmit = async (data: CheckoutFormData) => {
+    console.log('🛒 Form submitted:', data);
     setIsSubmitting(true);
 
     if (data.paymentMethod === "card") {
@@ -411,7 +412,10 @@ export function CheckoutContent({ locale, translations }: CheckoutContentProps) 
           </h1>
         </div>
 
-        <form onSubmit={(e) => void handleSubmit(onSubmit)(e)}>
+        <form onSubmit={(e) => {
+          console.log('📝 Form submit attempt, errors:', errors);
+          void handleSubmit(onSubmit)(e);
+        }}>
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left - Forms */}
             <div className="lg:col-span-2 space-y-6">

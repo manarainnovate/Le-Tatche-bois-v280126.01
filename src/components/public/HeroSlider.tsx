@@ -59,6 +59,8 @@ export default function HeroSlider({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
   const isRTL = locale === "ar";
 
   // Get localized content
@@ -144,6 +146,27 @@ export default function HeroSlider({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [nextSlide, prevSlide, isRTL]);
 
+  // Handle touch swipe for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0]?.clientX ?? 0);
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStart - touchEnd > 75) {
+      // Swipe left
+      isRTL ? prevSlide() : nextSlide();
+    }
+
+    if (touchStart - touchEnd < -75) {
+      // Swipe right
+      isRTL ? nextSlide() : prevSlide();
+    }
+  };
+
   // If no slides, show placeholder
   if (!slides || slides.length === 0) {
     return (
@@ -171,6 +194,9 @@ export default function HeroSlider({
       style={{ height }}
       onMouseEnter={() => pauseOnHover && setIsPaused(true)}
       onMouseLeave={() => pauseOnHover && setIsPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Slides Container */}
       <div className="absolute inset-0">
@@ -214,22 +240,22 @@ export default function HeroSlider({
             maxWidth: textPosition === "center" ? "900px" : "600px",
           }}
         >
-          {/* Title */}
+          {/* Title - MOBILE RESPONSIVE */}
           {getLocalized(currentSlide, "title") && (
             <h1
               key={`title-${currentIndex}`}
-              className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 leading-tight animate-fade-in-up"
+              className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 md:mb-6 leading-tight animate-fade-in-up"
               style={{ color: currentSlide.textColor || "#ffffff" }}
             >
               {getLocalized(currentSlide, "title")}
             </h1>
           )}
 
-          {/* Subtitle */}
+          {/* Subtitle - MOBILE RESPONSIVE */}
           {getLocalized(currentSlide, "subtitle") && (
             <p
               key={`subtitle-${currentIndex}`}
-              className="text-lg md:text-xl lg:text-2xl mb-6 md:mb-8 opacity-90 animate-fade-in-up"
+              className="text-sm sm:text-base md:text-lg lg:text-xl xl:text-2xl mb-4 sm:mb-5 md:mb-8 opacity-90 animate-fade-in-up"
               style={{
                 color: currentSlide.textColor || "#ffffff",
                 animationDelay: "0.2s",
@@ -239,9 +265,9 @@ export default function HeroSlider({
             </p>
           )}
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - MOBILE RESPONSIVE */}
           <div
-            className={`flex flex-wrap gap-4 animate-fade-in-up ${
+            className={`flex flex-wrap gap-2 sm:gap-3 md:gap-4 animate-fade-in-up ${
               textPosition === "center"
                 ? "justify-center"
                 : textPosition === "right"
@@ -253,7 +279,7 @@ export default function HeroSlider({
             {currentSlide.ctaUrl && getLocalized(currentSlide, "ctaText") && (
               <Link
                 href={currentSlide.ctaUrl}
-                className="inline-flex items-center px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg transition-all hover:scale-105 shadow-lg"
+                className="inline-flex items-center px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-sm sm:text-base bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg transition-all hover:scale-105 shadow-lg"
               >
                 {getLocalized(currentSlide, "ctaText")}
               </Link>
@@ -262,7 +288,7 @@ export default function HeroSlider({
             {currentSlide.cta2Url && getLocalized(currentSlide, "cta2Text") && (
               <Link
                 href={currentSlide.cta2Url}
-                className="inline-flex items-center px-6 py-3 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg transition-all border border-white/40"
+                className="inline-flex items-center px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 text-sm sm:text-base bg-white/20 hover:bg-white/30 text-white font-semibold rounded-lg transition-all border border-white/40"
               >
                 {getLocalized(currentSlide, "cta2Text")}
               </Link>
@@ -271,38 +297,38 @@ export default function HeroSlider({
         </div>
       </div>
 
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - MOBILE OPTIMIZED */}
       {showControls && slides.length > 1 && (
         <>
           <button
             onClick={isRTL ? nextSlide : prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-30 p-2 md:p-3 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all"
+            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-2.5 md:p-3 rounded-full bg-white/60 hover:bg-white/90 backdrop-blur-sm text-gray-800 transition-all shadow-lg"
             aria-label="Previous slide"
           >
-            <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />
           </button>
 
           <button
             onClick={isRTL ? prevSlide : nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 p-2 md:p-3 rounded-full bg-black/30 hover:bg-black/50 text-white transition-all"
+            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-2.5 md:p-3 rounded-full bg-white/60 hover:bg-white/90 backdrop-blur-sm text-gray-800 transition-all shadow-lg"
             aria-label="Next slide"
           >
-            <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />
           </button>
         </>
       )}
 
-      {/* Dot Indicators */}
+      {/* Dot Indicators - MOBILE OPTIMIZED */}
       {showIndicators && slides.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 sm:gap-2">
           {slides.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`h-3 rounded-full transition-all ${
+              className={`h-2 sm:h-2.5 md:h-3 rounded-full transition-all ${
                 index === currentIndex
-                  ? "bg-amber-500 w-8"
-                  : "bg-white/50 hover:bg-white/80 w-3"
+                  ? "bg-amber-500 w-6 sm:w-7 md:w-8"
+                  : "bg-white/50 hover:bg-white/80 w-2 sm:w-2.5 md:w-3"
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -312,7 +338,7 @@ export default function HeroSlider({
 
       {/* Progress Bar */}
       {slides.length > 1 && !isPaused && (
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/20 z-30">
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 sm:h-1 bg-black/20 z-30">
           <div
             key={currentIndex}
             className="h-full bg-amber-500 hero-progress-bar"
@@ -323,8 +349,8 @@ export default function HeroSlider({
         </div>
       )}
 
-      {/* Slide Counter */}
-      <div className="absolute top-4 right-4 z-30 px-3 py-1 bg-black/30 rounded-full text-white text-sm">
+      {/* Slide Counter - MOBILE OPTIMIZED */}
+      <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-30 px-2 py-0.5 sm:px-3 sm:py-1 bg-black/30 backdrop-blur-sm rounded-full text-white text-xs sm:text-sm">
         {currentIndex + 1} / {slides.length}
       </div>
 

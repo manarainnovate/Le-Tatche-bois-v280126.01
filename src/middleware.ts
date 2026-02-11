@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import createMiddleware from "next-intl/middleware";
 import { locales, defaultLocale } from "@/i18n/config";
+import {
+  detectLocale,
+  detectCurrency,
+  parseBrowserLanguage,
+  getCountryFromHeaders,
+  isBot,
+  getCookieValue,
+  COOKIES,
+  isValidLocale,
+  isValidCurrency,
+} from "@/lib/geo-detection";
 
 // ═══════════════════════════════════════════════════════════
 // Security Headers
@@ -26,6 +37,105 @@ const intlMiddleware = createMiddleware({
   defaultLocale,
   localePrefix: "always",
 });
+
+// ═══════════════════════════════════════════════════════════
+// Geo-Detection Logic
+// ═══════════════════════════════════════════════════════════
+
+function handleGeoDetection(request: NextRequest): NextResponse | null {
+  const { pathname } = request.nextUrl;
+  const cookieHeader = request.headers.get("cookie") || "";
+
+  // Check if pathname already has a locale prefix
+  const pathnameHasLocale = locales.some(
+    (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
+  );
+
+  // Only handle root path or paths without locale
+  if (pathnameHasLocale) {
+    return null; // Let intlMiddleware handle it
+  }
+
+  // Skip geo-detection for admin routes, API routes, and auth routes
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/_vercel")
+  ) {
+    return null;
+  }
+
+  // Check if user is a bot/crawler (don't redirect bots for SEO)
+  const userAgent = request.headers.get("user-agent") || "";
+  if (isBot(userAgent)) {
+    // Let bots see the default locale
+    return null;
+  }
+
+  // PRIORITY 1: Check for user's manual preference (highest priority)
+  const preferredLocale = getCookieValue(cookieHeader, COOKIES.PREFERRED_LOCALE);
+  if (preferredLocale && isValidLocale(preferredLocale)) {
+    // User has manually chosen a language — respect it
+    const url = request.nextUrl.clone();
+    url.pathname = `/${preferredLocale}${pathname}`;
+    return NextResponse.redirect(url);
+  }
+
+  // PRIORITY 2: Check for auto-detected locale from previous visit
+  const autoDetectedLocale = getCookieValue(cookieHeader, COOKIES.AUTO_DETECTED_LOCALE);
+  if (autoDetectedLocale && isValidLocale(autoDetectedLocale)) {
+    // We already detected locale before, use it (avoids re-detection on every visit)
+    const url = request.nextUrl.clone();
+    url.pathname = `/${autoDetectedLocale}${pathname}`;
+    return NextResponse.redirect(url);
+  }
+
+  // PRIORITY 3: First-time visitor — Auto-detect based on IP + browser language
+  // Get country from Cloudflare or Vercel headers
+  const country = getCountryFromHeaders(request.headers);
+
+  // Get browser language from Accept-Language header
+  const acceptLanguage = request.headers.get("accept-language") || "";
+  const browserLang = parseBrowserLanguage(acceptLanguage);
+
+  // Detect best locale
+  const detectedLocale = detectLocale(country, browserLang);
+
+  // Detect best currency
+  const detectedCurrency = detectCurrency(country);
+
+  // Redirect to detected locale
+  const url = request.nextUrl.clone();
+  url.pathname = `/${detectedLocale}${pathname}`;
+
+  const response = NextResponse.redirect(url);
+
+  // Set cookies to remember auto-detection (1 year)
+  const maxAge = 365 * 24 * 60 * 60; // 1 year in seconds
+
+  response.cookies.set(COOKIES.AUTO_DETECTED_LOCALE, detectedLocale, {
+    maxAge,
+    path: "/",
+    sameSite: "lax",
+  });
+
+  response.cookies.set(COOKIES.AUTO_DETECTED_CURRENCY, detectedCurrency, {
+    maxAge,
+    path: "/",
+    sameSite: "lax",
+  });
+
+  // Optional: Set a cookie with detected country for analytics/debugging
+  response.cookies.set("detected-country", country, {
+    maxAge,
+    path: "/",
+    sameSite: "lax",
+  });
+
+  return response;
+}
 
 // ═══════════════════════════════════════════════════════════
 // Combined Middleware
@@ -60,7 +170,17 @@ export default function middleware(request: NextRequest) {
     return response;
   }
 
-  // Handle internationalized routes
+  // Try geo-detection first (for root path and non-localized paths)
+  const geoResponse = handleGeoDetection(request);
+  if (geoResponse) {
+    // Add security headers to geo-redirect response
+    for (const [key, value] of Object.entries(securityHeaders)) {
+      geoResponse.headers.set(key, value);
+    }
+    return geoResponse;
+  }
+
+  // Handle internationalized routes with next-intl
   const response = intlMiddleware(request);
 
   // Add security headers to all responses

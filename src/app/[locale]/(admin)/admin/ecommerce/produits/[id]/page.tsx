@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Save, Loader2, Plus, X, Camera, Tag, Box, Ruler, Search, FileText, Trash2 } from "lucide-react";
+import { ArrowLeft, Save, Loader2, Plus, X, Camera, Tag, Box, Ruler, Search, FileText, Trash2, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 import MultilingualInput from "@/components/admin/MultilingualInput";
 import TranslateAllButton from "@/components/admin/TranslateAllButton";
+import { useCurrency } from "@/stores/currency";
 
 interface PageProps {
   params: { locale: string; id: string };
@@ -143,9 +144,11 @@ const translations = {
     deleting: "Suppression...",
     requiredField: "Champ requis",
     validationError: "Veuillez vérifier les champs requis",
+    viewOnline: "Voir en ligne",
   },
   en: {
     newProduct: "New Product",
+    viewOnline: "View Online",
     editProduct: "Edit Product",
     back: "Back",
     save: "Save",
@@ -287,8 +290,10 @@ const translations = {
     deleting: "Eliminando...",
     requiredField: "Campo requerido",
     validationError: "Por favor verifica los campos requeridos",
+    viewOnline: "Ver en línea",
   },
   ar: {
+    viewOnline: "عرض أونلاين",
     newProduct: "منتج جديد",
     editProduct: "تعديل المنتج",
     back: "رجوع",
@@ -369,6 +374,7 @@ export default function ProductEditPage({ params }: PageProps) {
   const router = useRouter();
   const t = translations[locale as keyof typeof translations] ?? translations.fr;
   const isRTL = locale === "ar";
+  const { currencyInfo } = useCurrency();
 
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
@@ -419,13 +425,21 @@ export default function ProductEditPage({ params }: PageProps) {
   const fetchCategories = async () => {
     setLoadingCategories(true);
     try {
-      const res = await fetch("/api/categories?isActive=true");
+      const res = await fetch("/api/categories?isActive=true&limit=100&allTranslations=true");
       if (res.ok) {
-        const data = await res.json();
-        setCategories(data.data || []);
+        const result = await res.json();
+        // API returns { success: true, data: { data: [...], pagination: {...} } }
+        if (result.success && result.data && Array.isArray(result.data.data)) {
+          setCategories(result.data.data);
+        } else {
+          setCategories([]);
+        }
+      } else {
+        setCategories([]);
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
+      setCategories([]);
     } finally {
       setLoadingCategories(false);
     }
@@ -600,7 +614,7 @@ export default function ProductEditPage({ params }: PageProps) {
             shortDescription: shortDescriptionValues.ar,
             features: featuresValues.ar,
           },
-        ],
+        ].filter((t) => t.name.trim() !== ""), // Only include translations with a name
       };
 
       console.log("📤 Sending payload:", payload);
@@ -657,6 +671,16 @@ export default function ProductEditPage({ params }: PageProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {!isNew && form.slug && (
+            <Link
+              href={`/${locale}/boutique/${form.slug}`}
+              target="_blank"
+              className="flex items-center gap-2 px-4 py-2 border border-amber-300 text-amber-600 rounded-lg hover:bg-amber-50 transition-colors dark:border-amber-700 dark:hover:bg-amber-900/20"
+            >
+              <ExternalLink className="w-4 h-4" />
+              {t.viewOnline || "Voir en ligne"}
+            </Link>
+          )}
           {!isNew && (
             <button
               onClick={handleDelete}
@@ -808,8 +832,8 @@ export default function ProductEditPage({ params }: PageProps) {
               <option value="">
                 {loadingCategories ? t.loadingCategories : t.selectCategory}
               </option>
-              {categories.map((cat) => {
-                const translation = cat.translations.find((t) => t.locale === locale) || cat.translations[0];
+              {Array.isArray(categories) && categories.map((cat) => {
+                const translation = cat.translations?.find((t) => t.locale === locale) || cat.translations?.[0];
                 return (
                   <option key={cat.id} value={cat.id}>
                     {translation?.name || cat.slug}
@@ -1039,45 +1063,60 @@ export default function ProductEditPage({ params }: PageProps) {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                {t.pricePerUnit} *
+                {t.pricePerUnit} * ({currencyInfo.code})
               </label>
-              <input
-                type="number"
-                value={form.price}
-                onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) })}
-                step="0.01"
-                min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) => setForm({ ...form, price: parseFloat(e.target.value) })}
+                  step="0.01"
+                  min="0"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white pr-12"
+                  required
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
+                  {currencyInfo.symbol}
+                </span>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t.comparePrice}
               </label>
-              <input
-                type="number"
-                value={form.comparePrice || ""}
-                onChange={(e) => setForm({ ...form, comparePrice: e.target.value ? parseFloat(e.target.value) : null })}
-                step="0.01"
-                min="0"
-                placeholder={t.comparePriceDesc}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={form.comparePrice || ""}
+                  onChange={(e) => setForm({ ...form, comparePrice: e.target.value ? parseFloat(e.target.value) : null })}
+                  step="0.01"
+                  min="0"
+                  placeholder={t.comparePriceDesc}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white pr-12"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
+                  {currencyInfo.symbol}
+                </span>
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 {t.costPrice}
               </label>
-              <input
-                type="number"
-                value={form.costPrice || ""}
-                onChange={(e) => setForm({ ...form, costPrice: e.target.value ? parseFloat(e.target.value) : null })}
-                step="0.01"
-                min="0"
-                placeholder={t.costPriceDesc}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={form.costPrice || ""}
+                  onChange={(e) => setForm({ ...form, costPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                  step="0.01"
+                  min="0"
+                  placeholder={t.costPriceDesc}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white pr-12"
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 font-medium">
+                  {currencyInfo.symbol}
+                </span>
+              </div>
             </div>
           </div>
 
