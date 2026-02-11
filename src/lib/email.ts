@@ -12,10 +12,12 @@ function getTransporter(): Transporter | null {
   if (transporter) return transporter;
 
   const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT ?? "465", 10);
+  const port = parseInt(process.env.SMTP_PORT ?? "587", 10); // Default to 587 (STARTTLS)
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS; // Support both variable names
-  const secure = process.env.SMTP_SECURE === "true"; // true for port 465
+
+  // Port 465 uses SSL/TLS (secure: true), port 587 uses STARTTLS (secure: false)
+  const secure = process.env.SMTP_SECURE === "true" || port === 465;
 
   if (!host || !user || !pass) {
     console.warn("[Email] SMTP not configured - emails will NOT be sent");
@@ -32,9 +34,15 @@ function getTransporter(): Transporter | null {
         user,
         pass,
       },
+      // Add timeouts to prevent hanging
+      connectionTimeout: 10000, // 10s
+      greetingTimeout: 10000,   // 10s
+      socketTimeout: 15000,     // 15s
+      // Require TLS for port 587
+      requireTLS: port === 587,
     });
 
-    console.log(`[Email] ✅ Transporter configured: ${host}:${port} (secure: ${secure})`);
+    console.log(`[Email] ✅ Transporter configured: ${host}:${port} (secure: ${secure}, requireTLS: ${port === 587})`);
     return transporter;
   } catch (error) {
     console.error("[Email] ❌ Failed to create transporter:", error);
