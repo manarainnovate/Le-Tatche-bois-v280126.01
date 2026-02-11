@@ -633,7 +633,7 @@ export default function EcommerceProductsPage({ params }: PageProps) {
             href={`/${locale}/boutique/${product.slug}`}
             target="_blank"
             className="inline-flex items-center justify-center rounded-md h-8 w-8 text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300 transition-colors"
-            title={t.viewOnline}
+            title="View online"
           >
             <ExternalLink className="h-4 w-4" />
           </Link>
