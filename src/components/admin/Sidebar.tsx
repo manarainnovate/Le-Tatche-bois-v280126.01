@@ -654,7 +654,7 @@ export function Sidebar({ locale }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 z-50 h-full bg-amber-900 text-white transition-all duration-300 flex flex-col",
+          "fixed top-0 z-50 h-full text-white transition-all duration-300 flex flex-col",
           isRTL ? "right-0" : "left-0",
           // Mobile: slide in/out
           sidebarOpen ? "translate-x-0" : isRTL ? "translate-x-full" : "-translate-x-full",
@@ -663,6 +663,9 @@ export function Sidebar({ locale }: SidebarProps) {
           sidebarCollapsed ? "lg:w-20" : "lg:w-64",
           "w-64"
         )}
+        style={{
+          background: `linear-gradient(to bottom, var(--sidebar-color1, #5C2E00), var(--sidebar-color2, #8B4513))`,
+        }}
       >
         {/* Logo */}
         <div className="flex h-16 items-center justify-between border-b border-amber-800 px-4 flex-shrink-0">

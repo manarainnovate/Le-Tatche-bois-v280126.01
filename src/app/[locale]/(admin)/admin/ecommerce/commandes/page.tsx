@@ -13,7 +13,7 @@ import {
   CreditCard,
   Truck,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { AdminButton } from "@/components/ui/admin-button";
 import { AdminDataTable, type Column } from "@/components/admin/AdminDataTable";
 import { OrderStatusBadge, ORDER_STATUSES, getOrderStatusLabel } from "@/components/admin/OrderStatusBadge";
 import { PaymentStatusBadge, PaymentMethodBadge } from "@/components/admin/PaymentStatusBadge";
@@ -404,14 +404,12 @@ export default function EcommerceOrdersPage({ params }: PageProps) {
           <p className="mt-1 text-gray-500 dark:text-gray-400">{t.subtitle}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => void fetchOrders()}>
-            <RefreshCw className="me-2 h-4 w-4" />
+          <AdminButton variant="outline" size="sm" onClick={() => void fetchOrders()} icon={<RefreshCw className="w-4 h-4" />}>
             {t.refresh}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="me-2 h-4 w-4" />
+          </AdminButton>
+          <AdminButton variant="export" size="sm" onClick={handleExport} icon={<Download className="w-4 h-4" />}>
             {t.export}
-          </Button>
+          </AdminButton>
         </div>
       </div>
 

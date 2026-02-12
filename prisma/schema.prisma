@@ -2175,3 +2175,38 @@ model HeroSlide {
 
   @@index([targetPage])
 }
+
+// ============================================
+// ADMIN - THEME PREFERENCES (Per-User)
+// ============================================
+
+model AdminThemePreference {
+  id     String @id @default(cuid())
+  userId String @unique
+
+  // Sidebar styling
+  sidebarStyle   String  @default("gradient") // "gradient" | "solid" | "image" | "wood" | "dark"
+  sidebarColor1  String  @default("#5C2E00") // Primary color or gradient start
+  sidebarColor2  String  @default("#8B4513") // Gradient end (if gradient)
+  sidebarImage   String? // URL to uploaded image or preset pattern
+  sidebarOpacity Float   @default(1.0) // 0-1 for image overlay
+
+  // Content area
+  contentBg     String @default("#F9FAFB") // Main content background
+  contentCardBg String @default("#FFFFFF") // Card backgrounds
+
+  // Accent colors
+  accentColor String @default("#D97706") // amber-600 default
+  accentHover String @default("#B45309") // amber-700
+
+  // Display mode
+  darkMode Boolean @default(false)
+
+  // Preset name (for quick switching)
+  presetName String @default("default")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admin_theme_preferences")
+}

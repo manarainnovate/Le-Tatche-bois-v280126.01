@@ -21,7 +21,7 @@ import {
   XCircle,
   ExternalLink,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { AdminButton } from "@/components/ui/admin-button";
 import { AdminDataTable, type Column } from "@/components/admin/AdminDataTable";
 import { StatsCard } from "@/components/admin/StatsCard";
 import { cn } from "@/lib/utils";
@@ -668,20 +668,16 @@ export default function EcommerceProductsPage({ params }: PageProps) {
           <p className="mt-1 text-gray-500 dark:text-gray-400">{t.subtitle}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => void fetchProducts()}>
-            <RefreshCw className="me-2 h-4 w-4" />
+          <AdminButton variant="outline" size="sm" onClick={() => void fetchProducts()} icon={<RefreshCw className="w-4 h-4" />}>
             {t.refresh}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="me-2 h-4 w-4" />
+          </AdminButton>
+          <AdminButton variant="export" size="sm" onClick={handleExport} icon={<Download className="w-4 h-4" />}>
             {t.export}
-          </Button>
-          <Link
-            href={`/${locale}/admin/ecommerce/produits/nouveau`}
-            className="inline-flex items-center justify-center font-medium transition-all duration-200 bg-wood-primary text-white hover:bg-wood-dark h-8 px-3 text-sm rounded-md"
-          >
-            <Plus className="me-2 h-4 w-4" />
-            {t.addProduct}
+          </AdminButton>
+          <Link href={`/${locale}/admin/ecommerce/produits/nouveau`}>
+            <AdminButton variant="primary" size="sm" icon={<Plus className="w-4 h-4" />}>
+              {t.addProduct}
+            </AdminButton>
           </Link>
         </div>
       </div>
@@ -749,32 +745,30 @@ export default function EcommerceProductsPage({ params }: PageProps) {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Button
+            <AdminButton
               variant="outline"
               size="sm"
               onClick={clearSelection}
-              className="text-gray-600"
+              icon={<XCircle className="w-4 h-4" />}
             >
-              <XCircle className="me-1 h-4 w-4" />
               {t.clearSelection}
-            </Button>
-            <Button
+            </AdminButton>
+            <AdminButton
               variant="outline"
               size="sm"
               onClick={selectAll}
-              className="text-gray-600"
+              icon={<CheckSquare className="w-4 h-4" />}
             >
-              <CheckSquare className="me-1 h-4 w-4" />
               {t.selectAll}
-            </Button>
-            <Button
+            </AdminButton>
+            <AdminButton
               variant="danger"
               size="sm"
               onClick={handleBulkDelete}
+              icon={<Trash2 className="w-4 h-4" />}
             >
-              <Trash2 className="me-1 h-4 w-4" />
               {t.deleteSelected}
-            </Button>
+            </AdminButton>
           </div>
         </div>
       )}

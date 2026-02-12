@@ -4,6 +4,8 @@ import { AdminProvider } from "@/components/admin/AdminProvider";
 import { Sidebar } from "@/components/admin/Sidebar";
 import { AdminHeader } from "@/components/admin/AdminHeader";
 import { ToastProvider, Toaster } from "@/components/ui/Toaster";
+import { AdminThemeProvider } from "@/contexts/admin-theme-context";
+import { ThemeCustomizer } from "@/components/admin/theme-customizer";
 import type { UserRole } from "@prisma/client";
 
 // ═══════════════════════════════════════════════════════════
@@ -51,24 +53,32 @@ export default async function AdminLayout({ children, params }: AdminLayoutProps
   return (
     <ToastProvider>
       <AdminProvider user={user} locale={locale}>
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-          {/* Sidebar */}
-          <Sidebar locale={locale} />
+        <AdminThemeProvider>
+          <div
+            className="min-h-screen transition-colors"
+            style={{ backgroundColor: 'var(--content-bg, #F9FAFB)' }}
+          >
+            {/* Sidebar */}
+            <Sidebar locale={locale} />
 
-          {/* Main Content */}
-          <div className="transition-all duration-300 lg:pl-64">
-            {/* Header */}
-            <AdminHeader locale={locale} />
+            {/* Main Content */}
+            <div className="transition-all duration-300 lg:pl-64">
+              {/* Header */}
+              <AdminHeader locale={locale} />
 
-            {/* Page Content */}
-            <main className="min-h-[calc(100vh-4rem)] p-4 pt-20 md:p-6 md:pt-20 lg:p-8 lg:pt-20">
-              {children}
-            </main>
+              {/* Page Content */}
+              <main className="min-h-[calc(100vh-4rem)] p-4 pt-20 md:p-6 md:pt-20 lg:p-8 lg:pt-20">
+                {children}
+              </main>
+            </div>
+
+            {/* Toast Notifications */}
+            <Toaster position="top-right" />
+
+            {/* Theme Customizer */}
+            <ThemeCustomizer />
           </div>
-
-          {/* Toast Notifications */}
-          <Toaster position="top-right" />
-        </div>
+        </AdminThemeProvider>
       </AdminProvider>
     </ToastProvider>
   );
