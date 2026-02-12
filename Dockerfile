@@ -25,12 +25,18 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Ensure PDFKit font data is accessible (backup safety measure)
-# The outputFileTracingIncludes should handle this, but this ensures it's always available
-RUN if [ -d /app/node_modules/pdfkit/js/data ]; then \
-      echo "✓ PDFKit font data found in node_modules"; \
+# Fix PDFKit font data paths for production
+# PDFKit looks for fonts in relative paths that don't work in Next.js standalone
+# Copy font data to multiple locations where PDFKit might look for them
+RUN echo "Fixing PDFKit font data paths..." && \
+    mkdir -p /app/.next/server/app/api/crm/documents && \
+    if [ -d /app/node_modules/pdfkit/js/data ]; then \
+      echo "✓ PDFKit source data found - copying to API routes..."; \
+      cp -r /app/node_modules/pdfkit/js/data /app/.next/server/app/api/crm/documents/data && \
+      echo "✓ Font data copied to .next/server/app/api/crm/documents/data"; \
     else \
-      echo "✗ WARNING: PDFKit font data not found!"; \
+      echo "✗ ERROR: PDFKit font data not found in node_modules!"; \
+      exit 1; \
     fi
 
 # Create uploads directory structure with correct permissions
