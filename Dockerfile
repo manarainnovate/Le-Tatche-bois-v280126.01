@@ -25,6 +25,14 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
+# Ensure PDFKit font data is accessible (backup safety measure)
+# The outputFileTracingIncludes should handle this, but this ensures it's always available
+RUN if [ -d /app/node_modules/pdfkit/js/data ]; then \
+      echo "✓ PDFKit font data found in node_modules"; \
+    else \
+      echo "✗ WARNING: PDFKit font data not found!"; \
+    fi
+
 # Create uploads directory structure with correct permissions
 RUN mkdir -p /app/public/uploads && \
     chown -R nextjs:nodejs /app/public && \

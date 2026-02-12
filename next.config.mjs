@@ -55,9 +55,9 @@ const nextConfig = {
 
   // Experimental features for PDFKit support
   experimental: {
-    // Include PDFKit font data in server bundle
+    // Include PDFKit font data in server bundle for all API routes that use PDFKit
     outputFileTracingIncludes: {
-      '/api/crm/documents/[id]/pdf': [
+      '/api/**/*': [
         './node_modules/pdfkit/js/data/**/*',
       ],
     },
