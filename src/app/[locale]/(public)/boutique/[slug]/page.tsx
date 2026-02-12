@@ -122,6 +122,15 @@ export default function ProductDetailPage() {
   const [addedToCart, setAddedToCart] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
+  // Get the current main image with proper fallbacks
+  const getCurrentImage = () => {
+    if (!product) return '/images/placeholder.svg';
+    if (product.images && product.images.length > 0) {
+      return fixImageUrl(product.images[selectedImage] || product.images[0]);
+    }
+    return fixImageUrl(product.thumbnail || '/images/placeholder.svg');
+  };
+
   // Fetch product data
   useEffect(() => {
     const fetchProduct = async () => {
@@ -351,10 +360,10 @@ export default function ProductDetailPage() {
                 onClick={() => setLightboxOpen(true)}
               >
                 <Image
-                  src={fixImageUrl(product.images[selectedImage] || product.thumbnail || product.images[0])}
+                  src={getCurrentImage()}
                   alt={product.name}
                   fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-contain transition-transform duration-300 group-hover:scale-105"
                   priority
                   sizes="(max-width: 1024px) 100vw, 50vw"
                 />
@@ -865,7 +874,7 @@ export default function ProductDetailPage() {
 
           <div className="relative w-full max-w-4xl mx-4" style={{ aspectRatio: '1/1', maxHeight: '80vh' }}>
             <Image
-              src={fixImageUrl(product.images[selectedImage] || product.images[0])}
+              src={getCurrentImage()}
               alt={product.name}
               fill
               className="object-contain"
