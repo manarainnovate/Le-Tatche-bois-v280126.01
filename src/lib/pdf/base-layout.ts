@@ -853,14 +853,6 @@ export function drawItemsTable(
       doc.restore();
     }
 
-    // Row borders
-    doc.save();
-    doc.strokeColor(COLORS.GOLD)
-       .lineWidth(0.4)
-       .rect(margin, rowY, tableWidth, dataRowHeight)
-       .stroke();
-    doc.restore();
-
     // Row text
     const textY = rowY + (dataRowHeight / 2) - 2.5;
     xPos = margin;
@@ -871,163 +863,230 @@ export function drawItemsTable(
        .fontSize(7.5);
 
     // N° (centered)
-    doc.text(`${i + 1}`, xPos, textY, { width: colWidths.num, align: 'center' });
+    doc.text(`${i + 1}`, xPos, textY, { width: colWidths.num, align: 'center', lineBreak: false });
     xPos += colWidths.num;
 
     // Description (left aligned with padding)
-    doc.text(item.desc, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left' });
+    doc.text(item.desc, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
     xPos += colWidths.desc;
 
     // Unit (centered)
-    doc.text(item.unit || 'U', xPos, textY, { width: colWidths.unit, align: 'center' });
+    doc.text(item.unit || 'U', xPos, textY, { width: colWidths.unit, align: 'center', lineBreak: false });
     xPos += colWidths.unit;
 
     // Quantity (centered)
-    doc.text(`${item.qty}`, xPos, textY, { width: colWidths.qty, align: 'center' });
+    doc.text(`${item.qty}`, xPos, textY, { width: colWidths.qty, align: 'center', lineBreak: false });
     xPos += colWidths.qty;
 
     // Unit price (right aligned)
-    doc.text(formatNumber(item.price), xPos, textY, { width: colWidths.puHT - 2, align: 'right' });
+    doc.text(formatNumber(item.price), xPos, textY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
     xPos += colWidths.puHT;
 
     // Total (right aligned)
-    doc.text(formatNumber(total), xPos, textY, { width: colWidths.totalHT - 2, align: 'right' });
+    doc.text(formatNumber(total), xPos, textY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
 
     doc.restore();
 
     currentY += dataRowHeight;
   }
 
-  // ── Draw totals section ──
-  const totalsY = currentY + 5 * MM;
+  // ══════════════════════════════════════════════════════════════
+  // GRID LINES — Draw AFTER all row backgrounds and text
+  // ══════════════════════════════════════════════════════════════
+  const tableTop = headerY;
+  const tableBottom = currentY;
 
-  // BUG B FIX: Widen totals box from 60mm to 77mm to fit large amounts + "DH"
-  const totalsWidth = 77 * MM;  // BEFORE: 60 * MM
-  const totalsX = PAGE.WIDTH - margin - totalsWidth;
+  doc.save();
+  doc.strokeColor('#8B7355')  // Medium brown for grid
+     .lineWidth(0.5);
 
+  // Outer border rectangle
+  doc.rect(margin, tableTop, tableWidth, tableBottom - tableTop).stroke();
+
+  // Vertical lines between columns
+  const colX = {
+    afterNum: margin + colWidths.num,
+    afterDesc: margin + colWidths.num + colWidths.desc,
+    afterUnit: margin + colWidths.num + colWidths.desc + colWidths.unit,
+    afterQty: margin + colWidths.num + colWidths.desc + colWidths.unit + colWidths.qty,
+    afterPuHT: margin + colWidths.num + colWidths.desc + colWidths.unit + colWidths.qty + colWidths.puHT,
+  };
+
+  const verticalLines = [
+    colX.afterNum,    // After N°
+    colX.afterDesc,   // After DÉSIGNATION
+    colX.afterUnit,   // After U
+    colX.afterQty,    // After QTÉ
+    colX.afterPuHT,   // After P.U. HT
+  ];
+
+  for (const x of verticalLines) {
+    doc.moveTo(x, tableTop)
+       .lineTo(x, tableBottom)
+       .stroke();
+  }
+
+  // Horizontal line under header (thicker)
+  doc.strokeColor('#C4973B')  // Gold for header separator
+     .lineWidth(1.0)
+     .moveTo(margin, tableTop + headerRowHeight)
+     .lineTo(margin + tableWidth, tableTop + headerRowHeight)
+     .stroke();
+
+  // Horizontal lines between data rows (subtle)
+  doc.strokeColor('#8B7355')
+     .lineWidth(0.3);
+  for (let i = 1; i < items.length; i++) {
+    const y = headerY + headerRowHeight + (i * dataRowHeight);
+    doc.moveTo(margin, y)
+       .lineTo(margin + tableWidth, y)
+       .stroke();
+  }
+
+  doc.restore();
+
+  // ══════════════════════════════════════════════════════════════
+  // TOTALS BOX — Right-aligned, with proper padding
+  // ══════════════════════════════════════════════════════════════
+  const totalsBoxWidth = 200;  // Total width of box in points
+  const totalsBoxX = margin + tableWidth - totalsBoxWidth;  // Right-aligned with table
+  const totalsBoxTop = currentY + 8;  // 8pt gap below table
+  const totalsRowHeight = 18;  // Height of each row in totals
+  const totalsPadLeft = 10;  // Left padding inside box
+  const totalsPadRight = 10;  // Right padding inside box
+  const labelColWidth = 80;  // Width for "Total HT", "TVA (20%)" labels
+  const valueColWidth = totalsBoxWidth - labelColWidth;  // Rest for values
+
+  // Calculate totals
   const tvaAmount = showTVA ? subtotal * tvaRate : 0;
   const totalTTC = subtotal + tvaAmount;
 
-  // Totals box background
-  const boxHeight = showTVA ? 25 * MM : 15 * MM;
+  // Row 1: Total HT
+  const row1Y = totalsBoxTop;
+  // Row 2: TVA
+  const row2Y = row1Y + totalsRowHeight;
+  // Row 3: Total TTC (bold, bigger)
+  const row3Y = row2Y + totalsRowHeight;
+  const totalsBoxBottom = showTVA ? (row3Y + totalsRowHeight + 4) : (row1Y + totalsRowHeight + 4);
+
+  // Draw box background
   doc.save();
-  doc.fillColor('#FFFEF8')
-     .opacity(0.5)
-     .roundedRect(totalsX, totalsY, totalsWidth, boxHeight, 2)
-     .fill();
-  doc.restore();
-
-  // Totals box border
-  doc.save();
-  doc.strokeColor(COLORS.GOLD)
-     .lineWidth(0.5)
-     .roundedRect(totalsX, totalsY, totalsWidth, boxHeight, 2)
-     .stroke();
-  doc.restore();
-
-  // BUG B FIX: Adjust label/value positioning for wider box
-  const labelX = totalsX + 3 * MM;
-  const labelWidth = 25 * MM;  // "Total HT", "TVA (20%)", etc.
-  const valueWidth = totalsWidth - labelWidth - 6 * MM;  // Remaining space for amounts
-  const valueX = totalsX + labelWidth + 3 * MM;
-  let rowY = totalsY + 4 * MM;
-
-  console.log('[PDF Totals] Box width:', totalsWidth, 'Value column width:', valueWidth);
-
-  // Total HT
-  doc.save();
-  doc.fillColor(COLORS.GRAY_DARK)
-     .font('Helvetica')
-     .fontSize(8)
-     .text('Total HT', labelX, rowY);
-
-  // BUG B FIX: Auto-shrink font for very large amounts
-  const htText = `${formatNumber(subtotal)} DH`;
-  let htFontSize = 8;
-  doc.font('Helvetica').fontSize(htFontSize);
-  if (doc.widthOfString(htText) > valueWidth - 5) {
-    htFontSize = 7;
-    doc.fontSize(htFontSize);
-  }
-  doc.text(htText, valueX, rowY, {
-    width: valueWidth,
-    align: 'right',
-  });
-  doc.restore();
 
   if (showTVA) {
-    rowY += 9;
-    doc.save();
-    doc.fillColor(COLORS.GRAY_DARK)
-       .font('Helvetica')
-       .fontSize(8)
-       .text(`TVA (${Math.round(tvaRate * 100)}%)`, labelX, rowY);
+    // Light beige background for rows 1-2
+    doc.rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight * 2)
+       .fillColor('#FDF8F0')
+       .fill();
 
-    // BUG B FIX: Auto-shrink font for TVA amount
-    const tvaText = `${formatNumber(tvaAmount)} DH`;
-    let tvaFontSize = 8;
-    doc.font('Helvetica').fontSize(tvaFontSize);
-    if (doc.widthOfString(tvaText) > valueWidth - 5) {
-      tvaFontSize = 7;
-      doc.fontSize(tvaFontSize);
-    }
-    doc.text(tvaText, valueX, rowY, {
-      width: valueWidth,
+    // Slightly darker for Total TTC row
+    doc.rect(totalsBoxX, row3Y, totalsBoxWidth, totalsRowHeight + 4)
+       .fillColor('#F5EDE0')
+       .fill();
+  } else {
+    // Single row background if no TVA
+    doc.rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight + 4)
+       .fillColor('#FDF8F0')
+       .fill();
+  }
+
+  // Draw outer border
+  doc.strokeColor(COLORS.GOLD)
+     .lineWidth(0.8)
+     .rect(totalsBoxX, totalsBoxTop, totalsBoxWidth, totalsBoxBottom - totalsBoxTop)
+     .stroke();
+
+  doc.restore();
+
+  // ── TEXT (drawn AFTER backgrounds and borders) ──
+
+  if (showTVA) {
+    // Row 1: Total HT
+    const textY1 = row1Y + 5;  // 5pt top padding
+    doc.save();
+    doc.font('Helvetica').fontSize(9).fillColor(COLORS.GRAY_DARK)
+       .text('Total HT', totalsBoxX + totalsPadLeft, textY1, {
+         width: labelColWidth - totalsPadLeft,
+         align: 'left',
+         lineBreak: false,
+       });
+    doc.text(`${formatNumber(subtotal)} DH`, totalsBoxX + labelColWidth, textY1, {
+      width: valueColWidth - totalsPadRight,
       align: 'right',
+      lineBreak: false,
     });
     doc.restore();
 
-    // Separator line
-    rowY += 4;
+    // Row 2: TVA
+    const textY2 = row2Y + 5;
+    doc.save();
+    doc.font('Helvetica').fontSize(9).fillColor(COLORS.GRAY_DARK)
+       .text(`TVA (${Math.round(tvaRate * 100)}%)`, totalsBoxX + totalsPadLeft, textY2, {
+         width: labelColWidth - totalsPadLeft,
+         align: 'left',
+         lineBreak: false,
+       });
+    doc.text(`${formatNumber(tvaAmount)} DH`, totalsBoxX + labelColWidth, textY2, {
+      width: valueColWidth - totalsPadRight,
+      align: 'right',
+      lineBreak: false,
+    });
+    doc.restore();
+
+    // Horizontal separator between TVA and Total TTC (drawn BEFORE text)
     doc.save();
     doc.strokeColor(COLORS.GOLD)
        .lineWidth(0.5)
-       .moveTo(labelX, rowY)
-       .lineTo(valueX, rowY)
+       .moveTo(totalsBoxX, row3Y)
+       .lineTo(totalsBoxX + totalsBoxWidth, row3Y)
        .stroke();
     doc.restore();
 
-    // Total TTC
-    rowY += 9;
+    // Row 3: Total TTC (bold, larger, brown color)
+    const textY3 = row3Y + 5;
     doc.save();
-    doc.fillColor(COLORS.BROWN_DARK)
-       .font('Helvetica-Bold')
-       .fontSize(10)
-       .text('Total TTC', labelX, rowY);
-
-    // BUG B FIX: Auto-shrink font for Total TTC (most important line)
-    const ttcText = `${formatNumber(totalTTC)} DH`;
-    let ttcFontSize = 10;
-    doc.font('Helvetica-Bold').fontSize(ttcFontSize);
-    if (doc.widthOfString(ttcText) > valueWidth - 5) {
-      ttcFontSize = 9;
-      doc.fontSize(ttcFontSize);
-    }
-    doc.text(ttcText, valueX, rowY, {
-      width: valueWidth,
-      align: 'right',
-    });
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.BROWN_DARK)
+       .text('Total TTC', totalsBoxX + totalsPadLeft, textY3, {
+         width: labelColWidth - totalsPadLeft,
+         align: 'left',
+         lineBreak: false,
+       });
+    doc.fillColor('#C41E1E')  // Red for TTC amount
+       .text(`${formatNumber(totalTTC)} DH`, totalsBoxX + labelColWidth, textY3, {
+         width: valueColWidth - totalsPadRight,
+         align: 'right',
+         lineBreak: false,
+       });
     doc.restore();
   } else {
-    // No TVA - show note
-    rowY += 4;
+    // No TVA - just show total
+    const textY1 = row1Y + 5;
     doc.save();
-    doc.strokeColor(COLORS.GOLD)
-       .moveTo(labelX, rowY)
-       .lineTo(valueX, rowY)
-       .stroke();
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.BROWN_DARK)
+       .text('Total', totalsBoxX + totalsPadLeft, textY1, {
+         width: labelColWidth - totalsPadLeft,
+         align: 'left',
+         lineBreak: false,
+       });
+    doc.text(`${formatNumber(subtotal)} DH`, totalsBoxX + labelColWidth, textY1, {
+      width: valueColWidth - totalsPadRight,
+      align: 'right',
+      lineBreak: false,
+    });
     doc.restore();
 
-    rowY += 9;
+    // Note about TVA
+    const noteY = row1Y + totalsRowHeight / 2 + 3;
     doc.save();
-    doc.fillColor(COLORS.GRAY)
-       .font('Helvetica-Oblique')
-       .fontSize(7.5)
-       .text('TVA non applicable', labelX, rowY);
+    doc.font('Helvetica-Oblique').fontSize(7).fillColor(COLORS.GRAY)
+       .text('TVA non applicable', totalsBoxX + totalsPadLeft, noteY, {
+         width: totalsBoxWidth - totalsPadLeft - totalsPadRight,
+         align: 'center',
+         lineBreak: false,
+       });
     doc.restore();
   }
 
-  const afterTableY = totalsY + boxHeight + 3 * MM;
+  const afterTableY = totalsBoxBottom;
 
   return { afterTableY, totalTTC };
 }
