@@ -1126,7 +1126,97 @@ export function FactureFormClient({
             </div>
           </div>
 
-          {/* Items */}
+        </div>
+
+        {/* Sidebar - Summary */}
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 sticky top-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-amber-600" />
+              {t.summary}
+            </h2>
+
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">{t.subtotal}</span>
+                <span className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
+              </div>
+
+              {discountValue > 0 && (
+                <div className="flex justify-between text-sm text-red-600 dark:text-red-400">
+                  <span>{t.discountAmount}</span>
+                  <span>-{formatCurrency(globalDiscountAmount)}</span>
+                </div>
+              )}
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">{t.netHT}</span>
+                <span className="text-gray-900 dark:text-white">{formatCurrency(netHT)}</span>
+              </div>
+
+              {/* TVA breakdown */}
+              {Object.entries(tvaByRate).map(([rate, { base, amount }]) => (
+                <div key={rate} className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
+                  <span>TVA {rate}%</span>
+                  <span>{formatCurrency(amount)}</span>
+                </div>
+              ))}
+
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500 dark:text-gray-400">{t.totalTVA}</span>
+                <span className="text-gray-900 dark:text-white">{formatCurrency(totalTVA)}</span>
+              </div>
+
+              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between text-lg font-bold">
+                  <span className="text-gray-900 dark:text-white">{t.totalTTC}</span>
+                  <span className="text-amber-600">{formatCurrency(totalTTC)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Amount in French words */}
+            {totalTTC > 0 && (
+              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">Montant en lettres :</span>{' '}
+                  <span className="italic">{numberToFrenchWords(totalTTC)}</span>
+                </p>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="mt-6 space-y-3">
+              <button
+                type="button"
+                onClick={() => handleSubmit(false)}
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                <Save className="h-4 w-4" />
+                {t.saveDraft}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSubmit(true)}
+                disabled={isSubmitting}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-amber-600 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors disabled:opacity-50"
+              >
+                <CreditCard className="h-4 w-4" />
+                {t.saveAndSend}
+              </button>
+              <Link
+                href={basePath}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                {t.cancel}
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Items - Full Width */}
+        <div className="lg:col-span-3">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1483,8 +1573,10 @@ export function FactureFormClient({
               </div>
             )}
           </div>
+        </div>
 
-          {/* Notes */}
+        {/* Notes - Full Width */}
+        <div className="lg:col-span-3">
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               {t.notes}
@@ -1527,93 +1619,6 @@ export function FactureFormClient({
                 onChange={(e) => setFooterText(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
               />
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar - Summary */}
-        <div className="space-y-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 sticky top-6">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <Calculator className="h-5 w-5 text-amber-600" />
-              {t.summary}
-            </h2>
-
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">{t.subtotal}</span>
-                <span className="text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
-              </div>
-
-              {discountValue > 0 && (
-                <div className="flex justify-between text-sm text-red-600 dark:text-red-400">
-                  <span>{t.discountAmount}</span>
-                  <span>-{formatCurrency(globalDiscountAmount)}</span>
-                </div>
-              )}
-
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">{t.netHT}</span>
-                <span className="text-gray-900 dark:text-white">{formatCurrency(netHT)}</span>
-              </div>
-
-              {/* TVA breakdown */}
-              {Object.entries(tvaByRate).map(([rate, { base, amount }]) => (
-                <div key={rate} className="flex justify-between text-sm text-gray-500 dark:text-gray-400">
-                  <span>TVA {rate}%</span>
-                  <span>{formatCurrency(amount)}</span>
-                </div>
-              ))}
-
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500 dark:text-gray-400">{t.totalTVA}</span>
-                <span className="text-gray-900 dark:text-white">{formatCurrency(totalTVA)}</span>
-              </div>
-
-              <div className="pt-3 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between text-lg font-bold">
-                  <span className="text-gray-900 dark:text-white">{t.totalTTC}</span>
-                  <span className="text-amber-600">{formatCurrency(totalTTC)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Amount in French words */}
-            {totalTTC > 0 && (
-              <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  <span className="font-medium">Montant en lettres :</span>{' '}
-                  <span className="italic">{numberToFrenchWords(totalTTC)}</span>
-                </p>
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="mt-6 space-y-3">
-              <button
-                type="button"
-                onClick={() => handleSubmit(false)}
-                disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors disabled:opacity-50"
-              >
-                <Save className="h-4 w-4" />
-                {t.saveDraft}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSubmit(true)}
-                disabled={isSubmitting}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-amber-600 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors disabled:opacity-50"
-              >
-                <CreditCard className="h-4 w-4" />
-                {t.saveAndSend}
-              </button>
-              <Link
-                href={basePath}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                {t.cancel}
-              </Link>
             </div>
           </div>
         </div>
