@@ -305,7 +305,7 @@ export function AdminHeader({ locale = "fr" }: AdminHeaderProps) {
         </Link>
 
         <Link
-          href={`/${locale}/admin/commandes`}
+          href={`/${locale}/admin/ecommerce/commandes`}
           className="relative rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
           title={t.orders}
         >
