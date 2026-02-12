@@ -545,15 +545,17 @@ export function drawFooter(doc: PDFDocument): void {
   const margin = 25 * MM;
   const footerHeight = 22 * MM;
   const footerTop = PAGE.HEIGHT - footerHeight;
+  const woodBarHeight = 3 * MM;
 
   // ── Gold gradient bar (separator at top of footer) ──
-  drawGoldGradientBar(doc, 0, footerTop, PAGE.WIDTH, 3 * MM);
+  drawGoldGradientBar(doc, 0, footerTop, PAGE.WIDTH, woodBarHeight);
 
   // ── Footer background (very light beige with transparency) ──
+  // IMPORTANT: Start BELOW the wood bar so it doesn't cover it
   doc.save();
   doc.fillColor('#FFFCF0')
      .opacity(0.6)
-     .rect(0, footerTop, PAGE.WIDTH, footerHeight)
+     .rect(0, footerTop + woodBarHeight, PAGE.WIDTH, footerHeight - woodBarHeight)
      .fill();
   doc.restore();
 
