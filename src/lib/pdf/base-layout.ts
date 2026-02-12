@@ -79,10 +79,10 @@ export const ASSETS = {
   woodBg: path.join(ASSETS_BASE, 'wood-bg.png'),
   woodBar: path.join(ASSETS_BASE, 'wood-bar.png'),
   woodHeader: path.join(ASSETS_BASE, 'wood-header.png'),
-  frameTop: path.join(ASSETS_BASE, 'frame-top.png'),
-  frameBottom: path.join(ASSETS_BASE, 'frame-bottom.png'),
-  frameLeft: path.join(ASSETS_BASE, 'frame-left.png'),
-  frameRight: path.join(ASSETS_BASE, 'frame-right.png'),
+  frameTop: path.join(ASSETS_BASE, 'frame_top.png'),
+  frameBottom: path.join(ASSETS_BASE, 'frame_bottom.png'),
+  frameLeft: path.join(ASSETS_BASE, 'frame_left.png'),
+  frameRight: path.join(ASSETS_BASE, 'frame_right.png'),
 } as const;
 
 /** Unit conversion constant: 1mm = 2.834645669 points */
@@ -262,48 +262,78 @@ export function drawCenterWatermark(doc: PDFDocument, opacity: number = 0.06): v
 export function drawBorderFrame(doc: PDFDocument): void {
   const thickness = 4 * MM;  // 4mm frame thickness
 
+  console.log('[PDF] drawBorderFrame - Starting border frame drawing');
+  console.log('[PDF] Assets base path:', ASSETS_BASE);
+  console.log('[PDF] Frame file paths:', {
+    top: ASSETS.frameTop,
+    bottom: ASSETS.frameBottom,
+    left: ASSETS.frameLeft,
+    right: ASSETS.frameRight,
+  });
+
   try {
     // Top strip
     if (fs.existsSync(ASSETS.frameTop)) {
+      console.log('[PDF] ✓ Drawing frame_top.png');
       doc.save();
       doc.image(ASSETS.frameTop, 0, 0, {
         width: PAGE.WIDTH,
         height: thickness,
       });
       doc.restore();
+    } else {
+      console.error('[PDF] ✗ frame_top.png not found:', ASSETS.frameTop);
     }
 
     // Bottom strip
     if (fs.existsSync(ASSETS.frameBottom)) {
+      console.log('[PDF] ✓ Drawing frame_bottom.png');
       doc.save();
       doc.image(ASSETS.frameBottom, 0, PAGE.HEIGHT - thickness, {
         width: PAGE.WIDTH,
         height: thickness,
       });
       doc.restore();
+    } else {
+      console.error('[PDF] ✗ frame_bottom.png not found:', ASSETS.frameBottom);
     }
 
     // Left strip
     if (fs.existsSync(ASSETS.frameLeft)) {
+      console.log('[PDF] ✓ Drawing frame_left.png');
       doc.save();
       doc.image(ASSETS.frameLeft, 0, 0, {
         width: thickness,
         height: PAGE.HEIGHT,
       });
       doc.restore();
+    } else {
+      console.error('[PDF] ✗ frame_left.png not found:', ASSETS.frameLeft);
     }
 
     // Right strip
     if (fs.existsSync(ASSETS.frameRight)) {
+      console.log('[PDF] ✓ Drawing frame_right.png');
       doc.save();
       doc.image(ASSETS.frameRight, PAGE.WIDTH - thickness, 0, {
         width: thickness,
         height: PAGE.HEIGHT,
       });
       doc.restore();
+    } else {
+      console.error('[PDF] ✗ frame_right.png not found:', ASSETS.frameRight);
     }
+
+    console.log('[PDF] ✅ Border frame drawing completed successfully');
   } catch (error) {
-    console.warn(`Failed to draw border frame: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('[PDF] ❌ Failed to draw border frame:', error);
+    if (error instanceof Error) {
+      console.error('[PDF] Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack,
+      });
+    }
   }
 }
 
@@ -888,8 +918,9 @@ export function drawItemsTable(
        .fontSize(10)
        .text('Total TTC', labelX, rowY);
 
-    doc.text(`${formatNumber(totalTTC)} DH`, valueX - 50, rowY, {
-      width: 50,
+    // Wider width (120pt) to prevent "DH" from wrapping to next line
+    doc.text(`${formatNumber(totalTTC)} DH`, valueX - 120, rowY, {
+      width: 120,
       align: 'right',
     });
     doc.restore();

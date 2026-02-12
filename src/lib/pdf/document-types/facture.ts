@@ -301,10 +301,25 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
         dateStr
       );
 
+      // ── Draw échéance (due date) if provided ──
+      let leftY = header.fieldsY;
+      if (data.document.dueDate) {
+        const dueDateStr = formatDate(data.document.dueDate);
+        doc.save();
+        doc.fillColor(COLORS.BROWN_DARK)
+           .font('Helvetica-Bold')
+           .fontSize(10)
+           .text(`Échéance :  ${dueDateStr}`, header.leftX, leftY);
+        doc.restore();
+        leftY += 16;  // Move down for next fields
+      }
+
       // ── Draw reference fields on left ──
+      // Temporarily modify header.fieldsY to account for échéance
+      const modifiedHeader = { ...header, fieldsY: leftY };
       const leftBottom = drawReferenceFields(
         doc,
-        header,
+        modifiedHeader,
         data.document.sourceDocuments
       );
 
@@ -321,7 +336,8 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
       // ── Draw items table ──
       // Table starts below whichever is lower: left fields or client box
       // FIXED: In PDFKit, larger Y = lower on page, so use Math.max
-      const tableY = Math.max(leftBottom, clientBottom) + 4 * MM;
+      // Increased spacing from 4mm to 8mm for better visual separation
+      const tableY = Math.max(leftBottom, clientBottom) + 8 * MM;
 
       // Convert FactureItem[] to TableItem[]
       const tableItems: TableItem[] = data.document.items.map((item) => {
