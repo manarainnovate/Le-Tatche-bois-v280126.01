@@ -11,6 +11,7 @@ import { useUIStore } from "@/stores/ui";
 import { useCartCount } from "@/stores/cart";
 import { useDirection } from "@/hooks/useDirection";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+import { useThemeSettings } from "@/stores/themeSettings";
 import { cn } from "@/lib/utils";
 import { X, ShoppingCart, FileText, Phone, Mail } from "lucide-react";
 
@@ -67,6 +68,7 @@ export function MobileMenu() {
   const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
   const cartCount = useCartCount();
   const { currency, setCurrency } = useCurrency();
+  const { logoHeader, siteName } = useThemeSettings();
 
   // Lock body scroll when menu is open
   useBodyScrollLock(isMobileMenuOpen);
@@ -133,12 +135,11 @@ export function MobileMenu() {
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           {/* Logo on LEFT */}
           <Link href={`/${locale}`} onClick={closeMobileMenu} className="flex items-center gap-2">
-            <Image
-              src="/images/logo.png"
-              alt="LE TATCHE BOIS"
-              width={120}
-              height={40}
-              className="h-8 w-auto"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoHeader || "/images/logo.png"}
+              alt={siteName || "LE TATCHE BOIS"}
+              className="h-10 w-auto object-contain"
             />
           </Link>
           {/* Close button on RIGHT */}
