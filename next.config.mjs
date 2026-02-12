@@ -53,6 +53,9 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Externalize PDFKit to prevent webpack bundling (fixes font file paths)
+  serverExternalPackages: ['pdfkit'],
+
   // Experimental features for PDFKit support
   experimental: {
     // Include PDFKit font data in server bundle for all API routes that use PDFKit
@@ -66,6 +69,11 @@ const nextConfig = {
   // Webpack configuration for PDFKit
   webpack: (config, { isServer }) => {
     if (isServer) {
+      // Externalize pdfkit so it's not bundled by webpack
+      // This preserves the original file structure and font paths
+      config.externals = config.externals || [];
+      config.externals.push('pdfkit');
+
       // Handle .afm font files used by PDFKit
       config.module.rules.push({
         test: /\.afm$/,

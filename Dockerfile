@@ -27,26 +27,15 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 
-# Fix PDFKit font data paths for production
-# PDFKit looks for fonts relative to the bundled route file location
-# Copy font data to ALL possible locations where PDFKit might look
-RUN echo "==== Fixing PDFKit font data paths ====" && \
-    if [ -d /app/node_modules/pdfkit/js/data ]; then \
-      echo "✓ PDFKit source data found in node_modules"; \
-      echo "Copying to multiple locations..."; \
-      mkdir -p /app/.next/server/app/api/crm/documents/\[id\]/pdf && \
-      cp -r /app/node_modules/pdfkit/js/data /app/.next/server/app/api/crm/documents/\[id\]/pdf/data && \
-      echo "✓ Copied to: .next/server/app/api/crm/documents/[id]/pdf/data"; \
-      mkdir -p /app/.next/server/app/api/crm/documents && \
-      cp -r /app/node_modules/pdfkit/js/data /app/.next/server/app/api/crm/documents/data && \
-      echo "✓ Copied to: .next/server/app/api/crm/documents/data"; \
-      mkdir -p /app/.next/server && \
-      cp -r /app/node_modules/pdfkit/js/data /app/.next/server/data && \
-      echo "✓ Copied to: .next/server/data"; \
-      echo "==== PDFKit font data setup complete ===="; \
-    else \
-      echo "✗ CRITICAL ERROR: PDFKit font data not found in node_modules!"; \
+# PDFKit is now externalized in next.config.mjs (serverExternalPackages)
+# This means it runs directly from node_modules without webpack bundling
+# Font files are automatically accessible at their original paths
+# Verify PDFKit is properly installed
+RUN if [ ! -d /app/node_modules/pdfkit ]; then \
+      echo "✗ CRITICAL ERROR: PDFKit not found in node_modules!"; \
       exit 1; \
+    else \
+      echo "✓ PDFKit found in node_modules (externalized - fonts accessible)"; \
     fi
 
 # Create uploads directory structure with correct permissions
