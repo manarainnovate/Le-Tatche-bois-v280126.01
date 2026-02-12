@@ -1145,18 +1145,29 @@ export function FactureFormClient({
 
             {/* Items Table */}
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full table-fixed text-sm min-w-[900px]">
+                <colgroup>
+                  <col className="w-10" />          {/* # */}
+                  <col />                           {/* Désignation — flexible, takes remaining space */}
+                  <col className="w-[70px]" />      {/* Qté */}
+                  <col className="w-20" />          {/* Unité */}
+                  <col className="w-[100px]" />     {/* P.U. HT */}
+                  <col className="w-[70px]" />      {/* Remise % */}
+                  <col className="w-20" />          {/* TVA % */}
+                  <col className="w-[110px]" />     {/* Total HT */}
+                  <col className="w-[70px]" />      {/* Actions */}
+                </colgroup>
                 <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
-                    <th className="px-2 py-2 w-10 text-center font-medium text-gray-500">#</th>
+                    <th className="px-2 py-2 text-center font-medium text-gray-500">#</th>
                     <th className="px-2 py-2 text-left font-medium text-gray-500">{t.designation}</th>
-                    <th className="px-2 py-2 text-right font-medium text-gray-500 w-20">{t.quantity}</th>
-                    <th className="px-2 py-2 text-left font-medium text-gray-500 w-20">{t.unit}</th>
-                    <th className="px-2 py-2 text-right font-medium text-gray-500 w-28">{t.unitPrice}</th>
-                    <th className="px-2 py-2 text-right font-medium text-gray-500 w-20">{t.discount}</th>
-                    <th className="px-2 py-2 text-right font-medium text-gray-500 w-20">{t.tva}</th>
-                    <th className="px-2 py-2 text-right font-medium text-gray-500 w-28">{t.totalHT}</th>
-                    <th className="px-2 py-2 w-16"></th>
+                    <th className="px-2 py-2 text-right font-medium text-gray-500">{t.quantity}</th>
+                    <th className="px-2 py-2 text-center font-medium text-gray-500">{t.unit}</th>
+                    <th className="px-2 py-2 text-right font-medium text-gray-500">{t.unitPrice}</th>
+                    <th className="px-2 py-2 text-center font-medium text-gray-500">{t.discount}</th>
+                    <th className="px-2 py-2 text-center font-medium text-gray-500">{t.tva}</th>
+                    <th className="px-2 py-2 text-right font-medium text-gray-500">{t.totalHT}</th>
+                    <th className="px-2 py-2"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1191,7 +1202,7 @@ export function FactureFormClient({
                       </td>
 
                       {/* ROW NUMBER + STATUS */}
-                      <td className="px-2 py-2 text-center w-10">
+                      <td className="px-2 py-2 text-center">
                         {item.isValidated ? (
                           <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-sm">
                             <Check className="w-3.5 h-3.5 text-white" />
@@ -1205,21 +1216,22 @@ export function FactureFormClient({
                       <td className="px-2 py-2">
                         {item.isValidated ? (
                           <div>
-                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
                               {item.designation}
                             </p>
                             {item.description && (
-                              <p className="text-xs text-gray-400 mt-0.5">{item.description}</p>
+                              <p className="text-xs text-gray-400 mt-0.5 truncate">{item.description}</p>
                             )}
                           </div>
                         ) : (
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
+                            {/* Catalog selector - compact */}
                             <select
                               value={item.catalogItemId || ""}
                               onChange={(e) => selectCatalogItem(item.id, e.target.value)}
                               onKeyDown={(e) => handleItemKeyDown(e, item.id, "catalog")}
                               disabled={item.isValidated}
-                              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
+                              className="w-full max-w-[200px] px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800 text-gray-500"
                             >
                               <option value="">-- Catalogue --</option>
                               {catalogItems.map((ci) => (
@@ -1228,26 +1240,37 @@ export function FactureFormClient({
                                 </option>
                               ))}
                             </select>
+                            {/* Main designation input - full width */}
                             <input
                               type="text"
                               value={item.designation}
                               onChange={(e) => updateItem(item.id, "designation", e.target.value)}
                               onKeyDown={(e) => handleItemKeyDown(e, item.id, "designation")}
                               disabled={item.isValidated}
-                              placeholder={t.designation}
+                              placeholder="Saisir la désignation du produit ou service..."
                               className={cn(
-                                "w-full px-2 py-1 border rounded focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800 transition-all",
+                                "w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800 transition-all",
                                 item.validationErrors.includes("designation")
                                   ? "border-red-400 bg-red-50 dark:bg-red-900/20 animate-shake"
                                   : "border-gray-300 dark:border-gray-600"
                               )}
+                            />
+                            {/* Optional description - subtle */}
+                            <input
+                              type="text"
+                              value={item.description || ""}
+                              onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                              onKeyDown={(e) => handleItemKeyDown(e, item.id, "description")}
+                              disabled={item.isValidated}
+                              placeholder="Description détaillée (optionnel)"
+                              className="w-full px-2 py-1.5 text-xs text-gray-500 border border-dashed border-gray-200 dark:border-gray-700 rounded focus:border-amber-300 focus:ring-1 focus:ring-amber-200 bg-transparent dark:bg-gray-900/20 transition-colors"
                             />
                           </div>
                         )}
                       </td>
 
                       {/* QUANTITY */}
-                      <td className="px-2 py-2">
+                      <td className="px-1 py-2">
                         {item.isValidated ? (
                           <p className="text-sm text-right font-medium text-gray-700 dark:text-gray-300">
                             {item.quantity}
@@ -1262,7 +1285,7 @@ export function FactureFormClient({
                             min="0"
                             step="0.01"
                             className={cn(
-                              "w-full px-2 py-1 text-right border rounded focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
+                              "w-full px-2 py-2 text-sm text-center border rounded-lg focus:ring-1 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
                               item.validationErrors.includes("quantity")
                                 ? "border-red-400 bg-red-50 dark:bg-red-900/20 animate-shake"
                                 : "border-gray-300 dark:border-gray-600"
@@ -1272,7 +1295,7 @@ export function FactureFormClient({
                       </td>
 
                       {/* UNIT */}
-                      <td className="px-2 py-2">
+                      <td className="px-1 py-2">
                         {item.isValidated ? (
                           <p className="text-sm text-center text-gray-600 dark:text-gray-400">{item.unit}</p>
                         ) : (
@@ -1281,7 +1304,7 @@ export function FactureFormClient({
                             onChange={(e) => updateItem(item.id, "unit", e.target.value)}
                             onKeyDown={(e) => handleItemKeyDown(e, item.id, "unit")}
                             disabled={item.isValidated}
-                            className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                            className="w-full px-1 py-2 text-xs border rounded-lg focus:ring-1 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-center"
                           >
                             {units.map((u) => (
                               <option key={u.value} value={u.value}>
@@ -1293,7 +1316,7 @@ export function FactureFormClient({
                       </td>
 
                       {/* PRIX UNITAIRE HT */}
-                      <td className="px-2 py-2">
+                      <td className="px-1 py-2">
                         {item.isValidated ? (
                           <p className="text-sm text-right font-medium text-gray-700 dark:text-gray-300">
                             {formatCurrency(item.unitPriceHT)}
@@ -1308,7 +1331,7 @@ export function FactureFormClient({
                             min="0"
                             step="0.01"
                             className={cn(
-                              "w-full px-2 py-1 text-right border rounded focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
+                              "w-full px-2 py-2 text-sm text-right border rounded-lg focus:ring-1 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
                               item.validationErrors.includes("unitPriceHT")
                                 ? "border-red-400 bg-red-50 dark:bg-red-900/20 animate-shake"
                                 : "border-gray-300 dark:border-gray-600"
@@ -1318,7 +1341,7 @@ export function FactureFormClient({
                       </td>
 
                       {/* REMISE % */}
-                      <td className="px-2 py-2">
+                      <td className="px-1 py-2">
                         {item.isValidated ? (
                           <p className="text-sm text-center text-gray-600 dark:text-gray-400">
                             {item.discountPercent > 0 ? `${item.discountPercent}%` : "-"}
@@ -1332,13 +1355,13 @@ export function FactureFormClient({
                             disabled={item.isValidated}
                             min="0"
                             max="100"
-                            className="w-full px-2 py-1 text-center border rounded focus:ring-2 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                            className="w-full px-2 py-2 text-sm text-center border rounded-lg focus:ring-1 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                           />
                         )}
                       </td>
 
                       {/* TVA % */}
-                      <td className="px-2 py-2">
+                      <td className="px-1 py-2">
                         {item.isValidated ? (
                           <p className="text-sm text-center text-gray-600 dark:text-gray-400">{item.tvaRate}%</p>
                         ) : (
@@ -1347,7 +1370,7 @@ export function FactureFormClient({
                             onChange={(e) => updateItem(item.id, "tvaRate", parseFloat(e.target.value))}
                             onKeyDown={(e) => handleItemKeyDown(e, item.id, "tvaRate")}
                             disabled={item.isValidated}
-                            className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                            className="w-full px-1 py-2 text-xs border rounded-lg focus:ring-1 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-center"
                           >
                             <option value={0}>0%</option>
                             <option value={7}>7%</option>
@@ -1359,10 +1382,10 @@ export function FactureFormClient({
                       </td>
 
                       {/* TOTAL HT */}
-                      <td className="px-2 py-2">
+                      <td className="px-1 py-2">
                         <div
                           className={cn(
-                            "px-3 py-1.5 rounded-lg text-sm text-right font-semibold",
+                            "px-2 py-2 rounded-lg text-sm text-right font-semibold whitespace-nowrap",
                             item.isValidated
                               ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
                               : "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
@@ -1373,8 +1396,8 @@ export function FactureFormClient({
                       </td>
 
                       {/* ACTIONS */}
-                      <td className="px-2 py-2">
-                        <div className="flex items-center gap-1">
+                      <td className="px-1 py-2">
+                        <div className="flex items-center gap-0.5 justify-center">
                           {item.isValidated ? (
                             <>
                               <button
