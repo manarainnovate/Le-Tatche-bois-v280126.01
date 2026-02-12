@@ -971,29 +971,32 @@ export function drawItemsTable(
   const row3Y = row2Y + totalsRowHeight;
   const totalsBoxBottom = showTVA ? (row3Y + totalsRowHeight + 4) : (row1Y + totalsRowHeight + 4);
 
-  // Draw box background
+  // Draw box background — same semi-transparent style as table data rows
   doc.save();
 
-  // FIRST: Draw solid white background to block wood texture
-  doc.rect(totalsBoxX, totalsBoxTop, totalsBoxWidth, totalsBoxBottom - totalsBoxTop)
-     .fillColor(COLORS.WHITE)
-     .fill();
-
   if (showTVA) {
-    // White background for rows 1-2
-    doc.rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight * 2)
-       .fillColor('#FFFFFF')
+    // Rows 1-2: Same as table even rows (subtle semi-transparent)
+    doc.save();
+    doc.fillColor('#FAF8F0')
+       .opacity(0.35)
+       .rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight * 2)
        .fill();
+    doc.restore();
 
-    // Very light beige for Total TTC row only
-    doc.rect(totalsBoxX, row3Y, totalsBoxWidth, totalsRowHeight + 4)
-       .fillColor('#FDF8F0')
+    // Row 3 (Total TTC): Slightly more visible
+    doc.save();
+    doc.fillColor('#FAF8F0')
+       .opacity(0.45)
+       .rect(totalsBoxX, row3Y, totalsBoxWidth, totalsRowHeight + 4)
        .fill();
+    doc.restore();
   } else {
-    // Single row white background if no TVA
-    doc.rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight + 4)
-       .fillColor('#FFFFFF')
+    doc.save();
+    doc.fillColor('#FAF8F0')
+       .opacity(0.35)
+       .rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight + 4)
        .fill();
+    doc.restore();
   }
 
   // Draw outer border
