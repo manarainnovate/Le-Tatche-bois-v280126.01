@@ -11,7 +11,6 @@ import {
   Trash2,
   Loader2,
   Archive,
-  Flag,
 } from "lucide-react";
 import { ReplyForm } from "./ReplyForm";
 
@@ -21,60 +20,48 @@ import { ReplyForm } from "./ReplyForm";
 
 const translations = {
   fr: {
-    actions: "Actions",
+    reply: "Répondre",
     markAsUnread: "Marquer comme non lu",
     markAsRead: "Marquer comme lu",
-    star: "Ajouter aux favoris",
+    star: "Favoris",
     unstar: "Retirer des favoris",
-    reply: "Répondre",
-    forward: "Transférer",
     archive: "Archiver",
-    flag: "Signaler",
     delete: "Supprimer",
     confirmDelete: "Êtes-vous sûr de vouloir supprimer ce message ?",
     deleting: "Suppression...",
     cancel: "Annuler",
   },
   en: {
-    actions: "Actions",
+    reply: "Reply",
     markAsUnread: "Mark as unread",
     markAsRead: "Mark as read",
     star: "Star",
     unstar: "Unstar",
-    reply: "Reply",
-    forward: "Forward",
     archive: "Archive",
-    flag: "Flag",
     delete: "Delete",
     confirmDelete: "Are you sure you want to delete this message?",
     deleting: "Deleting...",
     cancel: "Cancel",
   },
   es: {
-    actions: "Acciones",
+    reply: "Responder",
     markAsUnread: "Marcar como no leído",
     markAsRead: "Marcar como leído",
     star: "Destacar",
     unstar: "Quitar destacado",
-    reply: "Responder",
-    forward: "Reenviar",
     archive: "Archivar",
-    flag: "Marcar",
     delete: "Eliminar",
     confirmDelete: "¿Está seguro de eliminar este mensaje?",
     deleting: "Eliminando...",
     cancel: "Cancelar",
   },
   ar: {
-    actions: "الإجراءات",
+    reply: "رد",
     markAsUnread: "تحديد كغير مقروء",
     markAsRead: "تحديد كمقروء",
-    star: "إضافة للمفضلة",
+    star: "مفضلة",
     unstar: "إزالة من المفضلة",
-    reply: "رد",
-    forward: "إعادة توجيه",
     archive: "أرشفة",
-    flag: "تمييز",
     delete: "حذف",
     confirmDelete: "هل أنت متأكد من حذف هذه الرسالة؟",
     deleting: "جاري الحذف...",
@@ -130,6 +117,7 @@ export function MessageActions({
       if (!response.ok) {
         setStarred(!newStarred); // Revert on failure
       }
+      router.refresh();
     } catch (error) {
       console.error("Failed to toggle star:", error);
       setStarred(!newStarred); // Revert on failure
@@ -185,58 +173,61 @@ export function MessageActions({
 
   return (
     <>
-      {/* Horizontal Action Buttons - Modern Design */}
-      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
-        {/* Mark as Read/Unread */}
-        <button
-          onClick={() => void handleToggleRead()}
-          disabled={isUpdating}
-          className="group flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 px-4 py-3 font-semibold text-gray-700 shadow-md transition-all hover:scale-105 hover:border-amber-400 hover:from-amber-50 hover:to-orange-50 hover:text-amber-700 hover:shadow-lg disabled:opacity-50 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-300 dark:hover:border-amber-600 dark:hover:from-amber-900/20 dark:hover:to-orange-900/20 dark:hover:text-amber-400"
-        >
-          <MailOpen className="h-5 w-5 transition-transform group-hover:scale-110" />
-          <span className="hidden sm:inline">{read ? t.markAsUnread : t.markAsRead}</span>
-        </button>
+      {/* Clean Action Button Row - NOT scattered big buttons */}
+      <div className="flex w-full flex-wrap items-center justify-between gap-3">
+        {/* Left Side: Primary + Secondary Actions */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Primary: Reply Button (amber-600, with Reply icon) */}
+          <button
+            onClick={handleReply}
+            className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-amber-700 hover:shadow-md"
+          >
+            <Reply className="h-4 w-4" />
+            {t.reply}
+          </button>
 
-        {/* Star/Unstar */}
-        <button
-          onClick={() => void handleToggleStar()}
-          disabled={isUpdating}
-          className="group flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 px-4 py-3 font-semibold text-gray-700 shadow-md transition-all hover:scale-105 hover:border-yellow-400 hover:from-yellow-50 hover:to-amber-50 hover:text-yellow-700 hover:shadow-lg disabled:opacity-50 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-300 dark:hover:border-yellow-600 dark:hover:from-yellow-900/20 dark:hover:to-amber-900/20 dark:hover:text-yellow-400"
-        >
-          {starred ? (
-            <>
-              <StarOff className="h-5 w-5 transition-transform group-hover:scale-110" />
-              <span className="hidden sm:inline">{t.unstar}</span>
-            </>
-          ) : (
-            <>
-              <Star className="h-5 w-5 transition-transform group-hover:scale-110" />
-              <span className="hidden sm:inline">{t.star}</span>
-            </>
-          )}
-        </button>
+          {/* Secondary: Mark as Unread (gray, subtle) */}
+          <button
+            onClick={() => void handleToggleRead()}
+            disabled={isUpdating}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <MailOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">{read ? t.markAsUnread : t.markAsRead}</span>
+          </button>
 
-        {/* Reply - Primary Action */}
-        <button
-          onClick={handleReply}
-          className="group flex items-center gap-2 rounded-xl border-2 border-green-500 bg-gradient-to-br from-green-500 to-emerald-600 px-6 py-3 font-bold text-white shadow-lg shadow-green-500/30 transition-all hover:scale-105 hover:border-green-600 hover:from-green-600 hover:to-emerald-700 hover:shadow-xl hover:shadow-green-500/40"
-        >
-          <Reply className="h-5 w-5 transition-transform group-hover:scale-110" />
-          <span>{t.reply}</span>
-        </button>
+          {/* Secondary: Star/Unstar (gray, subtle) */}
+          <button
+            onClick={() => void handleToggleStar()}
+            disabled={isUpdating}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            {starred ? (
+              <>
+                <StarOff className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.unstar}</span>
+              </>
+            ) : (
+              <>
+                <Star className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.star}</span>
+              </>
+            )}
+          </button>
 
-        {/* Archive */}
-        <button className="group flex items-center gap-2 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 px-4 py-3 font-semibold text-gray-700 shadow-md transition-all hover:scale-105 hover:border-blue-400 hover:from-blue-50 hover:to-indigo-50 hover:text-blue-700 hover:shadow-lg dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 dark:text-gray-300 dark:hover:border-blue-600 dark:hover:from-blue-900/20 dark:hover:to-indigo-900/20 dark:hover:text-blue-400">
-          <Archive className="h-5 w-5 transition-transform group-hover:scale-110" />
-          <span className="hidden sm:inline">{t.archive}</span>
-        </button>
+          {/* Secondary: Archive (gray, subtle) */}
+          <button className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700">
+            <Archive className="h-4 w-4" />
+            <span className="hidden sm:inline">{t.archive}</span>
+          </button>
+        </div>
 
-        {/* Delete - Danger Action */}
+        {/* Right Side: Delete Button (red text) */}
         <button
           onClick={() => setShowDeleteConfirm(true)}
-          className="group flex items-center gap-2 rounded-xl border-2 border-red-500 bg-gradient-to-br from-red-500 to-rose-600 px-4 py-3 font-bold text-white shadow-lg shadow-red-500/30 transition-all hover:scale-105 hover:border-red-600 hover:from-red-600 hover:to-rose-700 hover:shadow-xl hover:shadow-red-500/40"
+          className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300"
         >
-          <Trash2 className="h-5 w-5 transition-transform group-hover:scale-110" />
+          <Trash2 className="h-4 w-4" />
           <span className="hidden sm:inline">{t.delete}</span>
         </button>
       </div>
