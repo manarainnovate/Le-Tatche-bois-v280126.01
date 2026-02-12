@@ -6,6 +6,7 @@
  */
 
 import PDFDoc from 'pdfkit';
+import * as fs from 'fs';
 import {
   drawWoodBackground,
   drawCenterWatermark,
@@ -17,6 +18,7 @@ import {
   COLORS,
   PAGE,
   MARGINS,
+  ASSETS,
   HeaderResult,
   ClientInfo,
 } from '../base-layout';
@@ -133,19 +135,32 @@ function drawSimpleTable(
 
   let y = startY;
 
-  // ── Draw table header ──
+  // ── Draw table header with wood texture ──
+  const headerHeight = 8 * MM;
+
   doc.save();
-  doc.fillColor(COLORS.BROWN_DARK)
-     .strokeColor(COLORS.GOLD)
-     .lineWidth(1.0);
 
-  // Header background (light gold)
-  doc.rect(margin, y, tableWidth, 8 * MM)
-     .fillAndStroke(COLORS.GOLD_LIGHT, COLORS.GOLD);
+  // Header background - use wood texture image
+  if (fs.existsSync(ASSETS.woodHeader)) {
+    doc.image(ASSETS.woodHeader, margin, y, {
+      width: tableWidth,
+      height: headerHeight,
+    });
+  } else {
+    // Fallback: dark brown rectangle
+    doc.rect(margin, y, tableWidth, headerHeight)
+       .fillAndStroke('#3E2012', COLORS.GOLD);
+  }
 
-  // Header text
+  // Header border (gold outline)
+  doc.strokeColor(COLORS.GOLD)
+     .lineWidth(1.0)
+     .rect(margin, y, tableWidth, headerHeight)
+     .stroke();
+
+  // Header text - WHITE on dark wood background
   const headerY = y + 3 * MM;
-  doc.fillColor(COLORS.BROWN_DARK)
+  doc.fillColor('#FFFFFF')
      .font('Helvetica-Bold')
      .fontSize(8.5);
 

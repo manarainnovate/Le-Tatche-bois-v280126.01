@@ -10,6 +10,7 @@ import { generateB2BNumber, mapDocumentType } from "@/lib/crm/generate-document-
 
 const documentItemSchema = z.object({
   catalogItemId: z.string().optional(),
+  sourceItemId: z.string().optional(), // For PV: link to source BL item
   reference: z.string().optional(),
   designation: z.string().min(1),
   description: z.string().optional(),
@@ -18,6 +19,7 @@ const documentItemSchema = z.object({
   unitPriceHT: z.number().min(0),
   discountPercent: z.number().min(0).max(100).optional(),
   tvaRate: z.number().default(20),
+  metadata: z.any().optional(), // For PV: quantityDelivered, status, remarks
 });
 
 const createDocumentSchema = z.object({
@@ -50,6 +52,14 @@ const createDocumentSchema = z.object({
   isDraft: z.boolean().optional().default(true),
   // If issueImmediately is true, bypass draft mode and issue with official number
   issueImmediately: z.boolean().optional().default(false),
+  // PV Reception specific fields
+  receptionDate: z.string().optional(), // PV reception date (separate from document date)
+  signedBy: z.string().optional(), // Name of person who signed the PV
+  workDescription: z.string().optional(), // Work description for PV
+  hasReserves: z.boolean().optional(), // Whether there are reserves
+  reserves: z.string().optional(), // Description of reserves
+  // BL Reception specific
+  receivedBy: z.string().optional(), // Name of person who received delivery
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -70,6 +80,8 @@ interface CalculatedItem {
   totalTVA: number;
   totalTTC: number;
   catalogItemId?: string;
+  sourceItemId?: string;
+  metadata?: any;
   order: number;
 }
 
@@ -114,6 +126,8 @@ function calculateDocumentTotals(
       totalTVA: lineTVA,
       totalTTC: lineTTC,
       catalogItemId: item.catalogItemId,
+      sourceItemId: item.sourceItemId,
+      metadata: item.metadata,
       order: index,
     };
   });
@@ -427,24 +441,54 @@ export async function POST(request: NextRequest) {
         internalNotes: data.internalNotes,
         publicNotes: data.publicNotes,
         footerText: data.footerText,
+        // PV Reception specific fields
+        workDescription: data.workDescription,
+        hasReserves: data.hasReserves,
+        reserves: data.reserves,
+        signedBy: data.signedBy,
+        // BL Reception specific
+        receivedBy: data.receivedBy,
         // Items
         items: {
-          create: calculated.items.map((item) => ({
-            catalogItemId: item.catalogItemId || null,
-            reference: item.reference,
-            designation: item.designation,
-            description: item.description,
-            quantity: item.quantity,
-            unit: item.unit,
-            unitPriceHT: item.unitPriceHT,
-            discountPercent: item.discountPercent,
-            discountAmount: item.discountAmount,
-            tvaRate: item.tvaRate,
-            totalHT: item.totalHT,
-            totalTVA: item.totalTVA,
-            totalTTC: item.totalTTC,
-            order: item.order,
-          })),
+          create: calculated.items.map((item, idx) => {
+            const originalItem = data.items[idx];
+            // For PV: extract metadata fields
+            const isPV = data.type === "PV_RECEPTION";
+            const pvMetadata = isPV && originalItem?.metadata ? originalItem.metadata : null;
+
+            // Build description with PV status/remarks if present
+            let itemDescription = item.description || null;
+            if (pvMetadata) {
+              const statusText = pvMetadata.status || '';
+              const remarks = pvMetadata.remarks || '';
+              if (statusText || remarks) {
+                itemDescription = [
+                  statusText && `[${statusText}]`,
+                  remarks,
+                  itemDescription
+                ].filter(Boolean).join(' ');
+              }
+            }
+
+            return {
+              catalogItemId: item.catalogItemId || null,
+              sourceBCItemId: item.sourceItemId || null, // Map sourceItemId to sourceBCItemId
+              reference: item.reference,
+              designation: item.designation,
+              description: itemDescription,
+              quantity: item.quantity, // For PV: accepted quantity
+              unit: item.unit,
+              unitPriceHT: item.unitPriceHT,
+              discountPercent: item.discountPercent,
+              discountAmount: item.discountAmount,
+              tvaRate: item.tvaRate,
+              totalHT: item.totalHT,
+              totalTVA: item.totalTVA,
+              totalTTC: item.totalTTC,
+              deliveredQty: pvMetadata?.quantityDelivered || null, // For PV: delivered quantity
+              order: item.order,
+            };
+          }),
         },
       },
       include: {
