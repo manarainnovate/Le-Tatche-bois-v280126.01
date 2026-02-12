@@ -26,6 +26,7 @@ import {
   AlertCircle,
   Search,
   ChevronDown,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/stores/currency";
@@ -583,6 +584,11 @@ export function FactureFormClient({
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const clientDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Catalog popover
+  const [catalogOpenForRow, setCatalogOpenForRow] = useState<string | null>(null);
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const catalogPopoverRef = useRef<HTMLDivElement>(null);
+
   // Get selected client
   const selectedClient = clients.find((c) => c.id === selectedClientId);
 
@@ -609,11 +615,25 @@ export function FactureFormClient({
     );
   }, [clients, clientSearch]);
 
+  // Filter catalog items by search
+  const filteredCatalogItems = useMemo(() => {
+    if (!catalogSearch.trim()) return catalogItems;
+    const q = catalogSearch.toLowerCase();
+    return catalogItems.filter((item) =>
+      (item.name || "").toLowerCase().includes(q) ||
+      (item.sku || "").toLowerCase().includes(q)
+    );
+  }, [catalogItems, catalogSearch]);
+
   // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (clientDropdownRef.current && !clientDropdownRef.current.contains(e.target as Node)) {
         setShowClientDropdown(false);
+      }
+      if (catalogPopoverRef.current && !catalogPopoverRef.current.contains(e.target as Node)) {
+        setCatalogOpenForRow(null);
+        setCatalogSearch("");
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -1582,37 +1602,101 @@ export function FactureFormClient({
                             )}
                           </div>
                         ) : (
-                          <div className="w-full space-y-1.5">
-                            {/* Catalog selector - compact */}
-                            <select
-                              value={item.catalogItemId || ""}
-                              onChange={(e) => selectCatalogItem(item.id, e.target.value)}
-                              onKeyDown={(e) => handleItemKeyDown(e, item.id, "catalog")}
-                              disabled={item.isValidated}
-                              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800 text-gray-500"
-                            >
-                              <option value="">-- Catalogue --</option>
-                              {catalogItems.map((ci) => (
-                                <option key={ci.id} value={ci.id}>
-                                  {ci.sku} - {ci.name}
-                                </option>
-                              ))}
-                            </select>
-                            {/* Main designation input - full width */}
-                            <input
-                              type="text"
-                              value={item.designation}
-                              onChange={(e) => updateItem(item.id, "designation", e.target.value)}
-                              onKeyDown={(e) => handleItemKeyDown(e, item.id, "designation")}
-                              disabled={item.isValidated}
-                              placeholder="Saisir la désignation du produit ou service..."
-                              className={cn(
-                                "w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800 transition-all",
-                                item.validationErrors.includes("designation")
-                                  ? "border-red-400 bg-red-50 dark:bg-red-900/20 animate-shake"
-                                  : "border-gray-300 dark:border-gray-600"
+                          <div className="w-full space-y-1.5 relative">
+                            {/* Main designation input with catalog button inside */}
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={item.designation}
+                                onChange={(e) => updateItem(item.id, "designation", e.target.value)}
+                                onKeyDown={(e) => handleItemKeyDown(e, item.id, "designation")}
+                                disabled={item.isValidated}
+                                placeholder="Saisir la désignation du produit ou service..."
+                                className={cn(
+                                  "w-full pl-3 pr-10 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800 transition-all",
+                                  item.validationErrors.includes("designation")
+                                    ? "border-red-400 bg-red-50 dark:bg-red-900/20 animate-shake"
+                                    : "border-gray-300 dark:border-gray-600"
+                                )}
+                              />
+                              {/* Catalog icon button - positioned inside input on right */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setCatalogOpenForRow(catalogOpenForRow === item.id ? null : item.id);
+                                  setCatalogSearch("");
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors text-amber-600 dark:text-amber-500"
+                                title="Sélectionner depuis le catalogue"
+                              >
+                                <Package className="w-4 h-4" />
+                              </button>
+
+                              {/* Catalog popover */}
+                              {catalogOpenForRow === item.id && (
+                                <div
+                                  ref={catalogPopoverRef}
+                                  className="absolute z-50 top-full mt-1 right-0 w-80 max-h-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl overflow-hidden"
+                                >
+                                  {/* Search input */}
+                                  <div className="p-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                                    <div className="relative">
+                                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                      <input
+                                        type="text"
+                                        value={catalogSearch}
+                                        onChange={(e) => setCatalogSearch(e.target.value)}
+                                        placeholder="Rechercher par nom ou SKU..."
+                                        className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
+                                        autoFocus
+                                      />
+                                    </div>
+                                  </div>
+
+                                  {/* Catalog items list */}
+                                  <div className="overflow-y-auto max-h-56">
+                                    {filteredCatalogItems.length === 0 ? (
+                                      <div className="p-4 text-center text-sm text-gray-500">
+                                        Aucun article trouvé
+                                      </div>
+                                    ) : (
+                                      filteredCatalogItems.map((ci) => (
+                                        <button
+                                          key={ci.id}
+                                          type="button"
+                                          onClick={() => {
+                                            selectCatalogItem(item.id, ci.id);
+                                            setCatalogOpenForRow(null);
+                                            setCatalogSearch("");
+                                          }}
+                                          className="w-full px-3 py-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors"
+                                        >
+                                          <div className="flex items-start justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                {ci.name}
+                                              </p>
+                                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                SKU: {ci.sku}
+                                              </p>
+                                            </div>
+                                            <div className="text-right">
+                                              <p className="text-sm font-semibold text-amber-600 dark:text-amber-500 whitespace-nowrap">
+                                                {formatCurrency(ci.sellingPriceHT)}
+                                              </p>
+                                              <p className="text-xs text-gray-400">
+                                                TVA {ci.tvaRate}%
+                                              </p>
+                                            </div>
+                                          </div>
+                                        </button>
+                                      ))
+                                    )}
+                                  </div>
+                                </div>
                               )}
-                            />
+                            </div>
+
                             {/* Optional description - subtle */}
                             <input
                               type="text"
