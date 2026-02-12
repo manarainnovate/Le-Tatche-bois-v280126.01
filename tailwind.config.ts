@@ -97,6 +97,7 @@ const config: Config = {
         "spin-slow": "spin 3s linear infinite",
         "pulse-slow": "pulse 3s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
+        "shake": "shake 0.5s ease-in-out",
       },
       keyframes: {
         fadeIn: {
@@ -122,6 +123,11 @@ const config: Config = {
         shimmer: {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
+        },
+        shake: {
+          "0%, 100%": { transform: "translateX(0)" },
+          "10%, 30%, 50%, 70%, 90%": { transform: "translateX(-4px)" },
+          "20%, 40%, 60%, 80%": { transform: "translateX(4px)" },
         },
       },
       transitionDuration: {

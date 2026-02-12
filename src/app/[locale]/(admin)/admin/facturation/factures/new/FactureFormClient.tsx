@@ -18,6 +18,8 @@ import {
   AlertTriangle,
   X,
   UserPlus,
+  Check,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/stores/currency";
@@ -114,6 +116,10 @@ interface LineItem {
   unitPriceHT: number;
   discountPercent: number;
   tvaRate: number;
+  // Validation state
+  isValidated: boolean;
+  isEditing: boolean;
+  validationErrors: string[];
 }
 
 interface ExistingDocument extends ParentDocument {
@@ -525,6 +531,10 @@ export function FactureFormClient({
         unitPriceHT: item.unitPriceHT,
         discountPercent: item.discountPercent || 0,
         tvaRate: item.tvaRate,
+        // Pre-filled items start as validated
+        isValidated: true,
+        isEditing: false,
+        validationErrors: [],
       }));
     }
     return [];
@@ -592,6 +602,9 @@ export function FactureFormClient({
             unitPriceHT: item.unitPriceHT,
             discountPercent: item.discountPercent || 0,
             tvaRate: item.tvaRate,
+            isValidated: true,
+            isEditing: false,
+            validationErrors: [],
           }))
         );
       }
@@ -613,13 +626,16 @@ export function FactureFormClient({
         unitPriceHT: 0,
         discountPercent: 0,
         tvaRate: 20,
+        isValidated: false,
+        isEditing: true,
+        validationErrors: [],
       },
     ]);
 
     // Focus first input of new row after render
     if (focusFirst) {
       setTimeout(() => {
-        const newRow = document.querySelector(`[data-row-id="${newId}"] input`);
+        const newRow = document.querySelector(`[data-row-id="${newId}"] input[type="text"]`);
         if (newRow instanceof HTMLInputElement) {
           newRow.focus();
         }
@@ -627,11 +643,95 @@ export function FactureFormClient({
     }
   };
 
-  // Handle Enter key on last field
-  const handleItemKeyDown = (e: React.KeyboardEvent, itemId: string, isLastField: boolean) => {
-    if (e.key === 'Enter' && isLastField) {
+  // Validate line item
+  const validateLine = (itemId: string) => {
+    const itemIndex = items.findIndex((i) => i.id === itemId);
+    if (itemIndex === -1) return false;
+
+    const item = items[itemIndex];
+    const errors: string[] = [];
+
+    if (!item.designation.trim()) errors.push("designation");
+    if (item.quantity <= 0) errors.push("quantity");
+    if (item.unitPriceHT < 0) errors.push("unitPriceHT");
+
+    if (errors.length > 0) {
+      // Show errors
+      const updatedItems = [...items];
+      updatedItems[itemIndex] = {
+        ...updatedItems[itemIndex],
+        validationErrors: errors,
+        isValidated: false,
+      };
+      setItems(updatedItems);
+      return false;
+    }
+
+    // Valid — lock the row
+    const updatedItems = [...items];
+    updatedItems[itemIndex] = {
+      ...updatedItems[itemIndex],
+      isValidated: true,
+      isEditing: false,
+      validationErrors: [],
+    };
+    setItems(updatedItems);
+
+    // Auto-add new row if this was the last one
+    if (itemIndex === items.length - 1) {
+      setTimeout(() => {
+        addItem(true);
+      }, 100);
+    }
+
+    return true;
+  };
+
+  // Unlock line item for editing
+  const unlockLine = (itemId: string) => {
+    const itemIndex = items.findIndex((i) => i.id === itemId);
+    if (itemIndex === -1) return;
+
+    const updatedItems = [...items];
+    updatedItems[itemIndex] = {
+      ...updatedItems[itemIndex],
+      isValidated: false,
+      isEditing: true,
+      validationErrors: [],
+    };
+    setItems(updatedItems);
+
+    // Focus designation input
+    setTimeout(() => {
+      const row = document.querySelector(`[data-row-id="${itemId}"]`);
+      const input = row?.querySelector('input[type="text"]');
+      if (input instanceof HTMLInputElement) {
+        input.focus();
+      }
+    }, 50);
+  };
+
+  // Handle Enter key on ANY field in a row
+  const handleItemKeyDown = (e: React.KeyboardEvent, itemId: string, field: string) => {
+    if (e.key === "Enter") {
       e.preventDefault();
-      addItem(true);
+      validateLine(itemId);
+    }
+
+    // Tab on last field also validates
+    if (e.key === "Tab" && !e.shiftKey && field === "tvaRate") {
+      e.preventDefault();
+      if (validateLine(itemId)) {
+        // Focus will go to new row's designation
+      }
+    }
+
+    // Escape to remove empty row
+    if (e.key === "Escape") {
+      const item = items.find((i) => i.id === itemId);
+      if (item && !item.designation.trim() && item.unitPriceHT === 0) {
+        removeItem(itemId);
+      }
     }
   };
 
@@ -641,9 +741,18 @@ export function FactureFormClient({
   };
 
   // Update line item
-  const updateItem = (id: string, field: keyof LineItem, value: string | number) => {
+  const updateItem = (id: string, field: keyof LineItem, value: string | number | boolean) => {
     setItems(
-      items.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+      items.map((item) =>
+        item.id === id
+          ? {
+              ...item,
+              [field]: value,
+              // Clear validation errors when editing
+              validationErrors: item.validationErrors.filter((e) => e !== field),
+            }
+          : item
+      )
     );
   };
 
@@ -1039,6 +1148,7 @@ export function FactureFormClient({
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 dark:bg-gray-900/50">
                   <tr>
+                    <th className="px-2 py-2 w-10 text-center font-medium text-gray-500">#</th>
                     <th className="px-2 py-2 text-left font-medium text-gray-500">{t.designation}</th>
                     <th className="px-2 py-2 text-right font-medium text-gray-500 w-20">{t.quantity}</th>
                     <th className="px-2 py-2 text-left font-medium text-gray-500 w-20">{t.unit}</th>
@@ -1046,103 +1156,267 @@ export function FactureFormClient({
                     <th className="px-2 py-2 text-right font-medium text-gray-500 w-20">{t.discount}</th>
                     <th className="px-2 py-2 text-right font-medium text-gray-500 w-20">{t.tva}</th>
                     <th className="px-2 py-2 text-right font-medium text-gray-500 w-28">{t.totalHT}</th>
-                    <th className="px-2 py-2 w-10"></th>
+                    <th className="px-2 py-2 w-16"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {items.map((item) => (
-                    <tr key={item.id} data-row-id={item.id}>
+                  {items.map((item, index) => (
+                    <tr
+                      key={item.id}
+                      data-row-id={item.id}
+                      onClick={() => {
+                        if (item.isValidated) unlockLine(item.id);
+                      }}
+                      className={cn(
+                        "border-b transition-all duration-200 group relative",
+                        item.isValidated
+                          ? "bg-emerald-50/50 dark:bg-emerald-900/10 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 cursor-pointer"
+                          : item.isEditing
+                            ? "bg-amber-50/30 dark:bg-amber-900/10"
+                            : "hover:bg-gray-50 dark:hover:bg-gray-800"
+                      )}
+                    >
+                      {/* LEFT BORDER INDICATOR */}
+                      <td className="relative w-0 p-0">
+                        <div
+                          className={cn(
+                            "absolute left-0 top-0 bottom-0 w-1 transition-colors duration-200",
+                            item.isValidated
+                              ? "bg-emerald-500"
+                              : item.isEditing
+                                ? "bg-amber-400"
+                                : "bg-transparent"
+                          )}
+                        />
+                      </td>
+
+                      {/* ROW NUMBER + STATUS */}
+                      <td className="px-2 py-2 text-center w-10">
+                        {item.isValidated ? (
+                          <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                            <Check className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        ) : (
+                          <span className="text-xs font-medium text-gray-400">{index + 1}</span>
+                        )}
+                      </td>
+
+                      {/* DESIGNATION */}
                       <td className="px-2 py-2">
-                        <div className="space-y-1">
+                        {item.isValidated ? (
+                          <div>
+                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                              {item.designation}
+                            </p>
+                            {item.description && (
+                              <p className="text-xs text-gray-400 mt-0.5">{item.description}</p>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-1">
+                            <select
+                              value={item.catalogItemId || ""}
+                              onChange={(e) => selectCatalogItem(item.id, e.target.value)}
+                              onKeyDown={(e) => handleItemKeyDown(e, item.id, "catalog")}
+                              disabled={item.isValidated}
+                              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
+                            >
+                              <option value="">-- Catalogue --</option>
+                              {catalogItems.map((ci) => (
+                                <option key={ci.id} value={ci.id}>
+                                  {ci.sku} - {ci.name}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="text"
+                              value={item.designation}
+                              onChange={(e) => updateItem(item.id, "designation", e.target.value)}
+                              onKeyDown={(e) => handleItemKeyDown(e, item.id, "designation")}
+                              disabled={item.isValidated}
+                              placeholder={t.designation}
+                              className={cn(
+                                "w-full px-2 py-1 border rounded focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800 transition-all",
+                                item.validationErrors.includes("designation")
+                                  ? "border-red-400 bg-red-50 dark:bg-red-900/20 animate-shake"
+                                  : "border-gray-300 dark:border-gray-600"
+                              )}
+                            />
+                          </div>
+                        )}
+                      </td>
+
+                      {/* QUANTITY */}
+                      <td className="px-2 py-2">
+                        {item.isValidated ? (
+                          <p className="text-sm text-right font-medium text-gray-700 dark:text-gray-300">
+                            {item.quantity}
+                          </p>
+                        ) : (
+                          <input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(item.id, "quantity", parseFloat(e.target.value) || 0)}
+                            onKeyDown={(e) => handleItemKeyDown(e, item.id, "quantity")}
+                            disabled={item.isValidated}
+                            min="0"
+                            step="0.01"
+                            className={cn(
+                              "w-full px-2 py-1 text-right border rounded focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
+                              item.validationErrors.includes("quantity")
+                                ? "border-red-400 bg-red-50 dark:bg-red-900/20 animate-shake"
+                                : "border-gray-300 dark:border-gray-600"
+                            )}
+                          />
+                        )}
+                      </td>
+
+                      {/* UNIT */}
+                      <td className="px-2 py-2">
+                        {item.isValidated ? (
+                          <p className="text-sm text-center text-gray-600 dark:text-gray-400">{item.unit}</p>
+                        ) : (
                           <select
-                            value={item.catalogItemId || ""}
-                            onChange={(e) => selectCatalogItem(item.id, e.target.value)}
-                            className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
+                            value={item.unit}
+                            onChange={(e) => updateItem(item.id, "unit", e.target.value)}
+                            onKeyDown={(e) => handleItemKeyDown(e, item.id, "unit")}
+                            disabled={item.isValidated}
+                            className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                           >
-                            <option value="">-- Catalogue --</option>
-                            {catalogItems.map((ci) => (
-                              <option key={ci.id} value={ci.id}>
-                                {ci.sku} - {ci.name}
+                            {units.map((u) => (
+                              <option key={u.value} value={u.value}>
+                                {u.label}
                               </option>
                             ))}
                           </select>
+                        )}
+                      </td>
+
+                      {/* PRIX UNITAIRE HT */}
+                      <td className="px-2 py-2">
+                        {item.isValidated ? (
+                          <p className="text-sm text-right font-medium text-gray-700 dark:text-gray-300">
+                            {formatCurrency(item.unitPriceHT)}
+                          </p>
+                        ) : (
                           <input
-                            type="text"
-                            value={item.designation}
-                            onChange={(e) => updateItem(item.id, "designation", e.target.value)}
-                            className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                            placeholder={t.designation}
+                            type="number"
+                            value={item.unitPriceHT}
+                            onChange={(e) => updateItem(item.id, "unitPriceHT", parseFloat(e.target.value) || 0)}
+                            onKeyDown={(e) => handleItemKeyDown(e, item.id, "unitPriceHT")}
+                            disabled={item.isValidated}
+                            min="0"
+                            step="0.01"
+                            className={cn(
+                              "w-full px-2 py-1 text-right border rounded focus:ring-2 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
+                              item.validationErrors.includes("unitPriceHT")
+                                ? "border-red-400 bg-red-50 dark:bg-red-900/20 animate-shake"
+                                : "border-gray-300 dark:border-gray-600"
+                            )}
                           />
+                        )}
+                      </td>
+
+                      {/* REMISE % */}
+                      <td className="px-2 py-2">
+                        {item.isValidated ? (
+                          <p className="text-sm text-center text-gray-600 dark:text-gray-400">
+                            {item.discountPercent > 0 ? `${item.discountPercent}%` : "-"}
+                          </p>
+                        ) : (
+                          <input
+                            type="number"
+                            value={item.discountPercent}
+                            onChange={(e) => updateItem(item.id, "discountPercent", parseFloat(e.target.value) || 0)}
+                            onKeyDown={(e) => handleItemKeyDown(e, item.id, "discountPercent")}
+                            disabled={item.isValidated}
+                            min="0"
+                            max="100"
+                            className="w-full px-2 py-1 text-center border rounded focus:ring-2 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                          />
+                        )}
+                      </td>
+
+                      {/* TVA % */}
+                      <td className="px-2 py-2">
+                        {item.isValidated ? (
+                          <p className="text-sm text-center text-gray-600 dark:text-gray-400">{item.tvaRate}%</p>
+                        ) : (
+                          <select
+                            value={item.tvaRate}
+                            onChange={(e) => updateItem(item.id, "tvaRate", parseFloat(e.target.value))}
+                            onKeyDown={(e) => handleItemKeyDown(e, item.id, "tvaRate")}
+                            disabled={item.isValidated}
+                            className="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                          >
+                            <option value={0}>0%</option>
+                            <option value={7}>7%</option>
+                            <option value={10}>10%</option>
+                            <option value={14}>14%</option>
+                            <option value={20}>20%</option>
+                          </select>
+                        )}
+                      </td>
+
+                      {/* TOTAL HT */}
+                      <td className="px-2 py-2">
+                        <div
+                          className={cn(
+                            "px-3 py-1.5 rounded-lg text-sm text-right font-semibold",
+                            item.isValidated
+                              ? "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400"
+                              : "bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                          )}
+                        >
+                          {formatCurrency(calculateLineTotal(item))}
                         </div>
                       </td>
+
+                      {/* ACTIONS */}
                       <td className="px-2 py-2">
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => updateItem(item.id, "quantity", parseFloat(e.target.value) || 0)}
-                          className="w-full px-2 py-1 text-right border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                          min="0"
-                          step="0.01"
-                        />
-                      </td>
-                      <td className="px-2 py-2">
-                        <select
-                          value={item.unit}
-                          onChange={(e) => updateItem(item.id, "unit", e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                        >
-                          {units.map((u) => (
-                            <option key={u.value} value={u.value}>
-                              {u.label}
-                            </option>
-                          ))}
-                        </select>
-                      </td>
-                      <td className="px-2 py-2">
-                        <input
-                          type="number"
-                          value={item.unitPriceHT}
-                          onChange={(e) => updateItem(item.id, "unitPriceHT", parseFloat(e.target.value) || 0)}
-                          className="w-full px-2 py-1 text-right border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                          min="0"
-                          step="0.01"
-                        />
-                      </td>
-                      <td className="px-2 py-2">
-                        <input
-                          type="number"
-                          value={item.discountPercent}
-                          onChange={(e) => updateItem(item.id, "discountPercent", parseFloat(e.target.value) || 0)}
-                          className="w-full px-2 py-1 text-right border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                          min="0"
-                          max="100"
-                        />
-                      </td>
-                      <td className="px-2 py-2">
-                        <select
-                          value={item.tvaRate}
-                          onChange={(e) => updateItem(item.id, "tvaRate", parseFloat(e.target.value))}
-                          onKeyDown={(e) => handleItemKeyDown(e, item.id, true)}
-                          className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                        >
-                          <option value={0}>0%</option>
-                          <option value={7}>7%</option>
-                          <option value={10}>10%</option>
-                          <option value={14}>14%</option>
-                          <option value={20}>20%</option>
-                        </select>
-                      </td>
-                      <td className="px-2 py-2 text-right font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(calculateLineTotal(item))}
-                      </td>
-                      <td className="px-2 py-2">
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id)}
-                          className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          {item.isValidated ? (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  unlockLine(item.id);
+                                }}
+                                className="p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"
+                                title="Modifier"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  removeItem(item.id);
+                                }}
+                                className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => validateLine(item.id)}
+                                className="p-1.5 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 shadow-sm transition-all hover:scale-105"
+                                title="Valider (Entrée)"
+                              >
+                                <Check className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => removeItem(item.id)}
+                                className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                title="Supprimer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
