@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -24,6 +24,8 @@ import {
   Phone,
   Hash,
   AlertCircle,
+  Search,
+  ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/stores/currency";
@@ -35,6 +37,7 @@ import { useCurrency } from "@/stores/currency";
 interface Client {
   id: string;
   fullName: string;
+  company: string | null;
   clientNumber: string;
   email: string | null;
   phone: string;
@@ -575,8 +578,47 @@ export function FactureFormClient({
   const [isCreatingClient, setIsCreatingClient] = useState(false);
   const [quickClientError, setQuickClientError] = useState("");
 
+  // Searchable client dropdown
+  const [clientSearch, setClientSearch] = useState("");
+  const [showClientDropdown, setShowClientDropdown] = useState(false);
+  const clientDropdownRef = useRef<HTMLDivElement>(null);
+
   // Get selected client
   const selectedClient = clients.find((c) => c.id === selectedClientId);
+
+  // Helper: Get client display name (company first, then person)
+  const getClientDisplayName = (client: any) => {
+    const company = client.company || "";
+    const person = client.fullName || "";
+    if (company && person) return { primary: company, secondary: person };
+    if (company) return { primary: company, secondary: "" };
+    return { primary: person, secondary: "" };
+  };
+
+  // Filter clients by search
+  const filteredClients = useMemo(() => {
+    if (!clientSearch.trim()) return clients;
+    const q = clientSearch.toLowerCase();
+    return clients.filter((c: any) =>
+      (c.company || "").toLowerCase().includes(q) ||
+      (c.fullName || "").toLowerCase().includes(q) ||
+      (c.email || "").toLowerCase().includes(q) ||
+      (c.phone || "").toLowerCase().includes(q) ||
+      (c.ice || "").toLowerCase().includes(q) ||
+      (c.clientNumber || "").toLowerCase().includes(q)
+    );
+  }, [clients, clientSearch]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (clientDropdownRef.current && !clientDropdownRef.current.contains(e.target as Node)) {
+        setShowClientDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Update payment terms when selecting client
   useEffect(() => {
@@ -1050,31 +1092,186 @@ export function FactureFormClient({
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              {/* Searchable Client Selector */}
+              <div ref={clientDropdownRef} className="relative">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   {t.selectClient} *
                 </label>
-                <div className="relative">
-                  <select
-                    value={selectedClientId}
-                    onChange={(e) => {
-                      if (e.target.value === "__new__") {
-                        setShowQuickClientModal(true);
-                      } else {
-                        setSelectedClientId(e.target.value);
-                      }
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
-                  >
-                    <option value="">{t.selectClient}</option>
-                    {clients.map((client) => (
-                      <option key={client.id} value={client.id}>
-                        {client.clientNumber} - {client.fullName}
-                      </option>
-                    ))}
-                    <option value="__new__" className="font-medium text-amber-600">+ Nouveau client</option>
-                  </select>
+
+                {/* Selected client display / Search input */}
+                <div
+                  className={`w-full border rounded-xl transition-all ${
+                    showClientDropdown
+                      ? "border-amber-400 ring-2 ring-amber-200"
+                      : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
+                  }`}
+                >
+                  {/* If client is selected and dropdown is closed, show selected client */}
+                  {selectedClientId && !showClientDropdown ? (
+                    <div
+                      className="flex items-center justify-between px-3 py-2.5 cursor-pointer"
+                      onClick={() => setShowClientDropdown(true)}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-bold text-amber-700">
+                            {(() => {
+                              if (!selectedClient) return "?";
+                              const { primary } = getClientDisplayName(selectedClient);
+                              return primary?.[0]?.toUpperCase() || "?";
+                            })()}
+                          </span>
+                        </div>
+                        <div className="min-w-0">
+                          {selectedClient ? (
+                            (() => {
+                              const { primary, secondary } = getClientDisplayName(selectedClient);
+                              return (
+                                <>
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                    {primary}
+                                  </p>
+                                  {secondary && (
+                                    <p className="text-xs text-gray-500 truncate">{secondary}</p>
+                                  )}
+                                </>
+                              );
+                            })()
+                          ) : (
+                            <span className="text-sm text-gray-400">Client non trouvé</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedClientId("");
+                          }}
+                          className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </div>
+                    </div>
+                  ) : (
+                    /* Search input */
+                    <div className="flex items-center px-3">
+                      <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                      <input
+                        type="text"
+                        value={clientSearch}
+                        onChange={(e) => {
+                          setClientSearch(e.target.value);
+                          setShowClientDropdown(true);
+                        }}
+                        onFocus={() => setShowClientDropdown(true)}
+                        placeholder="Rechercher par entreprise, nom, email, ICE..."
+                        className="w-full px-2 py-2.5 text-sm bg-transparent border-none outline-none focus:ring-0 placeholder:text-gray-400"
+                      />
+                      {clientSearch && (
+                        <button
+                          type="button"
+                          onClick={() => setClientSearch("")}
+                          className="p-1 text-gray-400 hover:text-gray-600"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
+
+                {/* Dropdown list */}
+                {showClientDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-xl max-h-[300px] overflow-y-auto">
+                    {/* Results */}
+                    {filteredClients.length > 0 ? (
+                      filteredClients.map((client: any) => {
+                        const { primary, secondary } = getClientDisplayName(client);
+                        const isSelected = selectedClientId === client.id;
+                        return (
+                          <button
+                            key={client.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedClientId(client.id);
+                              setShowClientDropdown(false);
+                              setClientSearch("");
+                            }}
+                            className={`w-full px-3 py-2.5 flex items-center gap-3 text-left hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors ${
+                              isSelected ? "bg-amber-50 dark:bg-amber-900/20" : ""
+                            }`}
+                          >
+                            {/* Avatar */}
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                                isSelected
+                                  ? "bg-amber-500 text-white"
+                                  : "bg-gray-100 text-gray-500"
+                              }`}
+                            >
+                              <span className="text-xs font-bold">
+                                {primary?.[0]?.toUpperCase() || "?"}
+                              </span>
+                            </div>
+
+                            {/* Client info */}
+                            <div className="flex-1 min-w-0">
+                              <p
+                                className={`text-sm font-medium truncate ${
+                                  isSelected
+                                    ? "text-amber-700"
+                                    : "text-gray-900 dark:text-gray-100"
+                                }`}
+                              >
+                                {primary}
+                              </p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {secondary && (
+                                  <span className="text-xs text-gray-500 truncate">
+                                    {secondary}
+                                  </span>
+                                )}
+                                {client.ice && (
+                                  <span className="text-xs text-gray-400">ICE: {client.ice}</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Check mark */}
+                            {isSelected && (
+                              <Check className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="px-4 py-6 text-center">
+                        <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                        <p className="text-sm text-gray-500">Aucun client trouvé</p>
+                        <p className="text-xs text-gray-400 mt-1">Essayez un autre mot-clé</p>
+                      </div>
+                    )}
+
+                    {/* Separator + New Client button */}
+                    <div className="border-t sticky bottom-0 bg-white dark:bg-gray-800">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowClientDropdown(false);
+                          setShowQuickClientModal(true);
+                        }}
+                        className="w-full px-3 py-3 flex items-center gap-2 text-sm font-medium text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                        Nouveau client
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1098,22 +1295,52 @@ export function FactureFormClient({
 
             {/* Selected Client Info */}
             {selectedClient && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-                <h3 className="font-medium text-gray-900 dark:text-white mb-2">
+              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                <h3 className="font-medium text-gray-900 dark:text-white mb-3">
                   {t.clientDetails}
                 </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500 dark:text-gray-400">{t.address}:</span>
-                    <p className="text-gray-900 dark:text-white">
-                      {selectedClient.billingAddress || "-"}
-                      {selectedClient.billingCity && `, ${selectedClient.billingCity}`}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500 dark:text-gray-400">{t.ice}:</span>
-                    <p className="text-gray-900 dark:text-white">{selectedClient.ice || "-"}</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  {selectedClient.company && (
+                    <>
+                      <span className="text-gray-500 dark:text-gray-400">Entreprise:</span>
+                      <span className="font-medium text-gray-900 dark:text-white">
+                        {selectedClient.company}
+                      </span>
+                    </>
+                  )}
+                  <span className="text-gray-500 dark:text-gray-400">Contact:</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {selectedClient.fullName}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400">{t.address}:</span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {selectedClient.billingAddress || "-"}
+                    {selectedClient.billingCity && `, ${selectedClient.billingCity}`}
+                  </span>
+                  <span className="text-gray-500 dark:text-gray-400">{t.ice}:</span>
+                  <span className="text-gray-700 dark:text-gray-300 font-mono">
+                    {selectedClient.ice || "-"}
+                  </span>
+                  {selectedClient.taxId && (
+                    <>
+                      <span className="text-gray-500 dark:text-gray-400">IF:</span>
+                      <span className="text-gray-700 dark:text-gray-300 font-mono">
+                        {selectedClient.taxId}
+                      </span>
+                    </>
+                  )}
+                  {selectedClient.email && (
+                    <>
+                      <span className="text-gray-500 dark:text-gray-400">Email:</span>
+                      <span className="text-gray-700 dark:text-gray-300">{selectedClient.email}</span>
+                    </>
+                  )}
+                  {selectedClient.phone && (
+                    <>
+                      <span className="text-gray-500 dark:text-gray-400">Tél:</span>
+                      <span className="text-gray-700 dark:text-gray-300">{selectedClient.phone}</span>
+                    </>
+                  )}
                 </div>
               </div>
             )}

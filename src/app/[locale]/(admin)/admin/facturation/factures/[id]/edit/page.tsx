@@ -23,6 +23,7 @@ export default async function EditFacturePage({ params }: EditFacturePageProps) 
         select: {
           id: true,
           fullName: true,
+          company: true,
           clientNumber: true,
           email: true,
           phone: true,
@@ -68,6 +69,7 @@ export default async function EditFacturePage({ params }: EditFacturePageProps) 
     select: {
       id: true,
       fullName: true,
+      company: true,
       clientNumber: true,
       email: true,
       phone: true,

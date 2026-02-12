@@ -33,6 +33,7 @@ export default async function NewFacturePage({ params, searchParams }: NewFactur
           select: {
             id: true,
             fullName: true,
+            company: true,
             clientNumber: true,
             email: true,
             phone: true,
@@ -64,6 +65,7 @@ export default async function NewFacturePage({ params, searchParams }: NewFactur
     select: {
       id: true,
       fullName: true,
+      company: true,
       clientNumber: true,
       email: true,
       phone: true,
