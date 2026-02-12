@@ -180,7 +180,7 @@ const translations = {
 // Types
 // ═══════════════════════════════════════════════════════════
 
-type UserRole = "ADMIN" | "EDITOR" | "SALES";
+type UserRole = "ADMIN" | "EDITOR" | "SALES" | "COMMERCIAL" | "MANAGER";
 
 interface UserFormData {
   name: string;

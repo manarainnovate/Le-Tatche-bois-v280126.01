@@ -3,12 +3,13 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from "next/navigation";
 import { UserForm } from "@/components/admin/forms/UserForm";
+import { prisma } from "@/lib/prisma";
 
 // ═══════════════════════════════════════════════════════════
 // Types
 // ═══════════════════════════════════════════════════════════
 
-type UserRole = "ADMIN" | "EDITOR" | "SALES";
+type UserRole = "ADMIN" | "EDITOR" | "SALES" | "COMMERCIAL" | "MANAGER";
 
 interface UserData {
   id: string;
@@ -16,61 +17,9 @@ interface UserData {
   email: string;
   password: string;
   confirmPassword: string;
-  role: UserRole;
+  role: UserRole | "";
   avatar: string | null;
   isActive: boolean;
-}
-
-// ═══════════════════════════════════════════════════════════
-// Mock Get User
-// ═══════════════════════════════════════════════════════════
-
-function getUser(id: string): UserData | null {
-  // In production, fetch from database
-  const mockUsers: Record<string, UserData> = {
-    "1": {
-      id: "1",
-      name: "Ahmed Benali",
-      email: "ahmed@letatche-bois.ma",
-      password: "",
-      confirmPassword: "",
-      role: "ADMIN",
-      avatar: null,
-      isActive: true,
-    },
-    "2": {
-      id: "2",
-      name: "Fatima Zohra",
-      email: "fatima@letatche-bois.ma",
-      password: "",
-      confirmPassword: "",
-      role: "EDITOR",
-      avatar: null,
-      isActive: true,
-    },
-    "3": {
-      id: "3",
-      name: "Mohammed El Amrani",
-      email: "mohammed@letatche-bois.ma",
-      password: "",
-      confirmPassword: "",
-      role: "SALES",
-      avatar: null,
-      isActive: true,
-    },
-    "4": {
-      id: "4",
-      name: "Karim Idrissi",
-      email: "karim@letatche-bois.ma",
-      password: "",
-      confirmPassword: "",
-      role: "SALES",
-      avatar: null,
-      isActive: false,
-    },
-  };
-
-  return mockUsers[id] ?? null;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -84,13 +33,38 @@ interface PageProps {
 export default async function EditUserPage({ params }: PageProps) {
   const { locale, id } = await params;
 
-  const user = getUser(id);
+  // Fetch user from database
+  const user = await prisma.user.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      avatar: true,
+      image: true,
+      isActive: true,
+      phone: true,
+    },
+  });
 
   if (!user) {
     notFound();
   }
 
-  return <UserForm user={user} locale={locale} />;
+  // Transform for UserForm
+  const userData: UserData = {
+    id: user.id,
+    name: user.name || "",
+    email: user.email,
+    password: "",
+    confirmPassword: "",
+    role: user.role as UserRole,
+    avatar: user.avatar || user.image || null,
+    isActive: user.isActive,
+  };
+
+  return <UserForm user={userData} locale={locale} />;
 }
 
 // ═══════════════════════════════════════════════════════════
