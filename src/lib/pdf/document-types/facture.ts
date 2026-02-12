@@ -365,12 +365,12 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
         true   // Show TVA
       );
 
-      // ── Sequential Y flow (FIXED: always descend) ──
+      // ── Sequential Y flow - BUG 7 FIX: Better spacing between sections ──
       let currentY = tableResult.afterTableY + 3 * MM;
 
-      // Amount in French words box
+      // Amount in French words box - BUG 7 FIX: Reduce gap from 5mm to 4mm
       const amountBoxBottom = drawAmountInWordsBox(doc, currentY, tableResult.totalTTC);
-      currentY = amountBoxBottom + 5 * MM;
+      currentY = amountBoxBottom + 4 * MM;
 
       // Payment section (if exists)
       if (data.document.paymentMethod || data.document.bankInfo) {
@@ -383,8 +383,14 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
         currentY += 3 * MM;
       }
 
-      // Signature section
-      drawSignatureSection(doc, currentY + 10 * MM);
+      // Signature section - BUG 6 FIX: Ensure signatures don't get cut off by footer
+      // Calculate maximum Y position to avoid footer overlap
+      const footerTop = PAGE.HEIGHT - 25 * MM;  // Footer starts at 25mm from bottom
+      const signatureHeight = 22 * MM;
+      const maxSignatureY = footerTop - signatureHeight - 5 * MM;  // 5mm gap before footer
+      const signatureY = Math.min(currentY + 8 * MM, maxSignatureY);
+
+      drawSignatureSection(doc, signatureY);
 
       // ── Draw "Acquittée" mention if paid ──
       drawAcquitteeMention(doc, data.document.paymentDate);

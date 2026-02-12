@@ -399,8 +399,8 @@ export function drawHeader(
      .text('LE TATCHE BOIS', textX, nameY);
   doc.restore();
 
-  // Type + Activity on same line
-  const typeY = nameY + 15;
+  // Type + Activity on same line - BUG 1 FIX: Move UP to avoid overlap with separator
+  const typeY = nameY + 12;
   doc.save();
   doc.fillColor(COLORS.GOLD_DARK)
      .font('Helvetica-Bold')
@@ -413,8 +413,8 @@ export function drawHeader(
      .text(`  •  ${COMPANY.activity}`, { continued: false });
   doc.restore();
 
-  // Contact info below - FIXED: explicit positions with lineBreak: false
-  const contactY = nameY + 30;
+  // Contact info below - BUG 1 FIX: Move UP to prevent overlap with separator bar
+  const contactY = nameY + 27;
   doc.save();
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
@@ -434,13 +434,13 @@ export function drawHeader(
      .text(COMPANY.city, rightX - 200, contactY + 11, { width: 200, align: 'right' });
   doc.restore();
 
-  // ── Bottom gold gradient line (separator) ──
-  const separatorY = headerBottom + 1 * MM;
+  // ── Bottom gold gradient line (separator) - BUG 1 FIX: Add 8pt gap after text ──
+  const separatorY = headerBottom + 1 * MM + 8;
   drawGoldGradientBar(doc, 0, separatorY, PAGE.WIDTH, 3 * MM);
 
   // ── Document type title (if specified) ──
   if (docType) {
-    const titleY = headerBottom + 6 * MM;
+    const titleY = headerBottom + 6 * MM + 8;
 
     // Build title text
     let titleText = docType.toUpperCase();
@@ -448,10 +448,14 @@ export function drawHeader(
       titleText += `  N° : ${docNumber}`;
     }
 
+    // BUG 3 FIX: Calculate max width to avoid overlap with client box
+    const clientBoxLeft = PAGE.WIDTH - MARGINS.RIGHT - 75 * MM;
+    const titleMaxWidth = clientBoxLeft - MARGINS.LEFT - 10;  // 10pt gap
+
     // Auto-scale font if needed (max 11.5pt, min 8pt)
     let fontSize = 11.5;
     doc.font('Helvetica-Bold').fontSize(fontSize);
-    while (fontSize > 8 && doc.widthOfString(titleText) > PAGE.WIDTH - 2 * margin) {
+    while (fontSize > 8 && doc.widthOfString(titleText) > titleMaxWidth) {
       fontSize -= 0.5;
       doc.fontSize(fontSize);
     }
@@ -462,7 +466,7 @@ export function drawHeader(
     doc.fillColor(COLORS.BROWN_DARK)
        .font('Helvetica-Bold')
        .fontSize(fontSize)
-       .text(titleText, leftX, titleY);
+       .text(titleText, leftX, titleY, { width: titleMaxWidth, lineBreak: false });
     doc.restore();
 
     // Date - same left_x start, bold
@@ -584,7 +588,7 @@ export function drawClientBox(
 ): number {
   const margin = 20 * MM;
   const boxWidth = 75 * MM;
-  const boxHeight = 28 * MM;
+  const boxHeight = 30 * MM;  // BUG 4 FIX: Increased from 28mm to 30mm for more space
   const boxX = PAGE.WIDTH - margin - boxWidth;
   const boxY = topY;
 
@@ -596,51 +600,54 @@ export function drawClientBox(
      .stroke();
   doc.restore();
 
-  // "Client :" label
+  // "Client :" label - BUG 4 FIX: Add proper padding from top (3mm)
+  const padTop = 3 * MM;
+  const padLeft = 3 * MM;
+
   doc.save();
   doc.fillColor(COLORS.BROWN_DARK)
      .font('Helvetica-Bold')
-     .fontSize(8.5)
-     .text('Client :', boxX + 3 * MM, boxY + 5 * MM);
+     .fontSize(9)
+     .text('Client :', boxX + padLeft, boxY + padTop);
   doc.restore();
 
-  // Client name
-  const textX = boxX + 3 * MM;
-  let textY = boxY + 12 * MM;
+  // Client name - BUG 4 FIX: Position 12pt below label
+  const textX = boxX + padLeft;
+  let textY = boxY + padTop + 12;
 
   doc.save();
   doc.fillColor(COLORS.BLACK)
      .font('Helvetica-Bold')
-     .fontSize(8.5)
-     .text(client.name || '[Nom du client]', textX, textY, { width: boxWidth - 6 * MM });
+     .fontSize(10)
+     .text(client.name || '[Nom du client]', textX, textY, { width: boxWidth - 2 * padLeft });
   doc.restore();
 
-  // Address
+  // Address - BUG 4 FIX: Better spacing
+  textY += 12;
+  doc.save();
+  doc.fillColor(COLORS.GRAY_DARK)
+     .font('Helvetica')
+     .fontSize(8.5)
+     .text(client.address || '[Adresse du client]', textX, textY, { width: boxWidth - 2 * padLeft });
+  doc.restore();
+
+  // City
   textY += 11;
   doc.save();
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
-     .fontSize(8)
-     .text(client.address || '[Adresse du client]', textX, textY, { width: boxWidth - 6 * MM });
-  doc.restore();
-
-  // City
-  textY += 10;
-  doc.save();
-  doc.fillColor(COLORS.GRAY_DARK)
-     .font('Helvetica')
-     .fontSize(8)
-     .text(client.city || '[Ville]', textX, textY, { width: boxWidth - 6 * MM });
+     .fontSize(8.5)
+     .text(client.city || '[Ville]', textX, textY, { width: boxWidth - 2 * padLeft });
   doc.restore();
 
   // ICE (if provided)
   if (client.ice) {
-    textY += 10;
+    textY += 11;
     doc.save();
     doc.fillColor(COLORS.BROWN_DARK)
        .font('Helvetica-Bold')
-       .fontSize(7.5)
-       .text(`ICE : ${client.ice}`, textX, textY, { width: boxWidth - 6 * MM });
+       .fontSize(8)
+       .text(`ICE : ${client.ice}`, textX, textY, { width: boxWidth - 2 * padLeft });
     doc.restore();
   }
 
