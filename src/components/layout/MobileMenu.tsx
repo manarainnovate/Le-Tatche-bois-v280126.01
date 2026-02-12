@@ -11,7 +11,7 @@ import { useUIStore } from "@/stores/ui";
 import { useCartCount } from "@/stores/cart";
 import { useDirection } from "@/hooks/useDirection";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
-import { useThemeSettings } from "@/stores/themeSettings";
+import { useSiteSettings } from "@/stores/siteSettings";
 import { cn } from "@/lib/utils";
 import { X, ShoppingCart, FileText, Phone, Mail } from "lucide-react";
 
@@ -68,7 +68,7 @@ export function MobileMenu() {
   const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
   const cartCount = useCartCount();
   const { currency, setCurrency } = useCurrency();
-  const { logoHeader, siteName } = useThemeSettings();
+  const { logoHeader, siteName } = useSiteSettings();
 
   // Lock body scroll when menu is open
   useBodyScrollLock(isMobileMenuOpen);

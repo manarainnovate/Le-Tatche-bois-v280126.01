@@ -53,6 +53,29 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
 
+  // Experimental features for PDFKit support
+  experimental: {
+    // Include PDFKit font data in server bundle
+    outputFileTracingIncludes: {
+      '/api/crm/documents/[id]/pdf': [
+        './node_modules/pdfkit/js/data/**/*',
+      ],
+    },
+  },
+
+  // Webpack configuration for PDFKit
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      // Handle .afm font files used by PDFKit
+      config.module.rules.push({
+        test: /\.afm$/,
+        type: 'asset/source',
+      });
+    }
+
+    return config;
+  },
+
   // ═══════════════════════════════════════════════════════════
   // Security Headers
   // ═══════════════════════════════════════════════════════════
