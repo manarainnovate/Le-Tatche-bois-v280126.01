@@ -227,38 +227,168 @@ export const getAdminMessageNotificationEmail = (message: MessageData) => {
     timeStyle: 'short',
   }).format(message.createdAt);
 
-  const content = `
-    <h2>📩 Nouveau message depuis votre site web</h2>
-    <p>Vous avez reçu un nouveau message de contact.</p>
+  // Format file size helper
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
-    <div class="info-box">
-      <h3>Expéditeur</h3>
-      <p><strong>Nom:</strong> ${message.name}</p>
-      <p><strong>Email:</strong> <a href="mailto:${message.email}">${message.email}</a></p>
-      ${message.phone ? `<p><strong>Téléphone:</strong> <a href="tel:${message.phone}">${message.phone}</a></p>` : ''}
-      <p><strong>Langue:</strong> ${message.locale.toUpperCase()}</p>
-    </div>
+  // Modern professional email template with wood-themed design
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#f5f0eb;font-family:Georgia,'Times New Roman',serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f5f0eb;padding:30px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(74,37,17,0.1);">
 
-    ${message.subject ? `
-    <h3>Sujet</h3>
-    <p>${message.subject}</p>
-    ` : ''}
+          <!-- HEADER with wood brown gradient -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#5C2E00 0%,#8B4513 50%,#6B3A1F 100%);padding:32px 40px;text-align:center;">
+              <h1 style="margin:0;color:#F5E6C8;font-size:28px;font-weight:bold;letter-spacing:2px;">
+                LE TATCHE BOIS
+              </h1>
+              <p style="margin:6px 0 0;color:#D4A843;font-size:13px;letter-spacing:1px;">
+                Artisanat du bois marocain
+              </p>
+            </td>
+          </tr>
 
-    <h3>Message</h3>
-    <p style="white-space: pre-wrap;">${message.content}</p>
+          <!-- TITLE -->
+          <tr>
+            <td style="padding:28px 40px 0;">
+              <h2 style="margin:0;color:#4A2511;font-size:20px;font-weight:bold;">
+                📩 Nouveau message de contact
+              </h2>
+              <p style="margin:8px 0 0;color:#888;font-size:13px;">
+                Reçu le ${formattedDate}
+              </p>
+            </td>
+          </tr>
 
-    <div class="divider"></div>
+          <!-- DIVIDER -->
+          <tr>
+            <td style="padding:16px 40px;">
+              <hr style="border:none;height:2px;background:linear-gradient(to right,#C4973B,#F5E6C8,#C4973B);" />
+            </td>
+          </tr>
 
-    <center>
-      <a href="https://letatchebois.com/fr/admin/messages" class="button">
-        Voir dans le tableau de bord →
-      </a>
-    </center>
+          <!-- SENDER INFO CARD -->
+          <tr>
+            <td style="padding:0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF9F0;border-radius:12px;border:1px solid #F5E6C8;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <!-- Name -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                      <tr>
+                        <td width="100" style="color:#8B6914;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;vertical-align:top;padding-top:2px;">
+                          Expéditeur
+                        </td>
+                        <td style="color:#4A2511;font-size:15px;font-weight:bold;">
+                          ${message.name}
+                        </td>
+                      </tr>
+                    </table>
+                    <!-- Email -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                      <tr>
+                        <td width="100" style="color:#8B6914;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;vertical-align:top;padding-top:2px;">
+                          Email
+                        </td>
+                        <td>
+                          <a href="mailto:${message.email}" style="color:#C4973B;font-size:14px;text-decoration:none;">
+                            ${message.email}
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    ${message.phone ? `
+                    <!-- Phone -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                      <tr>
+                        <td width="100" style="color:#8B6914;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;vertical-align:top;padding-top:2px;">
+                          Téléphone
+                        </td>
+                        <td>
+                          <a href="tel:${message.phone}" style="color:#4A2511;font-size:14px;text-decoration:none;">
+                            ${message.phone}
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    ` : ''}
+                    <!-- Subject -->
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td width="100" style="color:#8B6914;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;vertical-align:top;padding-top:2px;">
+                          Sujet
+                        </td>
+                        <td style="color:#4A2511;font-size:14px;font-weight:600;">
+                          ${message.subject || '(Sans objet)'}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-    <p class="text-muted" style="margin-top: 30px;">Reçu le ${formattedDate}</p>
-  `;
+          <!-- MESSAGE SECTION -->
+          <tr>
+            <td style="padding:20px 40px 0;">
+              <p style="margin:0 0 10px;color:#8B6914;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;">
+                Message
+              </p>
+              <div style="background-color:#FAFAF5;border-radius:12px;border:1px solid #E8E0D0;padding:20px 24px;">
+                <p style="margin:0;color:#333;font-size:15px;line-height:1.7;white-space:pre-wrap;">
+${message.content}
+                </p>
+              </div>
+            </td>
+          </tr>
 
-  return BASE_TEMPLATE(content, 'fr');
+          <!-- CTA BUTTON -->
+          <tr>
+            <td style="padding:24px 40px;" align="center">
+              <a href="https://letatchebois.com/fr/admin/messages"
+                 style="display:inline-block;background:linear-gradient(135deg,#C4973B,#8B6914);color:#fff;text-decoration:none;padding:14px 36px;border-radius:10px;font-size:14px;font-weight:bold;letter-spacing:0.5px;">
+                Voir dans le tableau de bord →
+              </a>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background-color:#4A2511;padding:24px 40px;text-align:center;">
+              <p style="margin:0 0 4px;color:#D4A843;font-size:14px;font-weight:bold;letter-spacing:1px;">
+                LE TATCHE BOIS
+              </p>
+              <p style="margin:0 0 8px;color:#C4973B;font-size:11px;">
+                Menuiserie Artisanat - Décoration
+              </p>
+              <p style="margin:0;color:#A0896B;font-size:11px;">
+                Tanger, Maroc
+              </p>
+              <p style="margin:4px 0 0;color:#A0896B;font-size:11px;">
+                contact@letatchebois.com · www.letatchebois.com
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 };
 
 export const getVisitorConfirmationEmail = (message: MessageData) => {
