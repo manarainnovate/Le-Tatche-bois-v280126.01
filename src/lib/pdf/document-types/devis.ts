@@ -256,12 +256,25 @@ export async function generateDevisPDF(data: DevisData): Promise<Buffer> {
       drawWoodBackground(doc);
       drawCenterWatermark(doc, 0.06);
 
+      // ── Calculate pagination info ──
+      const maxFirstPage = 15;
+      const maxContinuation = 22;
+      const totalItems = data.document.items.length;
+      const totalPages = totalItems <= maxFirstPage
+        ? 1
+        : 1 + Math.ceil((totalItems - maxFirstPage) / maxContinuation);
+
+      const pageInfo = totalPages > 1
+        ? { currentPage: 1, totalPages }
+        : undefined;
+
       // ── Draw header with document info ──
       const header = drawHeader(
         doc,
         'DEVIS',
         data.document.number,
-        '' // No date in header - it's in left fields
+        '', // No date in header - it's in left fields
+        pageInfo
       );
 
       // ── Draw reference fields on left ──
@@ -311,7 +324,13 @@ export async function generateDevisPDF(data: DevisData): Promise<Buffer> {
         tableY,
         tableItems,
         0.20,  // TVA rate 20%
-        true   // Show TVA
+        true,  // Show TVA
+        totalPages > 1 ? {
+          docType: 'DEVIS',
+          docNumber: data.document.number,
+          maxItemsFirstPage: maxFirstPage,
+          maxItemsContinuation: maxContinuation,
+        } : undefined
       );
 
       // ── Sequential Y flow (FIXED: always descend) ──

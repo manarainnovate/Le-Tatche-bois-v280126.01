@@ -394,13 +394,15 @@ export interface HeaderResult {
  * @param docType - Document type (e.g., "FACTURE", "DEVIS")
  * @param docNumber - Document number (e.g., "F-2026/0001")
  * @param docDate - Document date (e.g., "05/01/2026")
+ * @param pageInfo - Optional page numbering info for multi-page documents
  * @returns Header positioning info for subsequent content
  */
 export function drawHeader(
   doc: PDFDocument,
   docType?: string,
   docNumber?: string,
-  docDate?: string
+  docDate?: string,
+  pageInfo?: { currentPage: number; totalPages: number }
 ): HeaderResult {
   const margin = 25 * MM;
 
@@ -494,6 +496,10 @@ export function drawHeader(
     if (docNumber) {
       titleText += `  N° : ${docNumber}`;
     }
+    // Add page number if multi-page
+    if (pageInfo && pageInfo.totalPages > 1) {
+      titleText += `          Page ${pageInfo.currentPage}/${pageInfo.totalPages}`;
+    }
 
     // BUG 3 FIX: Calculate max width to avoid overlap with client box
     const clientBoxLeft = PAGE.WIDTH - MARGINS.RIGHT - 75 * MM;
@@ -536,6 +542,164 @@ export function drawHeader(
     fieldsY: headerBottom + 20 * MM,
     leftX: margin,
   };
+}
+
+/**
+ * Draw a minimal header for continuation pages (page 2, 3, etc.)
+ * Shows: company name, document type + number + page info, gold separator
+ * Returns Y position where table should start
+ */
+export function drawContinuationPageHeader(
+  doc: PDFDocument,
+  docType: string,
+  docNumber: string,
+  pageInfo: { currentPage: number; totalPages: number }
+): number {
+  const margin = 25 * MM;
+  const topY = 8 * MM;
+
+  // Company name — smaller than main header
+  doc.save();
+  doc.fillColor(COLORS.BROWN_DARK)
+     .font('Helvetica-Bold')
+     .fontSize(14)
+     .text('LE TATCHE BOIS', margin, topY);
+  doc.restore();
+
+  // Gold separator line
+  const separatorY = topY + 20;
+  drawGoldGradientBar(doc, 0, separatorY, PAGE.WIDTH, 2 * MM);
+
+  // Document title with page number
+  const titleY = separatorY + 8;
+  let titleText = `${docType.toUpperCase()}  N° : ${docNumber}`;
+  titleText += `          Page ${pageInfo.currentPage}/${pageInfo.totalPages}`;
+
+  doc.save();
+  doc.fillColor(COLORS.BROWN_DARK)
+     .font('Helvetica-Bold')
+     .fontSize(10)
+     .text(titleText, margin, titleY);
+  doc.restore();
+
+  // "Suite" mention
+  const suiteY = titleY + 14;
+  doc.save();
+  doc.fillColor(COLORS.GRAY)
+     .font('Helvetica-Oblique')
+     .fontSize(8)
+     .text('(Suite)', margin, suiteY);
+  doc.restore();
+
+  return suiteY + 12;  // Y where table header should start
+}
+
+/**
+ * Draw "Report page suivante" row at bottom of a non-last page
+ * Shows the running subtotal being carried to the next page
+ */
+export function drawPageCarryForward(
+  doc: PDFDocument,
+  currentY: number,
+  runningSubtotal: number,
+  tableWidth: number,
+  margin: number
+): number {
+  const rowHeight = 7 * MM;
+  const y = currentY;
+
+  // Background
+  doc.save();
+  doc.fillColor('#F5EDE0')
+     .opacity(0.6)
+     .rect(margin, y, tableWidth, rowHeight)
+     .fill();
+  doc.restore();
+
+  // Border
+  doc.save();
+  doc.strokeColor(COLORS.GOLD)
+     .lineWidth(0.8)
+     .rect(margin, y, tableWidth, rowHeight)
+     .stroke();
+  doc.restore();
+
+  // Text
+  const textY = y + (rowHeight / 2) - 4;
+  doc.save();
+  doc.fillColor(COLORS.BROWN_DARK)
+     .font('Helvetica-Bold')
+     .fontSize(8.5);
+
+  doc.text('Report page suivante ►', margin + 8, textY, {
+    width: tableWidth * 0.6,
+    align: 'left',
+    lineBreak: false,
+  });
+
+  doc.text(`${formatNumber(runningSubtotal)} DH`, margin + tableWidth * 0.6, textY, {
+    width: tableWidth * 0.4 - 10,
+    align: 'right',
+    lineBreak: false,
+  });
+
+  doc.restore();
+
+  return y + rowHeight;
+}
+
+/**
+ * Draw "Report page précédente" row at top of a continuation page
+ * Shows the subtotal carried from the previous page
+ */
+export function drawPageCarryForwardFrom(
+  doc: PDFDocument,
+  currentY: number,
+  previousSubtotal: number,
+  tableWidth: number,
+  margin: number
+): number {
+  const rowHeight = 6 * MM;
+  const y = currentY;
+
+  // Background
+  doc.save();
+  doc.fillColor('#F5EDE0')
+     .opacity(0.5)
+     .rect(margin, y, tableWidth, rowHeight)
+     .fill();
+  doc.restore();
+
+  // Border
+  doc.save();
+  doc.strokeColor(COLORS.GOLD)
+     .lineWidth(0.5)
+     .rect(margin, y, tableWidth, rowHeight)
+     .stroke();
+  doc.restore();
+
+  // Text
+  const textY = y + (rowHeight / 2) - 3.5;
+  doc.save();
+  doc.fillColor(COLORS.BROWN_DARK)
+     .font('Helvetica-Oblique')
+     .fontSize(8);
+
+  doc.text('◄ Report page précédente', margin + 8, textY, {
+    width: tableWidth * 0.6,
+    align: 'left',
+    lineBreak: false,
+  });
+
+  doc.text(`${formatNumber(previousSubtotal)} DH`, margin + tableWidth * 0.6, textY, {
+    width: tableWidth * 0.4 - 10,
+    align: 'right',
+    lineBreak: false,
+  });
+
+  doc.restore();
+
+  return y + rowHeight;
 }
 
 /**
@@ -722,6 +886,16 @@ export interface TableResult {
 }
 
 /**
+ * Pagination configuration for multi-page documents
+ */
+export interface TablePaginationConfig {
+  docType: string;             // 'FACTURE', 'DEVIS', etc.
+  docNumber: string;           // Document number
+  maxItemsFirstPage: number;   // Default ~15 (first page has header/client)
+  maxItemsContinuation: number; // Default ~22 (continuation pages have mini header)
+}
+
+/**
  * Draw the items table with totals
  * Handles pagination if items overflow
  *
@@ -730,6 +904,7 @@ export interface TableResult {
  * @param items - Array of items to display
  * @param tvaRate - TVA rate (default 0.20 for 20%)
  * @param showTVA - Whether to show TVA calculations
+ * @param pagination - Optional pagination config for multi-page documents
  * @returns Table result with positioning and totals
  */
 export function drawItemsTable(
@@ -737,7 +912,8 @@ export function drawItemsTable(
   startY: number,
   items: TableItem[],
   tvaRate: number = 0.20,
-  showTVA: boolean = true
+  showTVA: boolean = true,
+  pagination?: TablePaginationConfig
 ): TableResult {
   const margin = 20 * MM;
   const tableWidth = PAGE.WIDTH - 2 * margin;
@@ -763,189 +939,454 @@ export function drawItemsTable(
     subtotal += item.qty * item.price;
   }
 
-  // ── Draw table header with wood texture ──
-  const headerY = startY;
+  // Declare currentY here so it's available for both single and multi-page modes
+  let currentY = startY;
 
-  // Draw wood texture behind header
-  try {
-    if (fs.existsSync(ASSETS.woodHeader)) {
-      drawWoodTexture(doc, margin, headerY, tableWidth, headerRowHeight, ASSETS.woodHeader, 1.0);
-    } else {
-      // Fallback to brown background
+  // ══════════════════════════════════════════════════════════════
+  // PAGINATION LOGIC
+  // ══════════════════════════════════════════════════════════════
+  const needsPagination = pagination && items.length > pagination.maxItemsFirstPage;
+
+  if (!needsPagination) {
+    // ══════════════════════════════════════════════════════════════
+    // SINGLE PAGE MODE (existing logic - unchanged)
+    // ══════════════════════════════════════════════════════════════
+
+    // ── Draw table header with wood texture ──
+    const headerY = startY;
+
+    // Draw wood texture behind header
+    try {
+      if (fs.existsSync(ASSETS.woodHeader)) {
+        drawWoodTexture(doc, margin, headerY, tableWidth, headerRowHeight, ASSETS.woodHeader, 1.0);
+      } else {
+        // Fallback to brown background
+        doc.save();
+        doc.fillColor(COLORS.BROWN_DARK)
+           .rect(margin, headerY, tableWidth, headerRowHeight)
+           .fill();
+        doc.restore();
+      }
+    } catch (error) {
+      console.warn('Wood header texture not available, using solid color');
       doc.save();
       doc.fillColor(COLORS.BROWN_DARK)
          .rect(margin, headerY, tableWidth, headerRowHeight)
          .fill();
       doc.restore();
     }
-  } catch (error) {
-    console.warn('Wood header texture not available, using solid color');
+
+    // Draw header borders
     doc.save();
-    doc.fillColor(COLORS.BROWN_DARK)
+    doc.strokeColor(COLORS.GOLD_DARK)
+       .lineWidth(1.5)
        .rect(margin, headerY, tableWidth, headerRowHeight)
-       .fill();
+       .stroke();
     doc.restore();
-  }
 
-  // Draw header borders
-  doc.save();
-  doc.strokeColor(COLORS.GOLD_DARK)
-     .lineWidth(1.5)
-     .rect(margin, headerY, tableWidth, headerRowHeight)
-     .stroke();
-  doc.restore();
-
-  // Header text (white on wood/brown)
-  const headers = ['N°', 'DÉSIGNATION', 'U', 'QTÉ', 'P.U. HT', 'TOTAL HT'];
-  let xPos = margin;
-  const headerTextY = headerY + (headerRowHeight / 2) - 3;  // Vertically centered
-
-  doc.save();
-  doc.fillColor(COLORS.WHITE)
-     .font('Helvetica-Bold')
-     .fontSize(9);
-
-  // N°
-  doc.text(headers[0], xPos, headerTextY, { width: colWidths.num, align: 'center' });
-  xPos += colWidths.num;
-
-  // DÉSIGNATION
-  doc.text(headers[1], xPos + 2, headerTextY, { width: colWidths.desc - 4, align: 'center' });
-  xPos += colWidths.desc;
-
-  // U
-  doc.text(headers[2], xPos, headerTextY, { width: colWidths.unit, align: 'center' });
-  xPos += colWidths.unit;
-
-  // QTÉ
-  doc.text(headers[3], xPos, headerTextY, { width: colWidths.qty, align: 'center' });
-  xPos += colWidths.qty;
-
-  // P.U. HT
-  doc.text(headers[4], xPos, headerTextY, { width: colWidths.puHT, align: 'right' });
-  xPos += colWidths.puHT;
-
-  // TOTAL HT
-  doc.text(headers[5], xPos, headerTextY, { width: colWidths.totalHT, align: 'right' });
-
-  doc.restore();
-
-  // ── Draw data rows ──
-  let currentY = headerY + headerRowHeight;
-
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    const rowY = currentY;
-    const total = item.qty * item.price;
-
-    // Alternating row background (very subtle)
-    if (i % 2 === 0) {
-      doc.save();
-      doc.fillColor('#FAF8F0')
-         .opacity(0.35)
-         .rect(margin, rowY, tableWidth, dataRowHeight)
-         .fill();
-      doc.restore();
-    } else {
-      doc.save();
-      doc.fillColor(COLORS.WHITE)
-         .opacity(0.35)
-         .rect(margin, rowY, tableWidth, dataRowHeight)
-         .fill();
-      doc.restore();
-    }
-
-    // Row text
-    const textY = rowY + (dataRowHeight / 2) - 2.5;
-    xPos = margin;
+    // Header text (white on wood/brown)
+    const headers = ['N°', 'DÉSIGNATION', 'U', 'QTÉ', 'P.U. HT', 'TOTAL HT'];
+    let xPos = margin;
+    const headerTextY = headerY + (headerRowHeight / 2) - 3;  // Vertically centered
 
     doc.save();
-    doc.fillColor(COLORS.BROWN_DARK)
-       .font('Helvetica')
-       .fontSize(7.5);
+    doc.fillColor(COLORS.WHITE)
+       .font('Helvetica-Bold')
+       .fontSize(9);
 
-    // N° (centered)
-    doc.text(`${i + 1}`, xPos, textY, { width: colWidths.num, align: 'center', lineBreak: false });
+    // N°
+    doc.text(headers[0], xPos, headerTextY, { width: colWidths.num, align: 'center' });
     xPos += colWidths.num;
 
-    // Description (left aligned with padding)
-    doc.text(item.desc, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
+    // DÉSIGNATION
+    doc.text(headers[1], xPos + 2, headerTextY, { width: colWidths.desc - 4, align: 'center' });
     xPos += colWidths.desc;
 
-    // Unit (centered)
-    doc.text(item.unit || 'U', xPos, textY, { width: colWidths.unit, align: 'center', lineBreak: false });
+    // U
+    doc.text(headers[2], xPos, headerTextY, { width: colWidths.unit, align: 'center' });
     xPos += colWidths.unit;
 
-    // Quantity (centered)
-    doc.text(`${item.qty}`, xPos, textY, { width: colWidths.qty, align: 'center', lineBreak: false });
+    // QTÉ
+    doc.text(headers[3], xPos, headerTextY, { width: colWidths.qty, align: 'center' });
     xPos += colWidths.qty;
 
-    // Unit price (right aligned)
-    doc.text(formatNumber(item.price), xPos, textY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
+    // P.U. HT
+    doc.text(headers[4], xPos, headerTextY, { width: colWidths.puHT, align: 'right' });
     xPos += colWidths.puHT;
 
-    // Total (right aligned)
-    doc.text(formatNumber(total), xPos, textY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
+    // TOTAL HT
+    doc.text(headers[5], xPos, headerTextY, { width: colWidths.totalHT, align: 'right' });
 
     doc.restore();
 
-    currentY += dataRowHeight;
-  }
+    // ── Draw data rows ──
+    currentY = headerY + headerRowHeight;
 
-  // ══════════════════════════════════════════════════════════════
-  // GRID LINES — Draw AFTER all row backgrounds and text
-  // ══════════════════════════════════════════════════════════════
-  const tableTop = headerY;
-  const tableBottom = currentY;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      const rowY = currentY;
+      const total = item.qty * item.price;
 
-  doc.save();
-  doc.strokeColor('#8B7355')  // Medium brown for grid
-     .lineWidth(0.5);
+      // Alternating row background (very subtle)
+      if (i % 2 === 0) {
+        doc.save();
+        doc.fillColor('#FAF8F0')
+           .opacity(0.35)
+           .rect(margin, rowY, tableWidth, dataRowHeight)
+           .fill();
+        doc.restore();
+      } else {
+        doc.save();
+        doc.fillColor(COLORS.WHITE)
+           .opacity(0.35)
+           .rect(margin, rowY, tableWidth, dataRowHeight)
+           .fill();
+        doc.restore();
+      }
 
-  // Outer border rectangle
-  doc.rect(margin, tableTop, tableWidth, tableBottom - tableTop).stroke();
+      // Row text
+      const textY = rowY + (dataRowHeight / 2) - 2.5;
+      xPos = margin;
 
-  // Vertical lines between columns
-  const colX = {
-    afterNum: margin + colWidths.num,
-    afterDesc: margin + colWidths.num + colWidths.desc,
-    afterUnit: margin + colWidths.num + colWidths.desc + colWidths.unit,
-    afterQty: margin + colWidths.num + colWidths.desc + colWidths.unit + colWidths.qty,
-    afterPuHT: margin + colWidths.num + colWidths.desc + colWidths.unit + colWidths.qty + colWidths.puHT,
-  };
+      doc.save();
+      doc.fillColor(COLORS.BROWN_DARK)
+         .font('Helvetica')
+         .fontSize(7.5);
 
-  const verticalLines = [
-    colX.afterNum,    // After N°
-    colX.afterDesc,   // After DÉSIGNATION
-    colX.afterUnit,   // After U
-    colX.afterQty,    // After QTÉ
-    colX.afterPuHT,   // After P.U. HT
-  ];
+      // N° (centered)
+      doc.text(`${i + 1}`, xPos, textY, { width: colWidths.num, align: 'center', lineBreak: false });
+      xPos += colWidths.num;
 
-  for (const x of verticalLines) {
-    doc.moveTo(x, tableTop)
-       .lineTo(x, tableBottom)
+      // Description (left aligned with padding)
+      doc.text(item.desc, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
+      xPos += colWidths.desc;
+
+      // Unit (centered)
+      doc.text(item.unit || 'U', xPos, textY, { width: colWidths.unit, align: 'center', lineBreak: false });
+      xPos += colWidths.unit;
+
+      // Quantity (centered)
+      doc.text(`${item.qty}`, xPos, textY, { width: colWidths.qty, align: 'center', lineBreak: false });
+      xPos += colWidths.qty;
+
+      // Unit price (right aligned)
+      doc.text(formatNumber(item.price), xPos, textY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
+      xPos += colWidths.puHT;
+
+      // Total (right aligned)
+      doc.text(formatNumber(total), xPos, textY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
+
+      doc.restore();
+
+      currentY += dataRowHeight;
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // GRID LINES — Draw AFTER all row backgrounds and text
+    // ══════════════════════════════════════════════════════════════
+    const tableTop = headerY;
+    const tableBottom = currentY;
+
+    doc.save();
+    doc.strokeColor('#8B7355')  // Medium brown for grid
+       .lineWidth(0.5);
+
+    // Outer border rectangle
+    doc.rect(margin, tableTop, tableWidth, tableBottom - tableTop).stroke();
+
+    // Vertical lines between columns
+    const colX = {
+      afterNum: margin + colWidths.num,
+      afterDesc: margin + colWidths.num + colWidths.desc,
+      afterUnit: margin + colWidths.num + colWidths.desc + colWidths.unit,
+      afterQty: margin + colWidths.num + colWidths.desc + colWidths.unit + colWidths.qty,
+      afterPuHT: margin + colWidths.num + colWidths.desc + colWidths.unit + colWidths.qty + colWidths.puHT,
+    };
+
+    const verticalLines = [
+      colX.afterNum,    // After N°
+      colX.afterDesc,   // After DÉSIGNATION
+      colX.afterUnit,   // After U
+      colX.afterQty,    // After QTÉ
+      colX.afterPuHT,   // After P.U. HT
+    ];
+
+    for (const x of verticalLines) {
+      doc.moveTo(x, tableTop)
+         .lineTo(x, tableBottom)
+         .stroke();
+    }
+
+    // Horizontal line under header (thicker)
+    doc.strokeColor('#C4973B')  // Gold for header separator
+       .lineWidth(1.0)
+       .moveTo(margin, tableTop + headerRowHeight)
+       .lineTo(margin + tableWidth, tableTop + headerRowHeight)
        .stroke();
+
+    // Horizontal lines between data rows (subtle)
+    doc.strokeColor('#8B7355')
+       .lineWidth(0.3);
+    for (let i = 1; i < items.length; i++) {
+      const y = headerY + headerRowHeight + (i * dataRowHeight);
+      doc.moveTo(margin, y)
+         .lineTo(margin + tableWidth, y)
+         .stroke();
+    }
+
+    doc.restore();
+  } else {
+    // ══════════════════════════════════════════════════════════════
+    // MULTI-PAGE MODE
+    // ══════════════════════════════════════════════════════════════
+
+    // Split items into pages
+    const { maxItemsFirstPage, maxItemsContinuation, docType, docNumber } = pagination;
+    const totalPages = 1 + Math.ceil((items.length - maxItemsFirstPage) / maxItemsContinuation);
+
+    let itemIndex = 0;
+    let runningSubtotal = 0;
+    currentY = startY;  // Use the outer-scoped currentY
+
+    // Helper function to draw table header
+    const drawTableHeader = (headerY: number) => {
+      // Draw wood texture behind header
+      try {
+        if (fs.existsSync(ASSETS.woodHeader)) {
+          drawWoodTexture(doc, margin, headerY, tableWidth, headerRowHeight, ASSETS.woodHeader, 1.0);
+        } else {
+          // Fallback to brown background
+          doc.save();
+          doc.fillColor(COLORS.BROWN_DARK)
+             .rect(margin, headerY, tableWidth, headerRowHeight)
+             .fill();
+          doc.restore();
+        }
+      } catch (error) {
+        console.warn('Wood header texture not available, using solid color');
+        doc.save();
+        doc.fillColor(COLORS.BROWN_DARK)
+           .rect(margin, headerY, tableWidth, headerRowHeight)
+           .fill();
+        doc.restore();
+      }
+
+      // Draw header borders
+      doc.save();
+      doc.strokeColor(COLORS.GOLD_DARK)
+         .lineWidth(1.5)
+         .rect(margin, headerY, tableWidth, headerRowHeight)
+         .stroke();
+      doc.restore();
+
+      // Header text (white on wood/brown)
+      const headers = ['N°', 'DÉSIGNATION', 'U', 'QTÉ', 'P.U. HT', 'TOTAL HT'];
+      let xPos = margin;
+      const headerTextY = headerY + (headerRowHeight / 2) - 3;  // Vertically centered
+
+      doc.save();
+      doc.fillColor(COLORS.WHITE)
+         .font('Helvetica-Bold')
+         .fontSize(9);
+
+      // N°
+      doc.text(headers[0], xPos, headerTextY, { width: colWidths.num, align: 'center' });
+      xPos += colWidths.num;
+
+      // DÉSIGNATION
+      doc.text(headers[1], xPos + 2, headerTextY, { width: colWidths.desc - 4, align: 'center' });
+      xPos += colWidths.desc;
+
+      // U
+      doc.text(headers[2], xPos, headerTextY, { width: colWidths.unit, align: 'center' });
+      xPos += colWidths.unit;
+
+      // QTÉ
+      doc.text(headers[3], xPos, headerTextY, { width: colWidths.qty, align: 'center' });
+      xPos += colWidths.qty;
+
+      // P.U. HT
+      doc.text(headers[4], xPos, headerTextY, { width: colWidths.puHT, align: 'right' });
+      xPos += colWidths.puHT;
+
+      // TOTAL HT
+      doc.text(headers[5], xPos, headerTextY, { width: colWidths.totalHT, align: 'right' });
+
+      doc.restore();
+    };
+
+    // Helper function to draw rows
+    const drawRows = (pageItems: TableItem[], startRowNumber: number, rowsStartY: number) => {
+      let rowY = rowsStartY;
+
+      for (let i = 0; i < pageItems.length; i++) {
+        const item = pageItems[i];
+        const total = item.qty * item.price;
+
+        // Alternating row background (very subtle)
+        if (i % 2 === 0) {
+          doc.save();
+          doc.fillColor('#FAF8F0')
+             .opacity(0.35)
+             .rect(margin, rowY, tableWidth, dataRowHeight)
+             .fill();
+          doc.restore();
+        } else {
+          doc.save();
+          doc.fillColor(COLORS.WHITE)
+             .opacity(0.35)
+             .rect(margin, rowY, tableWidth, dataRowHeight)
+             .fill();
+          doc.restore();
+        }
+
+        // Row text
+        const textY = rowY + (dataRowHeight / 2) - 2.5;
+        let xPos = margin;
+
+        doc.save();
+        doc.fillColor(COLORS.BROWN_DARK)
+           .font('Helvetica')
+           .fontSize(7.5);
+
+        // N° (centered) - CONTINUOUS numbering
+        doc.text(`${startRowNumber + i}`, xPos, textY, { width: colWidths.num, align: 'center', lineBreak: false });
+        xPos += colWidths.num;
+
+        // Description (left aligned with padding)
+        doc.text(item.desc, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
+        xPos += colWidths.desc;
+
+        // Unit (centered)
+        doc.text(item.unit || 'U', xPos, textY, { width: colWidths.unit, align: 'center', lineBreak: false });
+        xPos += colWidths.unit;
+
+        // Quantity (centered)
+        doc.text(`${item.qty}`, xPos, textY, { width: colWidths.qty, align: 'center', lineBreak: false });
+        xPos += colWidths.qty;
+
+        // Unit price (right aligned)
+        doc.text(formatNumber(item.price), xPos, textY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
+        xPos += colWidths.puHT;
+
+        // Total (right aligned)
+        doc.text(formatNumber(total), xPos, textY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
+
+        doc.restore();
+
+        rowY += dataRowHeight;
+      }
+
+      return rowY;
+    };
+
+    // Helper function to draw grid lines
+    const drawGridLines = (tableTop: number, tableBottom: number, numRows: number) => {
+      doc.save();
+      doc.strokeColor('#8B7355')  // Medium brown for grid
+         .lineWidth(0.5);
+
+      // Outer border rectangle
+      doc.rect(margin, tableTop, tableWidth, tableBottom - tableTop).stroke();
+
+      // Vertical lines between columns
+      const colX = {
+        afterNum: margin + colWidths.num,
+        afterDesc: margin + colWidths.num + colWidths.desc,
+        afterUnit: margin + colWidths.num + colWidths.desc + colWidths.unit,
+        afterQty: margin + colWidths.num + colWidths.desc + colWidths.unit + colWidths.qty,
+        afterPuHT: margin + colWidths.num + colWidths.desc + colWidths.unit + colWidths.qty + colWidths.puHT,
+      };
+
+      const verticalLines = [
+        colX.afterNum,    // After N°
+        colX.afterDesc,   // After DÉSIGNATION
+        colX.afterUnit,   // After U
+        colX.afterQty,    // After QTÉ
+        colX.afterPuHT,   // After P.U. HT
+      ];
+
+      for (const x of verticalLines) {
+        doc.moveTo(x, tableTop)
+           .lineTo(x, tableBottom)
+           .stroke();
+      }
+
+      // Horizontal line under header (thicker)
+      doc.strokeColor('#C4973B')  // Gold for header separator
+         .lineWidth(1.0)
+         .moveTo(margin, tableTop + headerRowHeight)
+         .lineTo(margin + tableWidth, tableTop + headerRowHeight)
+         .stroke();
+
+      // Horizontal lines between data rows (subtle)
+      doc.strokeColor('#8B7355')
+         .lineWidth(0.3);
+      for (let i = 1; i < numRows; i++) {
+        const y = tableTop + headerRowHeight + (i * dataRowHeight);
+        doc.moveTo(margin, y)
+           .lineTo(margin + tableWidth, y)
+           .stroke();
+      }
+
+      doc.restore();
+    };
+
+    // Process each page
+    for (let page = 0; page < totalPages; page++) {
+      const isFirstPage = page === 0;
+      const isLastPage = page === totalPages - 1;
+      const itemsForThisPage = isFirstPage ? maxItemsFirstPage : maxItemsContinuation;
+      const pageItems = items.slice(itemIndex, itemIndex + itemsForThisPage);
+
+      if (!isFirstPage) {
+        // Add new page for continuation
+        doc.addPage({ size: 'A4', margin: 0 });
+        drawWoodBackground(doc);
+        drawCenterWatermark(doc, 0.06);
+
+        // Draw continuation header
+        const tableStartY = drawContinuationPageHeader(doc, docType, docNumber, {
+          currentPage: page + 1,
+          totalPages
+        });
+
+        // Draw table header
+        drawTableHeader(tableStartY);
+        currentY = tableStartY + headerRowHeight;
+
+        // Draw "Report page précédente" row
+        currentY = drawPageCarryForwardFrom(doc, currentY, runningSubtotal, tableWidth, margin);
+      } else {
+        // First page - draw table header at startY
+        drawTableHeader(currentY);
+        currentY += headerRowHeight;
+      }
+
+      // Draw rows for this page
+      const tableTopForPage = isFirstPage ? startY : (currentY - headerRowHeight - (isFirstPage ? 0 : 6 * MM));
+      currentY = drawRows(pageItems, itemIndex + 1, currentY);
+
+      // Update running subtotal
+      for (const item of pageItems) {
+        runningSubtotal += item.qty * item.price;
+      }
+
+      // Draw grid lines for this page
+      drawGridLines(tableTopForPage, currentY, pageItems.length);
+
+      if (!isLastPage) {
+        // Draw "Report page suivante" row
+        currentY = drawPageCarryForward(doc, currentY, runningSubtotal, tableWidth, margin);
+
+        // Draw footer and border for non-last pages
+        drawFooter(doc);
+        drawBorderFrame(doc);
+      }
+
+      itemIndex += pageItems.length;
+    }
   }
-
-  // Horizontal line under header (thicker)
-  doc.strokeColor('#C4973B')  // Gold for header separator
-     .lineWidth(1.0)
-     .moveTo(margin, tableTop + headerRowHeight)
-     .lineTo(margin + tableWidth, tableTop + headerRowHeight)
-     .stroke();
-
-  // Horizontal lines between data rows (subtle)
-  doc.strokeColor('#8B7355')
-     .lineWidth(0.3);
-  for (let i = 1; i < items.length; i++) {
-    const y = headerY + headerRowHeight + (i * dataRowHeight);
-    doc.moveTo(margin, y)
-       .lineTo(margin + tableWidth, y)
-       .stroke();
-  }
-
-  doc.restore();
 
   // ══════════════════════════════════════════════════════════════
   // TOTALS BOX — Right-aligned, with proper padding

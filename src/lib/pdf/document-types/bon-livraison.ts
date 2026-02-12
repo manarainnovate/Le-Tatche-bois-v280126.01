@@ -15,6 +15,7 @@ import {
   drawClientBox,
   drawSignatureSection,
   drawFooter,
+  drawContinuationPageHeader,
   COLORS,
   PAGE,
   MARGINS,
@@ -121,7 +122,13 @@ function drawReferenceFields(
 function drawSimpleTable(
   doc: PDFDocument,
   startY: number,
-  items: BonLivraisonItem[]
+  items: BonLivraisonItem[],
+  pagination?: {
+    docType: string;
+    docNumber: string;
+    maxItemsFirstPage: number;
+    maxItemsContinuation: number;
+  }
 ): number {
   const margin = 20 * MM;
   const tableWidth = PAGE.WIDTH - 2 * margin;
@@ -133,95 +140,243 @@ function drawSimpleTable(
   const colUnit = 18 * MM;
   const colObs = tableWidth - colNo - colDesignation - colQty - colUnit;
 
-  let y = startY;
-
-  // ── Draw table header with wood texture ──
   const headerHeight = 8 * MM;
+  const rowHeight = 6 * MM;
 
-  doc.save();
+  // Check if pagination is needed
+  const needsPagination = pagination && items.length > pagination.maxItemsFirstPage;
 
-  // Header background - use wood texture image
-  if (fs.existsSync(ASSETS.woodHeader)) {
-    doc.image(ASSETS.woodHeader, margin, y, {
-      width: tableWidth,
-      height: headerHeight,
-    });
-  } else {
-    // Fallback: dark brown rectangle
-    doc.rect(margin, y, tableWidth, headerHeight)
-       .fillAndStroke('#3E2012', COLORS.GOLD);
-  }
+  if (!needsPagination) {
+    // ══════════════════════════════════════════════════════════════
+    // SINGLE PAGE MODE (existing logic - unchanged)
+    // ══════════════════════════════════════════════════════════════
 
-  // Header border (gold outline)
-  doc.strokeColor(COLORS.GOLD)
-     .lineWidth(1.0)
-     .rect(margin, y, tableWidth, headerHeight)
-     .stroke();
+    let y = startY;
 
-  // Header text - WHITE on dark wood background
-  const headerY = y + 3 * MM;
-  doc.fillColor('#FFFFFF')
-     .font('Helvetica-Bold')
-     .fontSize(8.5);
+    // ── Draw table header with wood texture ──
+    doc.save();
 
-  let xPos = margin + 2;
-  doc.text('N°', xPos, headerY, { width: colNo, align: 'center' });
-  xPos += colNo;
-  doc.text('Désignation', xPos, headerY, { width: colDesignation, align: 'left' });
-  xPos += colDesignation;
-  doc.text('Qté', xPos, headerY, { width: colQty, align: 'center' });
-  xPos += colQty;
-  doc.text('Unité', xPos, headerY, { width: colUnit, align: 'center' });
-  xPos += colUnit;
-  doc.text('Observations', xPos, headerY, { width: colObs, align: 'center' });
+    // Header background - use wood texture image
+    if (fs.existsSync(ASSETS.woodHeader)) {
+      doc.image(ASSETS.woodHeader, margin, y, {
+        width: tableWidth,
+        height: headerHeight,
+      });
+    } else {
+      // Fallback: dark brown rectangle
+      doc.rect(margin, y, tableWidth, headerHeight)
+         .fillAndStroke('#3E2012', COLORS.GOLD);
+    }
 
-  doc.restore();
+    // Header border (gold outline)
+    doc.strokeColor(COLORS.GOLD)
+       .lineWidth(1.0)
+       .rect(margin, y, tableWidth, headerHeight)
+       .stroke();
 
-  y += 8 * MM;  // Move below header
+    // Header text - WHITE on dark wood background
+    const headerY = y + 3 * MM;
+    doc.fillColor('#FFFFFF')
+       .font('Helvetica-Bold')
+       .fontSize(8.5);
 
-  // ── Draw table rows ──
-  doc.save();
-  doc.fillColor(COLORS.GRAY_DARK)
-     .strokeColor(COLORS.GOLD)
-     .lineWidth(0.5)
-     .font('Helvetica')
-     .fontSize(8);
-
-  items.forEach((item, index) => {
-    const rowHeight = 6 * MM;
-
-    // Row border
-    doc.rect(margin, y, tableWidth, rowHeight).stroke();
-
-    // Row content
-    const textY = y + 2 * MM;
     let xPos = margin + 2;
-
-    // N°
-    doc.text(String(index + 1), xPos, textY, { width: colNo, align: 'center' });
+    doc.text('N°', xPos, headerY, { width: colNo, align: 'center' });
     xPos += colNo;
-
-    // Désignation
-    doc.text(item.designation, xPos, textY, { width: colDesignation - 4, align: 'left' });
+    doc.text('Désignation', xPos, headerY, { width: colDesignation, align: 'left' });
     xPos += colDesignation;
-
-    // Qté
-    doc.text(String(item.quantity), xPos, textY, { width: colQty, align: 'center' });
+    doc.text('Qté', xPos, headerY, { width: colQty, align: 'center' });
     xPos += colQty;
-
-    // Unité
-    doc.text(item.unit || 'U', xPos, textY, { width: colUnit, align: 'center' });
+    doc.text('Unité', xPos, headerY, { width: colUnit, align: 'center' });
     xPos += colUnit;
+    doc.text('Observations', xPos, headerY, { width: colObs, align: 'center' });
 
-    // Observations
-    doc.text(item.observations || '', xPos, textY, { width: colObs - 4, align: 'left' });
+    doc.restore();
 
-    y += rowHeight;
-  });
+    y += headerHeight;  // Move below header
 
-  doc.restore();
+    // ── Draw table rows ──
+    doc.save();
+    doc.fillColor(COLORS.GRAY_DARK)
+       .strokeColor(COLORS.GOLD)
+       .lineWidth(0.5)
+       .font('Helvetica')
+       .fontSize(8);
 
-  return y;  // Return Y position after table
+    items.forEach((item, index) => {
+      // Row border
+      doc.rect(margin, y, tableWidth, rowHeight).stroke();
+
+      // Row content
+      const textY = y + 2 * MM;
+      let xPos = margin + 2;
+
+      // N°
+      doc.text(String(index + 1), xPos, textY, { width: colNo, align: 'center' });
+      xPos += colNo;
+
+      // Désignation
+      doc.text(item.designation, xPos, textY, { width: colDesignation - 4, align: 'left' });
+      xPos += colDesignation;
+
+      // Qté
+      doc.text(String(item.quantity), xPos, textY, { width: colQty, align: 'center' });
+      xPos += colQty;
+
+      // Unité
+      doc.text(item.unit || 'U', xPos, textY, { width: colUnit, align: 'center' });
+      xPos += colUnit;
+
+      // Observations
+      doc.text(item.observations || '', xPos, textY, { width: colObs - 4, align: 'left' });
+
+      y += rowHeight;
+    });
+
+    doc.restore();
+
+    return y;  // Return Y position after table
+  } else {
+    // ══════════════════════════════════════════════════════════════
+    // MULTI-PAGE MODE
+    // ══════════════════════════════════════════════════════════════
+
+    const { maxItemsFirstPage, maxItemsContinuation, docType, docNumber } = pagination;
+    const totalPages = 1 + Math.ceil((items.length - maxItemsFirstPage) / maxItemsContinuation);
+
+    let itemIndex = 0;
+    let currentY = startY;
+
+    // Helper function to draw table header
+    const drawTableHeader = (headerY: number) => {
+      doc.save();
+
+      // Header background - use wood texture image
+      if (fs.existsSync(ASSETS.woodHeader)) {
+        doc.image(ASSETS.woodHeader, margin, headerY, {
+          width: tableWidth,
+          height: headerHeight,
+        });
+      } else {
+        // Fallback: dark brown rectangle
+        doc.rect(margin, headerY, tableWidth, headerHeight)
+           .fillAndStroke('#3E2012', COLORS.GOLD);
+      }
+
+      // Header border (gold outline)
+      doc.strokeColor(COLORS.GOLD)
+         .lineWidth(1.0)
+         .rect(margin, headerY, tableWidth, headerHeight)
+         .stroke();
+
+      // Header text - WHITE on dark wood background
+      const headerTextY = headerY + 3 * MM;
+      doc.fillColor('#FFFFFF')
+         .font('Helvetica-Bold')
+         .fontSize(8.5);
+
+      let xPos = margin + 2;
+      doc.text('N°', xPos, headerTextY, { width: colNo, align: 'center' });
+      xPos += colNo;
+      doc.text('Désignation', xPos, headerTextY, { width: colDesignation, align: 'left' });
+      xPos += colDesignation;
+      doc.text('Qté', xPos, headerTextY, { width: colQty, align: 'center' });
+      xPos += colQty;
+      doc.text('Unité', xPos, headerTextY, { width: colUnit, align: 'center' });
+      xPos += colUnit;
+      doc.text('Observations', xPos, headerTextY, { width: colObs, align: 'center' });
+
+      doc.restore();
+    };
+
+    // Helper function to draw rows
+    const drawRows = (pageItems: BonLivraisonItem[], startRowNumber: number, rowsStartY: number) => {
+      let rowY = rowsStartY;
+
+      doc.save();
+      doc.fillColor(COLORS.GRAY_DARK)
+         .strokeColor(COLORS.GOLD)
+         .lineWidth(0.5)
+         .font('Helvetica')
+         .fontSize(8);
+
+      pageItems.forEach((item, index) => {
+        // Row border
+        doc.rect(margin, rowY, tableWidth, rowHeight).stroke();
+
+        // Row content
+        const textY = rowY + 2 * MM;
+        let xPos = margin + 2;
+
+        // N° - CONTINUOUS numbering across pages
+        doc.text(String(startRowNumber + index), xPos, textY, { width: colNo, align: 'center' });
+        xPos += colNo;
+
+        // Désignation
+        doc.text(item.designation, xPos, textY, { width: colDesignation - 4, align: 'left' });
+        xPos += colDesignation;
+
+        // Qté
+        doc.text(String(item.quantity), xPos, textY, { width: colQty, align: 'center' });
+        xPos += colQty;
+
+        // Unité
+        doc.text(item.unit || 'U', xPos, textY, { width: colUnit, align: 'center' });
+        xPos += colUnit;
+
+        // Observations
+        doc.text(item.observations || '', xPos, textY, { width: colObs - 4, align: 'left' });
+
+        rowY += rowHeight;
+      });
+
+      doc.restore();
+
+      return rowY;
+    };
+
+    // Process each page
+    for (let page = 0; page < totalPages; page++) {
+      const isFirstPage = page === 0;
+      const isLastPage = page === totalPages - 1;
+      const itemsForThisPage = isFirstPage ? maxItemsFirstPage : maxItemsContinuation;
+      const pageItems = items.slice(itemIndex, itemIndex + itemsForThisPage);
+
+      if (!isFirstPage) {
+        // Add new page for continuation
+        doc.addPage({ size: 'A4', margin: 0 });
+        drawWoodBackground(doc);
+        drawCenterWatermark(doc, 0.06);
+
+        // Draw continuation header
+        const tableStartY = drawContinuationPageHeader(doc, docType, docNumber, {
+          currentPage: page + 1,
+          totalPages: totalPages,
+        });
+
+        currentY = tableStartY;
+      }
+
+      // Draw table header
+      const tableHeaderY = currentY;
+      drawTableHeader(tableHeaderY);
+      currentY = tableHeaderY + headerHeight;
+
+      // Draw rows
+      const startRowNumber = itemIndex + 1;  // 1-indexed row numbers
+      currentY = drawRows(pageItems, startRowNumber, currentY);
+
+      // If not last page, draw footer and border
+      if (!isLastPage) {
+        drawFooter(doc);
+        drawBorderFrame(doc);
+      }
+
+      itemIndex += itemsForThisPage;
+    }
+
+    return currentY;  // Return Y position after last table
+  }
 }
 
 /**
@@ -311,12 +466,25 @@ export async function generateBonLivraisonPDF(data: BonLivraisonData): Promise<B
       drawWoodBackground(doc);
       drawCenterWatermark(doc, 0.06);
 
+      // ── Calculate pagination info ──
+      const maxFirstPage = 18;  // More room since no prices
+      const maxContinuation = 25;
+      const totalItems = data.document.items.length;
+      const totalPages = totalItems <= maxFirstPage
+        ? 1
+        : 1 + Math.ceil((totalItems - maxFirstPage) / maxContinuation);
+
+      const pageInfo = totalPages > 1
+        ? { currentPage: 1, totalPages }
+        : undefined;
+
       // ── Draw header with document info ──
       const header = drawHeader(
         doc,
         'BON DE LIVRAISON',
         data.document.number,
-        '' // No date in header - it's in left fields
+        '', // No date in header - it's in left fields
+        pageInfo
       );
 
       // ── Draw reference fields on left ──
@@ -343,7 +511,17 @@ export async function generateBonLivraisonPDF(data: BonLivraisonData): Promise<B
       // FIXED: In PDFKit, larger Y = lower on page, so use Math.max
       const tableY = Math.max(leftBottom, clientBottom) + 4 * MM;
 
-      const afterTableY = drawSimpleTable(doc, tableY, data.document.items);
+      const afterTableY = drawSimpleTable(
+        doc,
+        tableY,
+        data.document.items,
+        totalPages > 1 ? {
+          docType: 'BON DE LIVRAISON',
+          docNumber: data.document.number,
+          maxItemsFirstPage: maxFirstPage,
+          maxItemsContinuation: maxContinuation,
+        } : undefined
+      );
 
       // ── Sequential Y flow (FIXED: always descend) ──
       let currentY = afterTableY + 5 * MM;

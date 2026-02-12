@@ -292,13 +292,26 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
       drawWoodBackground(doc);
       drawCenterWatermark(doc, 0.06);
 
+      // ── Calculate pagination info ──
+      const maxFirstPage = 15;
+      const maxContinuation = 22;
+      const totalItems = data.document.items.length;
+      const totalPages = totalItems <= maxFirstPage
+        ? 1
+        : 1 + Math.ceil((totalItems - maxFirstPage) / maxContinuation);
+
+      const pageInfo = totalPages > 1
+        ? { currentPage: 1, totalPages }
+        : undefined;
+
       // ── Draw header with document info ──
       const dateStr = formatDate(data.document.date);
       const header = drawHeader(
         doc,
         'FACTURE',
         data.document.number,
-        dateStr
+        dateStr,
+        pageInfo
       );
 
       // ── Draw échéance (due date) if provided ──
@@ -362,7 +375,13 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
         tableY,
         tableItems,
         0.20,  // TVA rate 20%
-        true   // Show TVA
+        true,  // Show TVA
+        totalPages > 1 ? {
+          docType: 'FACTURE',
+          docNumber: data.document.number,
+          maxItemsFirstPage: maxFirstPage,
+          maxItemsContinuation: maxContinuation,
+        } : undefined
       );
 
       // ── Sequential Y flow - BUG 7 FIX: Better spacing between sections ──
