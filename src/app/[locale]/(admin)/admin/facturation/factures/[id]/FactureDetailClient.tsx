@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocumentStatusBadge } from "@/components/crm/documents";
+import { DocumentStatusBar } from "@/components/admin/facturation/document-status-bar";
 import { useCurrency } from "@/stores/currency";
 
 // ═══════════════════════════════════════════════════════════
@@ -102,6 +103,13 @@ interface Document {
     number: string;
     totalTTC: number;
   } | null;
+  isDraft?: boolean;
+  isLocked?: boolean;
+  confirmedAt?: Date | null;
+  sentAt?: Date | null;
+  paidAt?: Date | null;
+  cancelledAt?: Date | null;
+  cancellationReason?: string | null;
   client: {
     id: string;
     fullName: string;
@@ -835,6 +843,26 @@ export function FactureDetailClient({ document, locale }: FactureDetailClientPro
           )}
         </div>
       </div>
+
+      {/* Document Status Bar */}
+      <DocumentStatusBar
+        document={{
+          id: document.id,
+          type: document.type,
+          number: document.number,
+          status: document.status,
+          confirmedAt: document.confirmedAt,
+          sentAt: document.sentAt,
+          paidAt: document.paidAt,
+          cancelledAt: document.cancelledAt,
+          cancellationReason: document.cancellationReason,
+          isDraft: document.isDraft,
+          isLocked: document.isLocked,
+        }}
+        locale={locale}
+        basePath={basePath}
+        onStatusChange={() => router.refresh()}
+      />
 
       {/* Overdue Alert */}
       {isOverdue && (

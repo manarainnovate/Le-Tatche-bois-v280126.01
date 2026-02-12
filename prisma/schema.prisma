@@ -807,6 +807,13 @@ model CRMDocument {
   emailSentAt DateTime?
   emailSentTo String?
 
+  // Status timestamps
+  confirmedAt        DateTime?
+  sentAt             DateTime?
+  paidAt             DateTime?
+  cancelledAt        DateTime?
+  cancellationReason String?
+
   // Creator
   createdById String?
   createdBy   User?   @relation("DocumentCreator", fields: [createdById], references: [id])
