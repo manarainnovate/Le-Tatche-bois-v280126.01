@@ -974,20 +974,25 @@ export function drawItemsTable(
   // Draw box background
   doc.save();
 
+  // FIRST: Draw solid white background to block wood texture
+  doc.rect(totalsBoxX, totalsBoxTop, totalsBoxWidth, totalsBoxBottom - totalsBoxTop)
+     .fillColor(COLORS.WHITE)
+     .fill();
+
   if (showTVA) {
-    // Light beige background for rows 1-2
+    // White background for rows 1-2
     doc.rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight * 2)
-       .fillColor('#FDF8F0')
+       .fillColor('#FFFFFF')
        .fill();
 
-    // Slightly darker for Total TTC row
+    // Very light beige for Total TTC row only
     doc.rect(totalsBoxX, row3Y, totalsBoxWidth, totalsRowHeight + 4)
-       .fillColor('#F5EDE0')
+       .fillColor('#FDF8F0')
        .fill();
   } else {
-    // Single row background if no TVA
+    // Single row white background if no TVA
     doc.rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight + 4)
-       .fillColor('#FDF8F0')
+       .fillColor('#FFFFFF')
        .fill();
   }
 
