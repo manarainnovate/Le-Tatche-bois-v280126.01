@@ -39,6 +39,11 @@ import {
   Images,
   Palette,
   Hammer,
+  Printer,
+  Award,
+  Banknote,
+  FileSpreadsheet,
+  Send,
 } from "lucide-react";
 import { useAdmin } from "./AdminProvider";
 import { cn } from "@/lib/utils";
@@ -64,6 +69,7 @@ interface NavItem {
   roles: UserRole[];
   badge?: number;
   isSubheader?: boolean; // For non-clickable group labels
+  external?: boolean; // For external links (opens in new tab)
 }
 
 interface NavSection {
@@ -215,6 +221,13 @@ const navigationSections: NavSection[] = [
         icon: FileText,
         roles: ["ADMIN", "MANAGER", "COMMERCIAL", "COMPTABLE"],
         items: [
+          // CHANGE 1: Reordered - Factures FIRST (most important)
+          {
+            name: { fr: "Factures", en: "Invoices", es: "Facturas", ar: "الفواتير" },
+            href: "/admin/facturation/factures",
+            icon: Receipt,
+            roles: ["ADMIN", "MANAGER", "COMPTABLE"],
+          },
           {
             name: { fr: "Devis", en: "Quotes", es: "Presupuestos", ar: "عروض الأسعار" },
             href: "/admin/facturation/devis",
@@ -240,16 +253,18 @@ const navigationSections: NavSection[] = [
             roles: ["ADMIN", "MANAGER", "CHEF_ATELIER"],
           },
           {
-            name: { fr: "Factures", en: "Invoices", es: "Facturas", ar: "الفواتير" },
-            href: "/admin/facturation/factures",
-            icon: Receipt,
-            roles: ["ADMIN", "MANAGER", "COMPTABLE"],
-          },
-          {
             name: { fr: "Avoirs", en: "Credit Notes", es: "Abonos", ar: "الإشعارات الدائنة" },
             href: "/admin/facturation/avoirs",
             icon: Receipt,
             roles: ["ADMIN", "MANAGER", "COMPTABLE"],
+          },
+          // CHANGE 2: NEW - Papier en-tête (blank letterhead PDF)
+          {
+            name: { fr: "Papier en-tête", en: "Letterhead", es: "Papel con membrete", ar: "ورقة برأسية" },
+            href: "/api/crm/documents/papier-entete",
+            icon: Printer,
+            roles: ["ADMIN", "MANAGER", "COMMERCIAL", "COMPTABLE"],
+            external: true, // Opens PDF in new tab
           },
         ],
       },
@@ -275,6 +290,48 @@ const navigationSections: NavSection[] = [
             roles: ["ADMIN", "MANAGER", "COMPTABLE"],
           },
         ],
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════
+  // CHANGE 3: NEW - DOCUMENTS RH (HR Documents)
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: "documents-rh",
+    title: { fr: "Documents RH", en: "HR Documents", es: "Documentos RRHH", ar: "مستندات الموارد البشرية" },
+    icon: Users,
+    roles: ["ADMIN", "MANAGER"],
+    items: [
+      {
+        name: { fr: "Note de frais", en: "Expense Report", es: "Nota de gastos", ar: "مذكرة نفقات" },
+        href: "/admin/documents-rh/note-de-frais",
+        icon: Receipt,
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        name: { fr: "Attestation de travail", en: "Work Certificate", es: "Certificado de trabajo", ar: "شهادة عمل" },
+        href: "/admin/documents-rh/attestation-travail",
+        icon: Award,
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        name: { fr: "Attestation de salaire", en: "Salary Certificate", es: "Certificado de salario", ar: "شهادة راتب" },
+        href: "/admin/documents-rh/attestation-salaire",
+        icon: Banknote,
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        name: { fr: "Bulletin de paie", en: "Payslip", es: "Nómina", ar: "قسيمة راتب" },
+        href: "/admin/documents-rh/bulletin-paie",
+        icon: FileSpreadsheet,
+        roles: ["ADMIN", "MANAGER"],
+      },
+      {
+        name: { fr: "Ordre de mission", en: "Mission Order", es: "Orden de misión", ar: "أمر مهمة" },
+        href: "/admin/documents-rh/ordre-mission",
+        icon: Send,
+        roles: ["ADMIN", "MANAGER"],
       },
     ],
   },
@@ -814,12 +871,15 @@ export function Sidebar({ locale }: SidebarProps) {
                               {subsection.items.map((item) => {
                                 const Icon = item.icon;
                                 const active = isActive(item.href);
+                                const href = item.external ? item.href : `/${locale}${item.href}`;
 
                                 return (
                                   <Link
                                     key={item.href}
-                                    href={`/${locale}${item.href}`}
+                                    href={href}
                                     onClick={() => setSidebarOpen(false)}
+                                    target={item.external ? "_blank" : undefined}
+                                    rel={item.external ? "noopener noreferrer" : undefined}
                                     className={cn(
                                       "flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs transition-colors",
                                       active
