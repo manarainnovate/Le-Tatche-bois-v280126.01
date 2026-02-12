@@ -116,12 +116,26 @@ interface LineItem {
   tvaRate: number;
 }
 
+interface ExistingDocument extends ParentDocument {
+  date: Date;
+  dueDate: Date | null;
+  paymentTerms: string | null;
+  discountType: string | null;
+  discountValue: number | null;
+  depositPercent: number | null;
+  depositAmount: number | null;
+  internalNotes: string | null;
+  publicNotes: string | null;
+  footerText: string | null;
+}
+
 interface FactureFormClientProps {
   locale: string;
   clients: Client[];
   availableDocuments: AvailableDocument[];
   catalogItems: CatalogItem[];
   parentDocument: ParentDocument | null;
+  existingDocument?: ExistingDocument | null;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -131,7 +145,9 @@ interface FactureFormClientProps {
 const translations: Record<string, Record<string, string>> = {
   fr: {
     title: "Nouvelle Facture",
+    titleEdit: "Modifier la Facture",
     subtitle: "Créer une nouvelle facture",
+    subtitleEdit: "Modifier le brouillon de facture",
     back: "Retour aux factures",
     // Form sections
     clientInfo: "Informations client",
@@ -200,7 +216,9 @@ const translations: Record<string, Record<string, string>> = {
   },
   en: {
     title: "New Invoice",
+    titleEdit: "Edit Invoice",
     subtitle: "Create a new invoice",
+    subtitleEdit: "Edit invoice draft",
     back: "Back to invoices",
     clientInfo: "Client Information",
     selectClient: "Select a client",
@@ -265,7 +283,9 @@ const translations: Record<string, Record<string, string>> = {
   },
   es: {
     title: "Nueva Factura",
+    titleEdit: "Editar Factura",
     subtitle: "Crear una nueva factura",
+    subtitleEdit: "Editar borrador de factura",
     back: "Volver a facturas",
     clientInfo: "Información del cliente",
     selectClient: "Seleccionar cliente",
@@ -330,7 +350,9 @@ const translations: Record<string, Record<string, string>> = {
   },
   ar: {
     title: "فاتورة جديدة",
+    titleEdit: "تعديل الفاتورة",
     subtitle: "إنشاء فاتورة جديدة",
+    subtitleEdit: "تعديل مسودة الفاتورة",
     back: "العودة إلى الفواتير",
     clientInfo: "معلومات العميل",
     selectClient: "اختر عميل",
@@ -459,24 +481,40 @@ export function FactureFormClient({
   availableDocuments,
   catalogItems,
   parentDocument,
+  existingDocument = null,
 }: FactureFormClientProps) {
   const router = useRouter();
   const t = (translations[locale] || translations.fr);
   const basePath = `/${locale}/admin/facturation/factures`;
+  const isEditMode = !!existingDocument;
 
-  // Form state
-  const [selectedClientId, setSelectedClientId] = useState(parentDocument?.clientId || "");
+  // Form state - initialize from existingDocument if in edit mode
+  const [selectedClientId, setSelectedClientId] = useState(
+    existingDocument?.clientId || parentDocument?.clientId || ""
+  );
   const [selectedSourceId, setSelectedSourceId] = useState(parentDocument?.id || "");
-  const [factureDate, setFactureDate] = useState(new Date().toISOString().split("T")[0]);
+  const [factureDate, setFactureDate] = useState(() => {
+    if (existingDocument?.date) {
+      return new Date(existingDocument.date).toISOString().split("T")[0];
+    }
+    return new Date().toISOString().split("T")[0];
+  });
   const [dueDate, setDueDate] = useState(() => {
+    if (existingDocument?.dueDate) {
+      return new Date(existingDocument.dueDate).toISOString().split("T")[0];
+    }
     const date = new Date();
     date.setDate(date.getDate() + 30);
     return date.toISOString().split("T")[0];
   });
-  const [paymentTerms, setPaymentTerms] = useState("30j");
+  const [paymentTerms, setPaymentTerms] = useState(
+    existingDocument?.paymentTerms || "30j"
+  );
   const [items, setItems] = useState<LineItem[]>(() => {
-    if (parentDocument?.items) {
-      return parentDocument.items.map((item) => ({
+    // Priority: existingDocument > parentDocument
+    const sourceItems = existingDocument?.items || parentDocument?.items;
+    if (sourceItems) {
+      return sourceItems.map((item) => ({
         id: crypto.randomUUID(),
         catalogItemId: item.catalogItemId || undefined,
         reference: item.reference || "",
@@ -491,11 +529,21 @@ export function FactureFormClient({
     }
     return [];
   });
-  const [discountType, setDiscountType] = useState<"percentage" | "fixed">("percentage");
-  const [discountValue, setDiscountValue] = useState(0);
-  const [internalNotes, setInternalNotes] = useState("");
-  const [publicNotes, setPublicNotes] = useState("");
-  const [footerText, setFooterText] = useState("Merci pour votre confiance.");
+  const [discountType, setDiscountType] = useState<"percentage" | "fixed">(
+    (existingDocument?.discountType as "percentage" | "fixed") || "percentage"
+  );
+  const [discountValue, setDiscountValue] = useState(
+    existingDocument?.discountValue || 0
+  );
+  const [internalNotes, setInternalNotes] = useState(
+    existingDocument?.internalNotes || ""
+  );
+  const [publicNotes, setPublicNotes] = useState(
+    existingDocument?.publicNotes || ""
+  );
+  const [footerText, setFooterText] = useState(
+    existingDocument?.footerText || "Merci pour votre confiance."
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -721,46 +769,63 @@ export function FactureFormClient({
     setErrors([]);
 
     try {
-      const response = await fetch("/api/crm/documents", {
-        method: "POST",
+      const url = isEditMode
+        ? `/api/crm/documents/${existingDocument!.id}`
+        : "/api/crm/documents";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const payload: Record<string, unknown> = {
+        items: items.map((item, index) => ({
+          catalogItemId: item.catalogItemId,
+          reference: item.reference,
+          designation: item.designation,
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          unitPriceHT: item.unitPriceHT,
+          discountPercent: item.discountPercent,
+          tvaRate: item.tvaRate,
+          order: index,
+        })),
+        discountType: discountValue > 0 ? discountType : undefined,
+        discountValue: discountValue > 0 ? discountValue : undefined,
+        internalNotes,
+        publicNotes,
+        footerText,
+      };
+
+      // Only include these fields for creation (POST)
+      if (!isEditMode) {
+        payload.type = "FACTURE";
+        payload.clientId = selectedClientId;
+        payload.parentId = selectedSourceId || undefined;
+        payload.date = factureDate;
+        payload.dueDate = dueDate;
+        payload.paymentTerms = paymentTerms;
+        payload.sendEmail = sendEmail;
+      } else {
+        // For edit (PUT), include dates and payment terms
+        payload.dueDate = dueDate;
+        payload.paymentTerms = paymentTerms;
+      }
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "FACTURE",
-          clientId: selectedClientId,
-          parentId: selectedSourceId || undefined,
-          date: factureDate,
-          dueDate,
-          paymentTerms,
-          items: items.map((item, index) => ({
-            catalogItemId: item.catalogItemId,
-            reference: item.reference,
-            designation: item.designation,
-            description: item.description,
-            quantity: item.quantity,
-            unit: item.unit,
-            unitPriceHT: item.unitPriceHT,
-            discountPercent: item.discountPercent,
-            tvaRate: item.tvaRate,
-            order: index,
-          })),
-          discountType: discountValue > 0 ? discountType : undefined,
-          discountValue: discountValue > 0 ? discountValue : undefined,
-          internalNotes,
-          publicNotes,
-          footerText,
-          sendEmail,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        router.push(`${basePath}/${data.data.id}`);
+        const docId = isEditMode ? existingDocument!.id : data.data.id;
+        router.push(`${basePath}/${docId}`);
       } else {
-        setErrors([data.error || "Erreur lors de la création de la facture"]);
+        const action = isEditMode ? "modification" : "création";
+        setErrors([data.error || `Erreur lors de la ${action} de la facture`]);
       }
     } catch (error) {
-      console.error("Error creating facture:", error);
+      console.error("Error submitting facture:", error);
       setErrors(["Erreur de connexion au serveur"]);
     } finally {
       setIsSubmitting(false);
@@ -799,9 +864,11 @@ export function FactureFormClient({
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
             <Receipt className="h-7 w-7 text-amber-600" />
-            {t.title}
+            {isEditMode ? t.titleEdit : t.title}
           </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t.subtitle}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            {isEditMode ? t.subtitleEdit : t.subtitle}
+          </p>
         </div>
       </div>
 
