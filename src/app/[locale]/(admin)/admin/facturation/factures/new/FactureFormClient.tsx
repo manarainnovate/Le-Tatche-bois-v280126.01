@@ -703,6 +703,11 @@ export function FactureFormClient({
     if (items.length === 0) {
       newErrors.push(t.addItemFirst);
     }
+    // Check if any items have empty designations
+    const hasEmptyDesignations = items.some(item => !item.designation || item.designation.trim() === '');
+    if (hasEmptyDesignations) {
+      newErrors.push("Toutes les lignes doivent avoir une désignation");
+    }
 
     setErrors(newErrors);
     return newErrors.length === 0;
