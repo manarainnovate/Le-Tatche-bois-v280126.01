@@ -11,6 +11,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Clock,
   CheckCircle,
   AlertTriangle,
@@ -21,6 +23,7 @@ import {
   FileText,
   TrendingUp,
   DollarSign,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocumentStatusBadge } from "@/components/crm/documents";
@@ -383,6 +386,16 @@ export function FacturesPageClient({
   const [dateTo, setDateTo] = useState(filters.dateTo);
   const [showOverdue, setShowOverdue] = useState(filters.overdue === "true");
 
+  // ═══════════════════════════════════════════════════════════
+  // Selection State
+  // ═══════════════════════════════════════════════════════════
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [pageSize, setPageSize] = useState(20);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
   const basePath = `/${locale}/admin/facturation/factures`;
 
   // Calculate stats
@@ -453,6 +466,118 @@ export function FacturesPageClient({
       doc.status !== "PAID" &&
       doc.balance > 0
     );
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // Selection Handlers
+  // ═══════════════════════════════════════════════════════════
+  const toggleSelect = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === documents.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(documents.map((d) => d.id)));
+    }
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const selectedCount = selectedIds.size;
+  const selectedDocs = documents.filter((d) => selectedIds.has(d.id));
+  const selectedDrafts = selectedDocs.filter((d) => d.status === "DRAFT");
+  const selectedNonDrafts = selectedDocs.filter((d) => d.status !== "DRAFT");
+
+  // ═══════════════════════════════════════════════════════════
+  // Bulk Delete Handler
+  // ═══════════════════════════════════════════════════════════
+  const handleBulkDelete = async () => {
+    if (selectedNonDrafts.length > 0) {
+      alert(
+        `Impossible de supprimer ${selectedNonDrafts.length} document(s) confirmé(s). Seuls les brouillons peuvent être supprimés.`
+      );
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const res = await fetch("/api/crm/documents/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erreur de suppression");
+      }
+
+      setShowBulkDelete(false);
+      clearSelection();
+      router.refresh();
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      alert(error instanceof Error ? error.message : "Erreur de suppression");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // Export Handler
+  // ═══════════════════════════════════════════════════════════
+  const handleExport = async (format: "excel" | "pdf") => {
+    setIsExporting(true);
+    setShowExportMenu(false);
+
+    try {
+      const body = {
+        format,
+        type: "FACTURE",
+        ...(selectedIds.size > 0 ? { ids: Array.from(selectedIds) } : {}),
+      };
+
+      const res = await fetch("/api/crm/documents/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        throw new Error("Erreur d'export");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        format === "excel"
+          ? `factures-${new Date().toISOString().split("T")[0]}.xlsx`
+          : `factures-${new Date().toISOString().split("T")[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      clearSelection();
+    } catch (error) {
+      console.error("Export error:", error);
+      alert("Erreur d'export");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   return (
@@ -577,15 +702,105 @@ export function FacturesPageClient({
             {t.filters}
           </button>
 
-          {/* Export */}
-          <button
-            className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <Download className="h-4 w-4" />
-            {t.export}
-          </button>
+          {/* Export Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              disabled={isExporting}
+              className="flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Download className="h-4 w-4" />
+              {isExporting ? "Export..." : t.export}
+              {selectedCount > 0 && (
+                <span className="ml-1 px-1.5 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded">
+                  {selectedCount}
+                </span>
+              )}
+            </button>
+
+            {/* Export Menu */}
+            {showExportMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowExportMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-20">
+                  <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 px-2 py-1">
+                      {selectedCount > 0
+                        ? `Exporter ${selectedCount} sélectionné${selectedCount > 1 ? "s" : ""}`
+                        : "Exporter tous les documents"}
+                    </p>
+                  </div>
+                  <div className="p-2">
+                    <button
+                      onClick={() => handleExport("excel")}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                    >
+                      <FileText className="h-4 w-4 text-green-600" />
+                      <div className="text-left">
+                        <div className="font-medium">Excel (.xlsx)</div>
+                        <div className="text-xs text-gray-500">Feuilles multiples</div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => alert("Export PDF sera disponible prochainement")}
+                      disabled
+                      className="w-full flex items-center gap-3 px-3 py-2 text-sm text-gray-400 dark:text-gray-600 rounded cursor-not-allowed opacity-50"
+                    >
+                      <FileText className="h-4 w-4" />
+                      <div className="text-left">
+                        <div className="font-medium">PDF</div>
+                        <div className="text-xs">Bientôt disponible</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Bulk Action Bar */}
+      {selectedCount > 0 && (
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="text-sm font-medium text-amber-900 dark:text-amber-100">
+              {selectedCount} document{selectedCount > 1 ? "s" : ""} sélectionné
+              {selectedCount > 1 ? "s" : ""}
+            </div>
+            {selectedNonDrafts.length > 0 && (
+              <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/40 px-2 py-1 rounded">
+                {selectedNonDrafts.length} confirmé{selectedNonDrafts.length > 1 ? "s" : ""} (non
+                supprimable{selectedNonDrafts.length > 1 ? "s" : ""})
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            {selectedDrafts.length > 0 && (
+              <button
+                onClick={() => setShowBulkDelete(true)}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+              >
+                <Trash2 className="h-4 w-4" />
+                Supprimer {selectedDrafts.length} brouillon
+                {selectedDrafts.length > 1 ? "s" : ""}
+              </button>
+            )}
+
+            <button
+              onClick={clearSelection}
+              className="flex items-center gap-1 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            >
+              <X className="h-4 w-4" />
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter Panel */}
       {showFilters && (
@@ -718,6 +933,14 @@ export function FacturesPageClient({
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr>
+                <th className="px-4 py-3 w-12">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size === documents.length && documents.length > 0}
+                    onChange={toggleSelectAll}
+                    className="rounded text-amber-600 focus:ring-amber-500"
+                  />
+                </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t.columns.number}
                 </th>
@@ -753,9 +976,18 @@ export function FacturesPageClient({
                   key={doc.id}
                   className={cn(
                     "hover:bg-gray-50 dark:hover:bg-gray-700/50",
-                    isOverdue(doc) && "bg-red-50 dark:bg-red-900/10"
+                    isOverdue(doc) && "bg-red-50 dark:bg-red-900/10",
+                    selectedIds.has(doc.id) && "bg-amber-50 dark:bg-amber-900/10"
                   )}
                 >
+                  <td className="px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(doc.id)}
+                      onChange={() => toggleSelect(doc.id)}
+                      className="rounded text-amber-600 focus:ring-amber-500"
+                    />
+                  </td>
                   <td className="px-4 py-3 font-mono text-sm text-amber-600 dark:text-amber-400">
                     <Link href={`${basePath}/${doc.id}`} className="hover:underline">
                       {doc.number}
@@ -838,15 +1070,43 @@ export function FacturesPageClient({
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Enhanced Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            {t.showing} {(currentPage - 1) * 20 + 1}-
-            {Math.min(currentPage * 20, totalCount)} {t.of} {totalCount} {t.documents}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {t.showing} {(currentPage - 1) * pageSize + 1}-
+              {Math.min(currentPage * pageSize, totalCount)} {t.of} {totalCount} {t.documents}
+            </div>
+
+            {/* Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Par page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(Number(e.target.value))}
+                className="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* First Page */}
+            <button
+              onClick={() => updateUrl({ page: "1" })}
+              disabled={currentPage === 1}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+              title="Première page"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </button>
+
+            {/* Previous */}
             <button
               onClick={() => updateUrl({ page: String(currentPage - 1) })}
               disabled={currentPage === 1}
@@ -855,6 +1115,43 @@ export function FacturesPageClient({
               <ChevronLeft className="h-4 w-4" />
               {t.previous}
             </button>
+
+            {/* Page Numbers */}
+            <div className="flex items-center gap-1">
+              {[...Array(totalPages)].map((_, i) => {
+                const page = i + 1;
+                // Show first, last, current, and adjacent pages
+                if (
+                  page === 1 ||
+                  page === totalPages ||
+                  (page >= currentPage - 1 && page <= currentPage + 1)
+                ) {
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => updateUrl({ page: String(page) })}
+                      className={cn(
+                        "px-3 py-1.5 text-sm rounded-lg transition-colors",
+                        page === currentPage
+                          ? "bg-amber-600 text-white font-medium"
+                          : "border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      )}
+                    >
+                      {page}
+                    </button>
+                  );
+                } else if (page === currentPage - 2 || page === currentPage + 2) {
+                  return (
+                    <span key={page} className="px-2 text-gray-400">
+                      ...
+                    </span>
+                  );
+                }
+                return null;
+              })}
+            </div>
+
+            {/* Next */}
             <button
               onClick={() => updateUrl({ page: String(currentPage + 1) })}
               disabled={currentPage === totalPages}
@@ -863,6 +1160,80 @@ export function FacturesPageClient({
               {t.next}
               <ChevronRight className="h-4 w-4" />
             </button>
+
+            {/* Last Page */}
+            <button
+              onClick={() => updateUrl({ page: String(totalPages) })}
+              disabled={currentPage === totalPages}
+              className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-800"
+              title="Dernière page"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Delete Confirmation Modal */}
+      {showBulkDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-full">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Confirmer la suppression
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Cette action est irréversible
+                  </p>
+                </div>
+              </div>
+
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+                  Vous êtes sur le point de supprimer définitivement :
+                </p>
+                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full" />
+                    <span className="font-medium">
+                      {selectedDrafts.length} brouillon{selectedDrafts.length > 1 ? "s" : ""}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowBulkDelete(false)}
+                  disabled={isDeleting}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Suppression...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      Supprimer définitivement
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
