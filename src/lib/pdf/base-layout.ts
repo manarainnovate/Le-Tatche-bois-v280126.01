@@ -256,85 +256,126 @@ export function drawCenterWatermark(doc: PDFDocument, opacity: number = 0.06): v
 }
 
 /**
+ * Helper: Load frame image with multi-path fallback
+ * BUG C FIX: Try multiple possible paths (local dev + Docker production)
+ */
+function loadFrameImage(filename: string): Buffer | null {
+  const possiblePaths = [
+    // Standard development path
+    path.join(process.cwd(), 'public', 'pdf-assets', 'le-tatche-bois-pdf-assets', filename),
+    // Next.js standalone build (Docker)
+    path.join(process.cwd(), 'pdf-assets', 'le-tatche-bois-pdf-assets', filename),
+    // Docker absolute path
+    path.join('/app', 'public', 'pdf-assets', 'le-tatche-bois-pdf-assets', filename),
+    // Relative to this file
+    path.join(__dirname, '..', '..', '..', '..', 'public', 'pdf-assets', 'le-tatche-bois-pdf-assets', filename),
+  ];
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      console.log(`[PDF] ✓ Found ${filename} at: ${p}`);
+      return fs.readFileSync(p);
+    }
+  }
+
+  console.warn(`[PDF] ✗ Frame image NOT FOUND: ${filename}`);
+  console.warn('[PDF] Tried paths:', possiblePaths);
+  return null;
+}
+
+/**
  * Draw ornate carved wood frame border
  * 4mm strips on all four sides with wood texture
+ * BUG C FIX: Multi-path fallback + gold rectangle fallback if images missing
  */
 export function drawBorderFrame(doc: PDFDocument): void {
   const thickness = 4 * MM;  // 4mm frame thickness
 
-  console.log('[PDF] drawBorderFrame - Starting border frame drawing');
-  console.log('[PDF] Assets base path:', ASSETS_BASE);
-  console.log('[PDF] Frame file paths:', {
-    top: ASSETS.frameTop,
-    bottom: ASSETS.frameBottom,
-    left: ASSETS.frameLeft,
-    right: ASSETS.frameRight,
-  });
+  console.log('[PDF] ═══ drawBorderFrame START ═══');
+
+  // BUG C FIX: Load images with fallback paths
+  const topBuffer = loadFrameImage('frame_top.png');
+  const bottomBuffer = loadFrameImage('frame_bottom.png');
+  const leftBuffer = loadFrameImage('frame_left.png');
+  const rightBuffer = loadFrameImage('frame_right.png');
+
+  let imagesLoaded = 0;
 
   try {
     // Top strip
-    if (fs.existsSync(ASSETS.frameTop)) {
-      console.log('[PDF] ✓ Drawing frame_top.png');
+    if (topBuffer) {
       doc.save();
-      doc.image(ASSETS.frameTop, 0, 0, {
+      doc.image(topBuffer, 0, 0, {
         width: PAGE.WIDTH,
         height: thickness,
       });
       doc.restore();
-    } else {
-      console.error('[PDF] ✗ frame_top.png not found:', ASSETS.frameTop);
+      imagesLoaded++;
     }
 
     // Bottom strip
-    if (fs.existsSync(ASSETS.frameBottom)) {
-      console.log('[PDF] ✓ Drawing frame_bottom.png');
+    if (bottomBuffer) {
       doc.save();
-      doc.image(ASSETS.frameBottom, 0, PAGE.HEIGHT - thickness, {
+      doc.image(bottomBuffer, 0, PAGE.HEIGHT - thickness, {
         width: PAGE.WIDTH,
         height: thickness,
       });
       doc.restore();
-    } else {
-      console.error('[PDF] ✗ frame_bottom.png not found:', ASSETS.frameBottom);
+      imagesLoaded++;
     }
 
     // Left strip
-    if (fs.existsSync(ASSETS.frameLeft)) {
-      console.log('[PDF] ✓ Drawing frame_left.png');
+    if (leftBuffer) {
       doc.save();
-      doc.image(ASSETS.frameLeft, 0, 0, {
+      doc.image(leftBuffer, 0, 0, {
         width: thickness,
         height: PAGE.HEIGHT,
       });
       doc.restore();
-    } else {
-      console.error('[PDF] ✗ frame_left.png not found:', ASSETS.frameLeft);
+      imagesLoaded++;
     }
 
     // Right strip
-    if (fs.existsSync(ASSETS.frameRight)) {
-      console.log('[PDF] ✓ Drawing frame_right.png');
+    if (rightBuffer) {
       doc.save();
-      doc.image(ASSETS.frameRight, PAGE.WIDTH - thickness, 0, {
+      doc.image(rightBuffer, PAGE.WIDTH - thickness, 0, {
         width: thickness,
         height: PAGE.HEIGHT,
       });
       doc.restore();
-    } else {
-      console.error('[PDF] ✗ frame_right.png not found:', ASSETS.frameRight);
+      imagesLoaded++;
     }
 
-    console.log('[PDF] ✅ Border frame drawing completed successfully');
+    console.log(`[PDF] ✅ Border frame: ${imagesLoaded}/4 images loaded`);
+
+    // BUG C FIX: FALLBACK - If NO images loaded, draw gold rectangle border
+    if (imagesLoaded === 0) {
+      console.warn('[PDF] ⚠️  No frame images found — drawing FALLBACK gold border');
+      doc.save();
+      doc.strokeColor(COLORS.GOLD)
+         .lineWidth(2)
+         .rect(4, 4, PAGE.WIDTH - 8, PAGE.HEIGHT - 8)
+         .stroke();
+      doc.restore();
+    }
+
   } catch (error) {
-    console.error('[PDF] ❌ Failed to draw border frame:', error);
-    if (error instanceof Error) {
-      console.error('[PDF] Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      });
+    console.error('[PDF] ❌ Border frame error:', error);
+    // Draw fallback border on error
+    try {
+      doc.save();
+      doc.strokeColor(COLORS.GOLD)
+         .lineWidth(2)
+         .rect(4, 4, PAGE.WIDTH - 8, PAGE.HEIGHT - 8)
+         .stroke();
+      doc.restore();
+      console.log('[PDF] ✅ Fallback gold border drawn');
+    } catch (fallbackError) {
+      console.error('[PDF] ❌ Even fallback border failed:', fallbackError);
     }
   }
+
+  console.log('[PDF] ═══ drawBorderFrame END ═══');
 }
 
 /**
@@ -391,7 +432,7 @@ export function drawHeader(
   const textX = 5 * MM + 40 * MM;
   const nameY = headerTop + 12 * MM;
 
-  // Company name
+  // Company name — 22pt bold
   doc.save();
   doc.fillColor(COLORS.BROWN_DARK)
      .font('Helvetica-Bold')
@@ -399,8 +440,9 @@ export function drawHeader(
      .text('LE TATCHE BOIS', textX, nameY);
   doc.restore();
 
-  // Type + Activity on same line - BUG 1 FIX: Move UP to avoid overlap with separator
-  const typeY = nameY + 12;
+  // BUG A FIX: Proper Y spacing based on font sizes
+  // Type + Activity — MUST be 28pt below name (22pt text + 6pt padding minimum)
+  const typeY = nameY + 28;
   doc.save();
   doc.fillColor(COLORS.GOLD_DARK)
      .font('Helvetica-Bold')
@@ -413,25 +455,30 @@ export function drawHeader(
      .text(`  •  ${COMPANY.activity}`, { continued: false });
   doc.restore();
 
-  // Contact info below - BUG 1 FIX: Move UP to prevent overlap with separator bar
-  const contactY = nameY + 27;
+  // Contact info — 14pt below type/activity (10pt text + 4pt padding)
+  const contactY = typeY + 14;
   doc.save();
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
      .fontSize(8.5)
      .text(`Tél : ${COMPANY.tel1}  /  ${COMPANY.tel2}`, textX, contactY, { lineBreak: false });
 
-  doc.text(`Email : ${COMPANY.email}`, textX, contactY + 11, { lineBreak: false });
+  // Email — 12pt below contact line (8.5pt text + 3.5pt padding)
+  const emailY = contactY + 12;
+  doc.text(`Email : ${COMPANY.email}`, textX, emailY, { lineBreak: false });
   doc.restore();
 
-  // ── Address (right aligned) ──
+  // Log Y values for verification
+  console.log('[PDF Header] nameY:', nameY, 'typeY:', typeY, 'contactY:', contactY, 'emailY:', emailY);
+
+  // ── Address (right aligned) — Match contact Y position
   const rightX = PAGE.WIDTH - margin;
   doc.save();
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
      .fontSize(9)
      .text(COMPANY.address, rightX - 200, contactY, { width: 200, align: 'right' })
-     .text(COMPANY.city, rightX - 200, contactY + 11, { width: 200, align: 'right' });
+     .text(COMPANY.city, rightX - 200, emailY, { width: 200, align: 'right' });
   doc.restore();
 
   // ── Bottom gold gradient line (separator) - BUG 1 FIX: Add 8pt gap after text ──
@@ -853,8 +900,10 @@ export function drawItemsTable(
 
   // ── Draw totals section ──
   const totalsY = currentY + 5 * MM;
-  const totalsX = PAGE.WIDTH - margin - 60 * MM;
-  const totalsWidth = 60 * MM;
+
+  // BUG B FIX: Widen totals box from 60mm to 77mm to fit large amounts + "DH"
+  const totalsWidth = 77 * MM;  // BEFORE: 60 * MM
+  const totalsX = PAGE.WIDTH - margin - totalsWidth;
 
   const tvaAmount = showTVA ? subtotal * tvaRate : 0;
   const totalTTC = subtotal + tvaAmount;
@@ -876,9 +925,14 @@ export function drawItemsTable(
      .stroke();
   doc.restore();
 
+  // BUG B FIX: Adjust label/value positioning for wider box
   const labelX = totalsX + 3 * MM;
-  const valueX = totalsX + totalsWidth - 3 * MM;
+  const labelWidth = 25 * MM;  // "Total HT", "TVA (20%)", etc.
+  const valueWidth = totalsWidth - labelWidth - 6 * MM;  // Remaining space for amounts
+  const valueX = totalsX + labelWidth + 3 * MM;
   let rowY = totalsY + 4 * MM;
+
+  console.log('[PDF Totals] Box width:', totalsWidth, 'Value column width:', valueWidth);
 
   // Total HT
   doc.save();
@@ -887,8 +941,16 @@ export function drawItemsTable(
      .fontSize(8)
      .text('Total HT', labelX, rowY);
 
-  doc.text(`${formatNumber(subtotal)} DH`, valueX - 50, rowY, {
-    width: 50,
+  // BUG B FIX: Auto-shrink font for very large amounts
+  const htText = `${formatNumber(subtotal)} DH`;
+  let htFontSize = 8;
+  doc.font('Helvetica').fontSize(htFontSize);
+  if (doc.widthOfString(htText) > valueWidth - 5) {
+    htFontSize = 7;
+    doc.fontSize(htFontSize);
+  }
+  doc.text(htText, valueX, rowY, {
+    width: valueWidth,
     align: 'right',
   });
   doc.restore();
@@ -901,8 +963,16 @@ export function drawItemsTable(
        .fontSize(8)
        .text(`TVA (${Math.round(tvaRate * 100)}%)`, labelX, rowY);
 
-    doc.text(`${formatNumber(tvaAmount)} DH`, valueX - 50, rowY, {
-      width: 50,
+    // BUG B FIX: Auto-shrink font for TVA amount
+    const tvaText = `${formatNumber(tvaAmount)} DH`;
+    let tvaFontSize = 8;
+    doc.font('Helvetica').fontSize(tvaFontSize);
+    if (doc.widthOfString(tvaText) > valueWidth - 5) {
+      tvaFontSize = 7;
+      doc.fontSize(tvaFontSize);
+    }
+    doc.text(tvaText, valueX, rowY, {
+      width: valueWidth,
       align: 'right',
     });
     doc.restore();
@@ -925,9 +995,16 @@ export function drawItemsTable(
        .fontSize(10)
        .text('Total TTC', labelX, rowY);
 
-    // Wider width (120pt) to prevent "DH" from wrapping to next line
-    doc.text(`${formatNumber(totalTTC)} DH`, valueX - 120, rowY, {
-      width: 120,
+    // BUG B FIX: Auto-shrink font for Total TTC (most important line)
+    const ttcText = `${formatNumber(totalTTC)} DH`;
+    let ttcFontSize = 10;
+    doc.font('Helvetica-Bold').fontSize(ttcFontSize);
+    if (doc.widthOfString(ttcText) > valueWidth - 5) {
+      ttcFontSize = 9;
+      doc.fontSize(ttcFontSize);
+    }
+    doc.text(ttcText, valueX, rowY, {
+      width: valueWidth,
       align: 'right',
     });
     doc.restore();
