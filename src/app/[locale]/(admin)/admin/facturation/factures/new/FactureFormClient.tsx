@@ -20,6 +20,10 @@ import {
   UserPlus,
   Check,
   Pencil,
+  Mail,
+  Phone,
+  Hash,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/stores/currency";
@@ -560,13 +564,16 @@ export function FactureFormClient({
   // Quick client creation modal
   const [showQuickClientModal, setShowQuickClientModal] = useState(false);
   const [quickClientData, setQuickClientData] = useState({
+    clientType: "COMPANY" as "COMPANY" | "INDIVIDUAL",
+    company: "",
     fullName: "",
     email: "",
     phone: "",
-    company: "",
     ice: "",
+    taxId: "", // IF - Identifiant Fiscal
   });
   const [isCreatingClient, setIsCreatingClient] = useState(false);
+  const [quickClientError, setQuickClientError] = useState("");
 
   // Get selected client
   const selectedClient = clients.find((c) => c.id === selectedClientId);
@@ -807,9 +814,25 @@ export function FactureFormClient({
   const { format: formatCurrency } = useCurrency();
 
   // Quick create client
-  const handleQuickCreateClient = async () => {
+  const handleQuickCreateClient = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setQuickClientError("");
+
+    // Client-side validation
+    if (quickClientData.clientType === "COMPANY" && !quickClientData.company?.trim()) {
+      setQuickClientError("La raison sociale est requise pour une entreprise");
+      return;
+    }
     if (!quickClientData.fullName.trim()) {
-      alert("Le nom complet est requis");
+      setQuickClientError(
+        quickClientData.clientType === "COMPANY"
+          ? "Le nom de la personne à contacter est requis"
+          : "Le nom complet est requis"
+      );
+      return;
+    }
+    if (quickClientData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(quickClientData.email)) {
+      setQuickClientError("Adresse email invalide");
       return;
     }
 
@@ -819,32 +842,53 @@ export function FactureFormClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName: quickClientData.fullName,
-          email: quickClientData.email || null,
-          phone: quickClientData.phone || "+212",
-          company: quickClientData.company || null,
-          ice: quickClientData.ice || null,
-          type: "PARTICULIER",
-          status: "ACTIF",
+          clientType: quickClientData.clientType,
+          fullName: quickClientData.fullName.trim(),
+          company: quickClientData.clientType === "COMPANY" ? quickClientData.company?.trim() : null,
+          email: quickClientData.email.trim() || null,
+          phone: quickClientData.phone.trim() || null,
+          ice: quickClientData.ice.trim() || null,
+          taxId: quickClientData.taxId.trim() || null,
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        // Show detailed validation errors
+        if (errorData.data && Array.isArray(errorData.data)) {
+          const messages = errorData.data.map((err: { field: string; message: string }) => err.message).join(". ");
+          setQuickClientError(messages);
+        } else {
+          setQuickClientError(errorData.error || "Erreur lors de la création du client");
+        }
+        return;
+      }
+
       const data = await response.json();
 
-      if (data.success) {
+      if (data.success && data.data.client) {
         // Add new client to the clients array
-        clients.push(data.data);
+        clients.push(data.data.client);
         // Select the newly created client
-        setSelectedClientId(data.data.id);
+        setSelectedClientId(data.data.client.id);
         // Close modal and reset form
         setShowQuickClientModal(false);
-        setQuickClientData({ fullName: "", email: "", phone: "", company: "", ice: "" });
+        setQuickClientData({
+          clientType: "COMPANY",
+          company: "",
+          fullName: "",
+          email: "",
+          phone: "",
+          ice: "",
+          taxId: "",
+        });
+        setQuickClientError("");
       } else {
-        alert(data.error || "Erreur lors de la création du client");
+        setQuickClientError(data.error || "Erreur lors de la création du client");
       }
     } catch (error) {
       console.error("Error creating client:", error);
-      alert("Erreur de connexion au serveur");
+      setQuickClientError("Erreur de connexion au serveur");
     } finally {
       setIsCreatingClient(false);
     }
@@ -1627,89 +1671,226 @@ export function FactureFormClient({
         </div>
       </div>
 
-      {/* Quick Client Creation Modal */}
+      {/* Quick Client Creation Modal - Redesigned */}
       {showQuickClientModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-6 max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-amber-600" />
-                Nouveau client rapide
-              </h3>
+        <div
+          className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowQuickClientModal(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="px-6 py-4 border-b bg-gradient-to-r from-amber-50 to-orange-50 rounded-t-2xl flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-700 rounded-xl flex items-center justify-center shadow-md">
+                  <UserPlus className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Nouveau client</h3>
+                  <p className="text-xs text-gray-500">Ajouter un client rapidement</p>
+                </div>
+              </div>
               <button
-                type="button"
                 onClick={() => setShowQuickClientModal(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                className="p-2 hover:bg-white/60 rounded-lg transition-colors"
               >
-                <X className="h-5 w-5 text-gray-500" />
+                <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <input
-                  type="text"
-                  placeholder="Nom complet *"
-                  value={quickClientData.fullName}
-                  onChange={(e) => setQuickClientData({ ...quickClientData, fullName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                  required
-                />
+            {/* Form */}
+            <form onSubmit={handleQuickCreateClient} className="p-6 space-y-4">
+              {/* Client Type Toggle */}
+              <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuickClientData((prev) => ({ ...prev, clientType: "COMPANY" }))
+                  }
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                    quickClientData.clientType === "COMPANY"
+                      ? "bg-white shadow-sm text-amber-700"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <Building2 className="w-4 h-4 inline mr-1.5" />
+                  Entreprise
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setQuickClientData((prev) => ({ ...prev, clientType: "INDIVIDUAL" }))
+                  }
+                  className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-all ${
+                    quickClientData.clientType === "INDIVIDUAL"
+                      ? "bg-white shadow-sm text-amber-700"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <User className="w-4 h-4 inline mr-1.5" />
+                  Particulier
+                </button>
               </div>
-              <div>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={quickClientData.email}
-                  onChange={(e) => setQuickClientData({ ...quickClientData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <div>
-                <input
-                  type="tel"
-                  placeholder="Téléphone"
-                  value={quickClientData.phone}
-                  onChange={(e) => setQuickClientData({ ...quickClientData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="Entreprise"
-                  value={quickClientData.company}
-                  onChange={(e) => setQuickClientData({ ...quickClientData, company: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                />
-              </div>
-              <div>
-                <input
-                  type="text"
-                  placeholder="ICE (identifiant fiscal)"
-                  value={quickClientData.ice}
-                  onChange={(e) => setQuickClientData({ ...quickClientData, ice: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                />
-              </div>
-            </div>
 
-            <div className="flex gap-3 mt-6">
-              <button
-                type="button"
-                onClick={handleQuickCreateClient}
-                disabled={isCreatingClient || !quickClientData.fullName.trim()}
-                className="flex-1 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isCreatingClient ? "Création..." : "Créer & sélectionner"}
-              </button>
+              {/* Company Name - shown for COMPANY type */}
+              {quickClientData.clientType === "COMPANY" && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                    Raison sociale <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <Building2 className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="text"
+                      value={quickClientData.company || ""}
+                      onChange={(e) =>
+                        setQuickClientData((prev) => ({ ...prev, company: e.target.value }))
+                      }
+                      placeholder="Ex: Atlas Menuiserie SARL"
+                      autoFocus
+                      className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Contact Person Name */}
+              <div>
+                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                  {quickClientData.clientType === "COMPANY"
+                    ? "Personne à contacter"
+                    : "Nom complet"}
+                  <span className="text-red-400"> *</span>
+                </label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    value={quickClientData.fullName || ""}
+                    onChange={(e) =>
+                      setQuickClientData((prev) => ({ ...prev, fullName: e.target.value }))
+                    }
+                    placeholder="Ex: Mohammed Alami"
+                    autoFocus={quickClientData.clientType === "INDIVIDUAL"}
+                    className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                  />
+                </div>
+              </div>
+
+              {/* Email + Phone - 2 columns */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Email</label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="email"
+                      value={quickClientData.email || ""}
+                      onChange={(e) =>
+                        setQuickClientData((prev) => ({ ...prev, email: e.target.value }))
+                      }
+                      placeholder="email@exemple.com"
+                      className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">Téléphone</label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="tel"
+                      value={quickClientData.phone || ""}
+                      onChange={(e) =>
+                        setQuickClientData((prev) => ({ ...prev, phone: e.target.value }))
+                      }
+                      placeholder="+212 6XX XXX XXX"
+                      className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ICE + IF - 2 columns (for companies) */}
+              {quickClientData.clientType === "COMPANY" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      ICE
+                      <span className="text-xs text-gray-400 ml-1">(15 chiffres)</span>
+                    </label>
+                    <div className="relative">
+                      <Hash className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={quickClientData.ice || ""}
+                        onChange={(e) => {
+                          // Only allow digits, max 15
+                          const val = e.target.value.replace(/\D/g, "").slice(0, 15);
+                          setQuickClientData((prev) => ({ ...prev, ice: val }));
+                        }}
+                        placeholder="001234567000089"
+                        maxLength={15}
+                        className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm font-mono focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                      IF
+                      <span className="text-xs text-gray-400 ml-1">(Identifiant Fiscal)</span>
+                    </label>
+                    <div className="relative">
+                      <FileText className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        value={quickClientData.taxId || ""}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                          setQuickClientData((prev) => ({ ...prev, taxId: val }));
+                        }}
+                        placeholder="12345678"
+                        maxLength={10}
+                        className="w-full pl-10 pr-4 py-3 border rounded-xl text-sm font-mono focus:ring-2 focus:ring-amber-200 focus:border-amber-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error message */}
+              {quickClientError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-sm text-red-700 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">Erreur</p>
+                    <p className="text-xs mt-0.5">{quickClientError}</p>
+                  </div>
+                </div>
+              )}
+            </form>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t bg-gray-50 rounded-b-2xl flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setShowQuickClientModal(false)}
-                disabled={isCreatingClient}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50"
+                className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
               >
                 Annuler
+              </button>
+              <button
+                onClick={handleQuickCreateClient}
+                disabled={isCreatingClient}
+                className="px-6 py-2.5 text-sm font-semibold bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-xl hover:from-amber-600 hover:to-amber-700 shadow-md disabled:opacity-50 flex items-center gap-2 transition-all"
+              >
+                {isCreatingClient ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <Check className="w-4 h-4" />
+                )}
+                Créer & sélectionner
               </button>
             </div>
           </div>
