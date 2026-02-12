@@ -1314,14 +1314,14 @@ export function FactureFormClient({
                             )}
                           </div>
                         ) : (
-                          <div className="space-y-1.5">
+                          <div className="w-full space-y-1.5">
                             {/* Catalog selector - compact */}
                             <select
                               value={item.catalogItemId || ""}
                               onChange={(e) => selectCatalogItem(item.id, e.target.value)}
                               onKeyDown={(e) => handleItemKeyDown(e, item.id, "catalog")}
                               disabled={item.isValidated}
-                              className="w-full max-w-[200px] px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800 text-gray-500"
+                              className="w-full max-w-[200px] px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800 text-gray-500"
                             >
                               <option value="">-- Catalogue --</option>
                               {catalogItems.map((ci) => (
@@ -1368,12 +1368,13 @@ export function FactureFormClient({
                         ) : (
                           <input
                             type="number"
-                            value={item.quantity}
+                            value={item.quantity || ""}
                             onChange={(e) => updateItem(item.id, "quantity", parseFloat(e.target.value) || 0)}
                             onKeyDown={(e) => handleItemKeyDown(e, item.id, "quantity")}
                             disabled={item.isValidated}
                             min="0"
                             step="0.01"
+                            placeholder="1"
                             className={cn(
                               "w-full px-2 py-2 text-sm text-center border rounded-lg focus:ring-1 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
                               item.validationErrors.includes("quantity")
@@ -1414,12 +1415,13 @@ export function FactureFormClient({
                         ) : (
                           <input
                             type="number"
-                            value={item.unitPriceHT}
+                            value={item.unitPriceHT || ""}
                             onChange={(e) => updateItem(item.id, "unitPriceHT", parseFloat(e.target.value) || 0)}
                             onKeyDown={(e) => handleItemKeyDown(e, item.id, "unitPriceHT")}
                             disabled={item.isValidated}
                             min="0"
                             step="0.01"
+                            placeholder="Prix HT"
                             className={cn(
                               "w-full px-2 py-2 text-sm text-right border rounded-lg focus:ring-1 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
                               item.validationErrors.includes("unitPriceHT")
@@ -1439,12 +1441,13 @@ export function FactureFormClient({
                         ) : (
                           <input
                             type="number"
-                            value={item.discountPercent}
+                            value={item.discountPercent || ""}
                             onChange={(e) => updateItem(item.id, "discountPercent", parseFloat(e.target.value) || 0)}
                             onKeyDown={(e) => handleItemKeyDown(e, item.id, "discountPercent")}
                             disabled={item.isValidated}
                             min="0"
                             max="100"
+                            placeholder="0"
                             className="w-full px-2 py-2 text-sm text-center border rounded-lg focus:ring-1 focus:ring-amber-200 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
                           />
                         )}
