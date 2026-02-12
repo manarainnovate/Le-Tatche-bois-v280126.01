@@ -522,6 +522,19 @@ export function PVFormClient({
       return;
     }
 
+    // Validate that all items have a designation (required by API)
+    const invalidItems = items.filter(item => !item.designation || item.designation.trim() === '');
+    if (invalidItems.length > 0) {
+      setError(locale === 'fr'
+        ? 'Veuillez remplir la désignation pour tous les articles'
+        : locale === 'en'
+        ? 'Please fill in the designation for all items'
+        : locale === 'es'
+        ? 'Por favor complete la designación para todos los artículos'
+        : 'يرجى ملء الوصف لجميع العناصر');
+      return;
+    }
+
     setSaving(true);
     setError("");
 
@@ -760,8 +773,14 @@ export function PVFormClient({
                           type="text"
                           value={item.designation}
                           onChange={(e) => updateItemField(item.id, "designation", e.target.value)}
-                          className="w-full px-2 py-1 font-medium border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800"
-                          placeholder={t.designation}
+                          className={cn(
+                            "w-full px-2 py-1 font-medium border rounded focus:ring-1 bg-white dark:bg-gray-800",
+                            !item.designation || item.designation.trim() === ''
+                              ? "border-red-300 dark:border-red-700 focus:ring-red-500"
+                              : "border-gray-300 dark:border-gray-600 focus:ring-amber-500"
+                          )}
+                          placeholder={`${t.designation} *`}
+                          required
                         />
                       </div>
                       <button
