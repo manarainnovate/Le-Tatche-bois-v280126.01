@@ -1281,14 +1281,14 @@ export function FactureFormClient({
             <div className="overflow-x-auto">
               <table className="w-full table-fixed text-sm min-w-[900px]">
                 <colgroup>
-                  <col className="w-10" />          {/* # */}
-                  <col />                           {/* Désignation — flexible, takes remaining space */}
+                  <col className="w-12" />          {/* # + border indicator */}
+                  <col />                           {/* Désignation — takes ALL remaining space */}
                   <col className="w-[70px]" />      {/* Qté */}
-                  <col className="w-20" />          {/* Unité */}
-                  <col className="w-[100px]" />     {/* P.U. HT */}
+                  <col className="w-[75px]" />      {/* Unité */}
+                  <col className="w-[120px]" />     {/* P.U. HT — wider for prices like 12,500.00 */}
                   <col className="w-[70px]" />      {/* Remise % */}
-                  <col className="w-20" />          {/* TVA % */}
-                  <col className="w-[110px]" />     {/* Total HT */}
+                  <col className="w-[80px]" />      {/* TVA % */}
+                  <col className="w-[120px]" />     {/* Total HT */}
                   <col className="w-[70px]" />      {/* Actions */}
                 </colgroup>
                 <thead className="bg-gray-50 dark:bg-gray-900/50">
@@ -1321,8 +1321,9 @@ export function FactureFormClient({
                             : "hover:bg-gray-50 dark:hover:bg-gray-800"
                       )}
                     >
-                      {/* LEFT BORDER INDICATOR */}
-                      <td className="relative w-0 p-0">
+                      {/* ROW NUMBER + STATUS (with left border indicator) */}
+                      <td className="px-2 py-2 text-center relative">
+                        {/* Left border indicator */}
                         <div
                           className={cn(
                             "absolute left-0 top-0 bottom-0 w-1 transition-colors duration-200",
@@ -1333,10 +1334,6 @@ export function FactureFormClient({
                                 : "bg-transparent"
                           )}
                         />
-                      </td>
-
-                      {/* ROW NUMBER + STATUS */}
-                      <td className="px-2 py-2 text-center">
                         {item.isValidated ? (
                           <div className="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-sm">
                             <Check className="w-3.5 h-3.5 text-white" />
@@ -1365,7 +1362,7 @@ export function FactureFormClient({
                               onChange={(e) => selectCatalogItem(item.id, e.target.value)}
                               onKeyDown={(e) => handleItemKeyDown(e, item.id, "catalog")}
                               disabled={item.isValidated}
-                              className="w-full max-w-[200px] px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800 text-gray-500"
+                              className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-1 focus:ring-amber-500 bg-white dark:bg-gray-800 text-gray-500"
                             >
                               <option value="">-- Catalogue --</option>
                               {catalogItems.map((ci) => (
