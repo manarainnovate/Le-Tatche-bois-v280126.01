@@ -8,34 +8,44 @@ import { COMPANY } from '@/lib/pdf/base-layout';
 
 export async function GET(request: NextRequest) {
   try {
-    // This is the EXACT text that gets encoded in the QR code
+    // This is the EXACT vCard text that gets encoded in the QR code
     const docNumber = 'FAC-2026/0001';
     const totalTTC = 12500.00;
     const clientName = 'Test Client Name';
 
     const lines = [
-      `LE TATCHE BOIS`,
-      ``,
-      `COORDONNEES BANCAIRES:`,
-      `Titulaire: ${COMPANY.bank.holder}`,
-      `RIB: ${COMPANY.bank.rib}`,
-      `IBAN: ${COMPANY.bank.iban}`,
-      `SWIFT: ${COMPANY.bank.swift}`,
-      `Banque: ${COMPANY.bank.name} ${COMPANY.bank.branch}`,
-      ``,
-      `DOCUMENT: ${docNumber}`,
+      'BEGIN:VCARD',
+      'VERSION:3.0',
+      `FN:${COMPANY.name}`,
+      `ORG:${COMPANY.name};${COMPANY.type}`,
+      `TITLE:${COMPANY.activity}`,
+      `TEL;TYPE=WORK,VOICE:${COMPANY.tel1}`,
+      `TEL;TYPE=WORK,VOICE:${COMPANY.tel2}`,
+      `EMAIL;TYPE=INTERNET:${COMPANY.email}`,
+      `EMAIL;TYPE=INTERNET:${COMPANY.email2}`,
+      `URL:${COMPANY.website}`,
+      `ADR;TYPE=WORK:;;${COMPANY.address};LAMHAMID;MARRAKECH;;Morocco`,
     ];
 
-    if (totalTTC !== undefined && totalTTC > 0) {
-      lines.push(`Montant: ${totalTTC.toFixed(2)} DH`);
-    }
+    // Add bank info in NOTE field
+    let note = `COORDONNEES BANCAIRES:\\n`;
+    note += `Titulaire: ${COMPANY.bank.holder}\\n`;
+    note += `RIB: ${COMPANY.bank.rib}\\n`;
+    note += `IBAN: ${COMPANY.bank.iban}\\n`;
+    note += `SWIFT: ${COMPANY.bank.swift}\\n`;
+    note += `Banque: ${COMPANY.bank.name} ${COMPANY.bank.branch}\\n`;
+    note += `\\nDOCUMENT: ${docNumber}`;
 
-    lines.push(``);
-    lines.push(`CONTACT:`);
-    lines.push(`Tel: ${COMPANY.tel1}`);
-    lines.push(`Email: ${COMPANY.email2}`);
-    lines.push(`Web: ${COMPANY.website}`);
-    lines.push(`ICE: ${COMPANY.ice}`);
+    if (totalTTC !== undefined && totalTTC > 0) {
+      note += `\\nMontant: ${totalTTC.toFixed(2)} DH`;
+    }
+    if (clientName) {
+      note += `\\nClient: ${clientName}`;
+    }
+    note += `\\nICE: ${COMPANY.ice}`;
+
+    lines.push(`NOTE:${note}`);
+    lines.push('END:VCARD');
 
     const qrContent = lines.join('\n');
 
