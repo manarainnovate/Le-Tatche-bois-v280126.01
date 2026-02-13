@@ -723,44 +723,44 @@ export function drawPageCarryForwardFrom(
 /**
  * Generate QR code containing bank/payment info + invoice reference
  * Returns a PNG buffer that can be embedded in PDFKit
+ *
+ * Content is SIMPLE TEXT optimized for readability when scanned
  */
 export async function generateInvoiceQR(
   docNumber: string,
   totalTTC?: number,
   clientName?: string
 ): Promise<Buffer> {
-  // Build QR content — structured text with bank info + invoice ref
+  // Build QR content — SIMPLE format for easy scanning
   const lines = [
     `LE TATCHE BOIS`,
-    `━━━━━━━━━━━━━━━━`,
-    `Virement bancaire:`,
+    ``,
+    `COORDONNEES BANCAIRES:`,
     `Titulaire: ${COMPANY.bank.holder}`,
-    `Banque: ${COMPANY.bank.name} - ${COMPANY.bank.branch}`,
     `RIB: ${COMPANY.bank.rib}`,
     `IBAN: ${COMPANY.bank.iban}`,
     `SWIFT: ${COMPANY.bank.swift}`,
-    `━━━━━━━━━━━━━━━━`,
-    `Réf: ${docNumber}`,
+    `Banque: ${COMPANY.bank.name} ${COMPANY.bank.branch}`,
+    ``,
+    `DOCUMENT: ${docNumber}`,
   ];
 
   if (totalTTC !== undefined && totalTTC > 0) {
-    lines.push(`Montant: ${totalTTC.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DH`);
-  }
-  if (clientName) {
-    lines.push(`Client: ${clientName}`);
+    lines.push(`Montant: ${totalTTC.toFixed(2)} DH`);
   }
 
-  lines.push(`━━━━━━━━━━━━━━━━`);
-  lines.push(`ICE: ${COMPANY.ice}`);
-  lines.push(`Web: ${COMPANY.website}`);
+  lines.push(``);
+  lines.push(`CONTACT:`);
+  lines.push(`Tel: ${COMPANY.tel1}`);
   lines.push(`Email: ${COMPANY.email2}`);
-  lines.push(`Tél: ${COMPANY.tel1}`);
+  lines.push(`Web: ${COMPANY.website}`);
+  lines.push(`ICE: ${COMPANY.ice}`);
 
   const qrContent = lines.join('\n');
 
   // Generate QR as PNG buffer
   const qrBuffer = await QRCode.toBuffer(qrContent, {
-    errorCorrectionLevel: 'M',
+    errorCorrectionLevel: 'M',  // Medium error correction
     type: 'png',
     width: 300,       // 300px resolution for sharp print
     margin: 1,
