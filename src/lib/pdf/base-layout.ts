@@ -441,60 +441,69 @@ export function drawHeader(
     console.warn(`Failed to load header logo: ${error instanceof Error ? error.message : String(error)}`);
   }
 
-  // ── Company name and info (right of logo) ──
-  const textX = 5 * MM + 40 * MM;
-  const nameY = headerTop + 12 * MM;
+  // ══════════════════════════════════════════════════════════
+  // COMPANY INFO BLOCK — All aligned to the right of logo
+  // Tight vertical spacing, one clean column
+  // ══════════════════════════════════════════════════════════
+  const textX = 5 * MM + 40 * MM;  // Right of logo
+  const lineSpacing = 11;           // Tight line spacing (11pt between lines)
 
-  // Company name — 22pt bold
+  // Line 1: Company name — 20pt bold
+  const nameY = headerTop + 10 * MM;
   doc.save();
   doc.fillColor(COLORS.BROWN_DARK)
      .font('Helvetica-Bold')
-     .fontSize(22)
-     .text('LE TATCHE BOIS', textX, nameY);
+     .fontSize(20)
+     .text('LE TATCHE BOIS', textX, nameY, { lineBreak: false });
   doc.restore();
 
-  // BUG A FIX: Proper Y spacing based on font sizes
-  // Type + Activity — MUST be 28pt below name (22pt text + 6pt padding minimum)
-  const typeY = nameY + 28;
+  // Line 2: Type + Activity — right below name (24pt gap for 20pt text)
+  const typeY = nameY + 24;
   doc.save();
   doc.fillColor(COLORS.GOLD_DARK)
      .font('Helvetica-Bold')
-     .fontSize(10)
+     .fontSize(9)
      .text(COMPANY.type, textX, typeY, { continued: true });
-
   doc.fillColor(COLORS.BROWN_MEDIUM)
      .font('Helvetica')
      .fontSize(8)
      .text(`  •  ${COMPANY.activity}`, { continued: false });
   doc.restore();
 
-  // Contact info — 14pt below type/activity (10pt text + 4pt padding)
-  const contactY = typeY + 14;
-  doc.save();
-  doc.fillColor(COLORS.GRAY_DARK)
-     .font('Helvetica')
-     .fontSize(8.5)
-     .text(`Tél : ${COMPANY.tel1}  /  ${COMPANY.tel2}`, textX, contactY, { lineBreak: false });
-
-  // Email — 12pt below contact line (8.5pt text + 3.5pt padding)
-  const emailY = contactY + 12;
-  doc.text(`Email : ${COMPANY.email}  /  ${COMPANY.email2}`, textX, emailY, { lineBreak: false });
-
-  // Website — 12pt below email line
-  const websiteY = emailY + 12;
-  doc.text(`Web : ${COMPANY.website}`, textX, websiteY, { lineBreak: false });
-  doc.restore();
-
-  // Log Y values for verification
-  console.log('[PDF Header] nameY:', nameY, 'typeY:', typeY, 'contactY:', contactY, 'emailY:', emailY);
-
-  // ── Address (left side, below logo) — Leaving room for QR code at top-right
+  // Line 3: Address — on one line
+  const addressY = typeY + lineSpacing + 2;
   doc.save();
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
      .fontSize(8)
-     .text(COMPANY.address, 5 * MM, websiteY + 12, { width: 140, align: 'left' })
-     .text(COMPANY.city, 5 * MM, websiteY + 20, { width: 140, align: 'left' });
+     .text(`${COMPANY.address} - ${COMPANY.city}`, textX, addressY, { lineBreak: false });
+  doc.restore();
+
+  // Line 4: Telephone
+  const contactY = addressY + lineSpacing;
+  doc.save();
+  doc.fillColor(COLORS.GRAY_DARK)
+     .font('Helvetica')
+     .fontSize(8)
+     .text(`Tél : ${COMPANY.tel1}  /  ${COMPANY.tel2}`, textX, contactY, { lineBreak: false });
+  doc.restore();
+
+  // Line 5: Email (both addresses)
+  const emailY = contactY + lineSpacing;
+  doc.save();
+  doc.fillColor(COLORS.GRAY_DARK)
+     .font('Helvetica')
+     .fontSize(8)
+     .text(`Email : ${COMPANY.email}  /  ${COMPANY.email2}`, textX, emailY, { lineBreak: false });
+  doc.restore();
+
+  // Line 6: Website
+  const webY = emailY + lineSpacing;
+  doc.save();
+  doc.fillColor(COLORS.GOLD_DARK)
+     .font('Helvetica')
+     .fontSize(8)
+     .text(`Web : ${COMPANY.website}`, textX, webY, { lineBreak: false });
   doc.restore();
 
   // ── Bottom gold gradient line (separator) - BUG 1 FIX: Add 8pt gap after text ──
