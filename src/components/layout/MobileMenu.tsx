@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
@@ -69,6 +69,12 @@ export function MobileMenu() {
   const cartCount = useCartCount();
   const { currency, setCurrency } = useCurrency();
   const { logoHeader, siteName } = useSiteSettings();
+
+  // Fix hydration mismatch for cart count (server renders 0, client hydrates from localStorage)
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   // Lock body scroll when menu is open
   useBodyScrollLock(isMobileMenuOpen);
@@ -187,7 +193,7 @@ export function MobileMenu() {
                   <ShoppingCart className="w-5 h-5" />
                   {t("cart")}
                 </span>
-                {cartCount > 0 && (
+                {isClient && cartCount > 0 && (
                   <span className="bg-amber-600 text-white text-xs px-2 py-1 rounded-full">
                     {cartCount}
                   </span>

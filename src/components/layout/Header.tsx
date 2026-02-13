@@ -161,6 +161,12 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
   const [langOpen, setLangOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
 
+  // Fix hydration mismatch for cart count (server renders 0, client hydrates from localStorage)
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Get current language (non-null assertion safe since arrays are non-empty)
   const currentLang = languages.find((l) => l.code === locale) ?? languages[0]!;
   const currentCurrency = currencies.find((c) => c.code === currency) ?? currencies[0]!;
@@ -250,7 +256,7 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
               aria-label={t("cart")}
             >
               <ShoppingCart className="w-6 h-6 text-gray-700" />
-              {cartCount > 0 && (
+              {isClient && cartCount > 0 && (
                 <span
                   className={cn(
                     "absolute -top-1 bg-wood-primary text-white text-xs",
@@ -406,7 +412,7 @@ export function Header({ onMobileMenuOpen }: HeaderProps) {
               aria-label={t("cart")}
             >
               <ShoppingCart className="w-6 h-6 text-gray-700" />
-              {cartCount > 0 && (
+              {isClient && cartCount > 0 && (
                 <span
                   className={cn(
                     "absolute -top-1 bg-wood-primary text-white text-xs",
