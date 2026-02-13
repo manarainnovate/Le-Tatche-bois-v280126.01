@@ -790,7 +790,7 @@ export function drawQRCode(
   doc: PDFDocument,
   qrBuffer: Buffer
 ): void {
-  const qrSize = 22 * MM;   // ~62pt = good scannable size
+  const qrSize = 28 * MM;   // ~79pt = larger, more visible QR code
   const margin = 8 * MM;    // Right margin
   const topMargin = 6 * MM; // Top margin
 
