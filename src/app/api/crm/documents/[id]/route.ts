@@ -26,9 +26,10 @@ const updateDocumentSchema = z.object({
     "CONFIRMED", "PARTIAL", "DELIVERED", "SIGNED",
     "PAID", "OVERDUE", "CANCELLED"
   ]).optional(),
-  validUntil: z.string().datetime().optional().nullable(),
-  dueDate: z.string().datetime().optional().nullable(),
-  deliveryDate: z.string().datetime().optional().nullable(),
+  // Accept both simple date strings (YYYY-MM-DD) and ISO datetime strings
+  validUntil: z.string().optional().nullable(),
+  dueDate: z.string().optional().nullable(),
+  deliveryDate: z.string().optional().nullable(),
   deliveryAddress: z.string().optional(),
   deliveryCity: z.string().optional(),
   deliveryNotes: z.string().optional(),
@@ -48,16 +49,16 @@ const updateDocumentSchema = z.object({
   workDescription: z.string().optional(),
   hasReserves: z.boolean().optional(),
   reserves: z.string().optional(),
-  reserveDeadline: z.string().datetime().optional().nullable(),
+  reserveDeadline: z.string().optional().nullable(),
   // Avoir specific
   avoirReason: z.string().optional(),
   // Reception specific
   receivedBy: z.string().optional(),
-  receivedAt: z.string().datetime().optional().nullable(),
+  receivedAt: z.string().optional().nullable(),
   // Signature
   signatureUrl: z.string().optional(),
   signedBy: z.string().optional(),
-  signedAt: z.string().datetime().optional().nullable(),
+  signedAt: z.string().optional().nullable(),
 });
 
 // ═══════════════════════════════════════════════════════════
