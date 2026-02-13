@@ -15,6 +15,8 @@ import {
   drawItemsTable,
   drawSignatureSection,
   drawFooter,
+  generateInvoiceQR,
+  drawQRCode,
   COLORS,
   PAGE,
   MARGINS,
@@ -225,7 +227,7 @@ function drawConditionsSection(
  * });
  */
 export async function generateDevisPDF(data: DevisData): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       // ── Validate required fields ──
       if (!data.document) {
@@ -237,6 +239,25 @@ export async function generateDevisPDF(data: DevisData): Promise<Buffer> {
       if (!data.document.items || data.document.items.length === 0) {
         throw new Error('At least one item is required');
       }
+
+      // ── Generate QR code (async, must be done before drawing) ──
+      // Calculate total TTC for QR
+      let qrTotalTTC = 0;
+      for (const item of data.document.items) {
+        let price = item.unitPriceHT;
+        if (item.discountPercent && item.discountPercent > 0) {
+          price = price * (1 - item.discountPercent / 100);
+        }
+        const lineTotalHT = item.quantity * price;
+        const lineTotalTTC = lineTotalHT * (1 + item.tvaRate / 100);
+        qrTotalTTC += lineTotalTTC;
+      }
+
+      const qrBuffer = await generateInvoiceQR(
+        data.document.number,
+        qrTotalTTC,
+        data.document.client.fullName
+      );
 
       // ── Create PDF document ──
       const doc = new PDFDoc({
@@ -255,6 +276,9 @@ export async function generateDevisPDF(data: DevisData): Promise<Buffer> {
       // ── Draw base layout elements ──
       drawWoodBackground(doc);
       drawCenterWatermark(doc, 0.06);
+
+      // ── Draw QR code at top-right corner ──
+      drawQRCode(doc, qrBuffer);
 
       // ── Calculate pagination info ──
       const maxFirstPage = 15;

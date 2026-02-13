@@ -11,6 +11,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import QRCode from 'qrcode';
 import { formatNumber } from './helpers/format-utils';
 
 // Import PDFKit types
@@ -60,9 +61,19 @@ export const COMPANY = {
   ice: '002942117000021',
   pat: '64601859',
   email: 'letatchebois@gmail.com',
+  email2: 'contact@letatchebois.com',
   tel1: '0687 44 184',
   tel2: '0698 01 34 68',
   website: 'www.letatchebois.com',
+  // Bank details — Banque Populaire NAKHIL
+  bank: {
+    name: 'Banque Populaire',
+    branch: 'NAKHIL',
+    holder: 'STE LE TATCHE BOIS',
+    rib: '145 450 2121144005640004 43',
+    iban: 'MA64 145450212114400564000443',
+    swift: 'BCPOMAMC',
+  },
 } as const;
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -467,20 +478,23 @@ export function drawHeader(
 
   // Email — 12pt below contact line (8.5pt text + 3.5pt padding)
   const emailY = contactY + 12;
-  doc.text(`Email : ${COMPANY.email}`, textX, emailY, { lineBreak: false });
+  doc.text(`Email : ${COMPANY.email}  /  ${COMPANY.email2}`, textX, emailY, { lineBreak: false });
+
+  // Website — 12pt below email line
+  const websiteY = emailY + 12;
+  doc.text(`Web : ${COMPANY.website}`, textX, websiteY, { lineBreak: false });
   doc.restore();
 
   // Log Y values for verification
   console.log('[PDF Header] nameY:', nameY, 'typeY:', typeY, 'contactY:', contactY, 'emailY:', emailY);
 
-  // ── Address (right aligned) — Match contact Y position
-  const rightX = PAGE.WIDTH - margin;
+  // ── Address (left side, below logo) — Leaving room for QR code at top-right
   doc.save();
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
-     .fontSize(9)
-     .text(COMPANY.address, rightX - 200, contactY, { width: 200, align: 'right' })
-     .text(COMPANY.city, rightX - 200, emailY, { width: 200, align: 'right' });
+     .fontSize(8)
+     .text(COMPANY.address, 5 * MM, websiteY + 12, { width: 140, align: 'left' })
+     .text(COMPANY.city, 5 * MM, websiteY + 20, { width: 140, align: 'left' });
   doc.restore();
 
   // ── Bottom gold gradient line (separator) - BUG 1 FIX: Add 8pt gap after text ──
@@ -700,6 +714,101 @@ export function drawPageCarryForwardFrom(
   doc.restore();
 
   return y + rowHeight;
+}
+
+// ────────────────────────────────────────────────────────────────────────────────
+// QR CODE FUNCTIONS
+// ────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Generate QR code containing bank/payment info + invoice reference
+ * Returns a PNG buffer that can be embedded in PDFKit
+ */
+export async function generateInvoiceQR(
+  docNumber: string,
+  totalTTC?: number,
+  clientName?: string
+): Promise<Buffer> {
+  // Build QR content — structured text with bank info + invoice ref
+  const lines = [
+    `LE TATCHE BOIS`,
+    `━━━━━━━━━━━━━━━━`,
+    `Virement bancaire:`,
+    `Titulaire: ${COMPANY.bank.holder}`,
+    `Banque: ${COMPANY.bank.name} - ${COMPANY.bank.branch}`,
+    `RIB: ${COMPANY.bank.rib}`,
+    `IBAN: ${COMPANY.bank.iban}`,
+    `SWIFT: ${COMPANY.bank.swift}`,
+    `━━━━━━━━━━━━━━━━`,
+    `Réf: ${docNumber}`,
+  ];
+
+  if (totalTTC !== undefined && totalTTC > 0) {
+    lines.push(`Montant: ${totalTTC.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} DH`);
+  }
+  if (clientName) {
+    lines.push(`Client: ${clientName}`);
+  }
+
+  lines.push(`━━━━━━━━━━━━━━━━`);
+  lines.push(`ICE: ${COMPANY.ice}`);
+  lines.push(`Web: ${COMPANY.website}`);
+  lines.push(`Email: ${COMPANY.email2}`);
+  lines.push(`Tél: ${COMPANY.tel1}`);
+
+  const qrContent = lines.join('\n');
+
+  // Generate QR as PNG buffer
+  const qrBuffer = await QRCode.toBuffer(qrContent, {
+    errorCorrectionLevel: 'M',
+    type: 'png',
+    width: 300,       // 300px resolution for sharp print
+    margin: 1,
+    color: {
+      dark: '#3E2723',   // Dark brown (matches COLORS.BROWN_DARK)
+      light: '#FFFFFF00', // Transparent background
+    },
+  });
+
+  return qrBuffer;
+}
+
+/**
+ * Draw QR code at top-right corner of the page
+ * Position: Right side, aligned with header
+ */
+export function drawQRCode(
+  doc: PDFDocument,
+  qrBuffer: Buffer
+): void {
+  const qrSize = 22 * MM;   // ~62pt = good scannable size
+  const margin = 8 * MM;    // Right margin
+  const topMargin = 6 * MM; // Top margin
+
+  const qrX = PAGE.WIDTH - margin - qrSize;
+  const qrY = topMargin;
+
+  // Draw QR image
+  try {
+    doc.image(qrBuffer, qrX, qrY, {
+      width: qrSize,
+      height: qrSize,
+    });
+
+    // Small label below QR
+    doc.save();
+    doc.fillColor(COLORS.GRAY)
+       .font('Helvetica')
+       .fontSize(5.5)
+       .text('Scanner pour coordonnées bancaires', qrX - 5, qrY + qrSize + 1, {
+         width: qrSize + 10,
+         align: 'center',
+         lineBreak: false,
+       });
+    doc.restore();
+  } catch (error) {
+    console.warn('Failed to draw QR code:', error);
+  }
 }
 
 /**

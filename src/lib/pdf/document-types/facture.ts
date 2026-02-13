@@ -17,6 +17,9 @@ import {
   drawItemsTable,
   drawSignatureSection,
   drawFooter,
+  generateInvoiceQR,
+  drawQRCode,
+  COMPANY,
   COLORS,
   PAGE,
   MARGINS,
@@ -188,29 +191,75 @@ function drawPaymentSection(
   paymentMethod?: string,
   bankInfo?: string
 ): number {
-  if (!paymentMethod && !bankInfo) {
-    return startY;  // Skip if no payment info
-  }
-
   const margin = 25 * MM;
-  const y = startY;
+  let y = startY;
 
+  // Mode de paiement label and value
   doc.save();
   doc.fillColor(COLORS.BROWN_DARK)
      .font('Helvetica-Bold')
      .fontSize(9)
-     .text('Mode de paiement :', margin, y);
+     .text('Délai de paiement :', margin, y, { continued: true });
 
-  const paymentText = paymentMethod || 'Virement bancaire / Espèces / Chèque';
+  const paymentText = paymentMethod || '30 jours';
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
      .fontSize(8.5)
-     .text(paymentText, margin + 40 * MM, y);
+     .text(`  ${paymentText}`, { continued: false });
+  doc.restore();
+
+  y += 5 * MM;
+
+  // Bank details box — compact, with light background
+  const bankBoxWidth = PAGE.WIDTH - 2 * margin;
+  const bankBoxHeight = 12 * MM;
+
+  // Light background
+  doc.save();
+  doc.fillColor('#FAF8F0')
+     .opacity(0.4)
+     .rect(margin, y, bankBoxWidth, bankBoxHeight)
+     .fill();
+  doc.restore();
+
+  // Border
+  doc.save();
+  doc.strokeColor(COLORS.GOLD)
+     .lineWidth(0.5)
+     .rect(margin, y, bankBoxWidth, bankBoxHeight)
+     .stroke();
+  doc.restore();
+
+  // Bank icon label
+  const textY = y + 2.5 * MM;
+  doc.save();
+  doc.fillColor(COLORS.BROWN_DARK)
+     .font('Helvetica-Bold')
+     .fontSize(7.5)
+     .text('Coordonnées bancaires (RIB) :', margin + 3 * MM, textY);
+  doc.restore();
+
+  // Bank details in 2 columns
+  const col1X = margin + 3 * MM;
+  const col2X = margin + bankBoxWidth / 2;
+  const detailY = textY + 10;
+
+  doc.save();
+  doc.fillColor(COLORS.GRAY_DARK)
+     .font('Helvetica')
+     .fontSize(7);
+
+  // Left column
+  doc.text(`Titulaire : ${COMPANY.bank.holder}`, col1X, detailY, { lineBreak: false });
+  doc.text(`RIB : ${COMPANY.bank.rib}`, col1X, detailY + 9, { lineBreak: false });
+
+  // Right column
+  doc.text(`Banque : ${COMPANY.bank.name} — ${COMPANY.bank.branch}`, col2X, detailY, { lineBreak: false });
+  doc.text(`IBAN : ${COMPANY.bank.iban}  |  SWIFT : ${COMPANY.bank.swift}`, col2X, detailY + 9, { lineBreak: false });
 
   doc.restore();
 
-  // FIXED: PDFKit Y increases downward
-  return y + 8 * MM;  // Return next Y position (below current element)
+  return y + bankBoxHeight + 3 * MM;
 }
 
 /**
@@ -261,7 +310,7 @@ function drawAcquitteeMention(
  * });
  */
 export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       // ── Validate required fields ──
       if (!data.document) {
@@ -273,6 +322,25 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
       if (!data.document.items || data.document.items.length === 0) {
         throw new Error('At least one item is required');
       }
+
+      // ── Generate QR code (async, must be done before creating PDF) ──
+      // Calculate total TTC for QR
+      let qrTotalTTC = 0;
+      for (const item of data.document.items) {
+        let price = item.unitPriceHT;
+        if (item.discountPercent && item.discountPercent > 0) {
+          price = price * (1 - item.discountPercent / 100);
+        }
+        const lineTotalHT = item.quantity * price;
+        const lineTotalTTC = lineTotalHT * (1 + item.tvaRate / 100);
+        qrTotalTTC += lineTotalTTC;
+      }
+
+      const qrBuffer = await generateInvoiceQR(
+        data.document.number,
+        qrTotalTTC,
+        data.document.client.fullName
+      );
 
       // ── Create PDF document ──
       const doc = new PDFDoc({
@@ -291,6 +359,9 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
       // ── Draw base layout elements ──
       drawWoodBackground(doc);
       drawCenterWatermark(doc, 0.06);
+
+      // ── Draw QR code at top-right corner ──
+      drawQRCode(doc, qrBuffer);
 
       // ── Calculate pagination info ──
       const maxFirstPage = 15;
@@ -391,16 +462,14 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
       const amountBoxBottom = drawAmountInWordsBox(doc, currentY, tableResult.totalTTC);
       currentY = amountBoxBottom + 4 * MM;
 
-      // Payment section (if exists)
-      if (data.document.paymentMethod || data.document.bankInfo) {
-        currentY = drawPaymentSection(
-          doc,
-          currentY,
-          data.document.paymentMethod,
-          data.document.bankInfo
-        );
-        currentY += 3 * MM;
-      }
+      // Always show payment section with bank details
+      currentY = drawPaymentSection(
+        doc,
+        currentY,
+        data.document.paymentMethod || '30 jours',
+        data.document.bankInfo
+      );
+      currentY += 2 * MM;
 
       // Signature section - BUG 6 FIX: Ensure signatures don't get cut off by footer
       // Calculate maximum Y position to avoid footer overlap

@@ -16,6 +16,8 @@ import {
   drawSignatureSection,
   drawFooter,
   drawContinuationPageHeader,
+  generateInvoiceQR,
+  drawQRCode,
   COLORS,
   PAGE,
   MARGINS,
@@ -435,7 +437,7 @@ function drawObservationsSection(
  * });
  */
 export async function generateBonLivraisonPDF(data: BonLivraisonData): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
       // ── Validate required fields ──
       if (!data.document) {
@@ -447,6 +449,13 @@ export async function generateBonLivraisonPDF(data: BonLivraisonData): Promise<B
       if (!data.document.items || data.document.items.length === 0) {
         throw new Error('At least one item is required');
       }
+
+      // ── Generate QR code (no amount for BL, just reference and contact info) ──
+      const qrBuffer = await generateInvoiceQR(
+        data.document.number,
+        undefined,  // No amount for delivery notes
+        data.document.client.fullName
+      );
 
       // ── Create PDF document ──
       const doc = new PDFDoc({
@@ -465,6 +474,9 @@ export async function generateBonLivraisonPDF(data: BonLivraisonData): Promise<B
       // ── Draw base layout elements ──
       drawWoodBackground(doc);
       drawCenterWatermark(doc, 0.06);
+
+      // ── Draw QR code at top-right corner ──
+      drawQRCode(doc, qrBuffer);
 
       // ── Calculate pagination info ──
       const maxFirstPage = 18;  // More room since no prices
