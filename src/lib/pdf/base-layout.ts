@@ -733,51 +733,32 @@ export function drawPageCarryForwardFrom(
  * Generate QR code containing bank/payment info + invoice reference
  * Returns a PNG buffer that can be embedded in PDFKit
  *
- * Uses vCard format (VCF) for universal phone compatibility
- * Phones will offer to save contact or view info
+ * QR links to HTML page that displays all company and bank details
+ * with copy buttons for RIB/IBAN - much better UX than vCard
  */
 export async function generateInvoiceQR(
   docNumber: string,
   totalTTC?: number,
   clientName?: string
 ): Promise<Buffer> {
-  // Build QR content using vCard 3.0 format for maximum compatibility
-  // This format is recognized by all smartphones
-  const lines = [
-    'BEGIN:VCARD',
-    'VERSION:3.0',
-    `FN:${COMPANY.name}`,
-    `ORG:${COMPANY.name};${COMPANY.type}`,
-    `TITLE:${COMPANY.activity}`,
-    `TEL;TYPE=WORK,VOICE:${COMPANY.tel1}`,
-    `TEL;TYPE=WORK,VOICE:${COMPANY.tel2}`,
-    `EMAIL;TYPE=INTERNET:${COMPANY.email}`,
-    `EMAIL;TYPE=INTERNET:${COMPANY.email2}`,
-    `URL:${COMPANY.website}`,
-    `ADR;TYPE=WORK:;;${COMPANY.address};LAMHAMID;MARRAKECH;;Morocco`,
-  ];
+  // Build URL to info page
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://letatchebois.com';
+  let qrUrl = `${baseUrl}/api/qr-info/${encodeURIComponent(docNumber)}`;
 
-  // Add bank info in NOTE field
-  let note = `COORDONNEES BANCAIRES:\\n`;
-  note += `Titulaire: ${COMPANY.bank.holder}\\n`;
-  note += `RIB: ${COMPANY.bank.rib}\\n`;
-  note += `IBAN: ${COMPANY.bank.iban}\\n`;
-  note += `SWIFT: ${COMPANY.bank.swift}\\n`;
-  note += `Banque: ${COMPANY.bank.name} ${COMPANY.bank.branch}\\n`;
-  note += `\\nDOCUMENT: ${docNumber}`;
-
+  // Add query params for amount and client if provided
+  const params: string[] = [];
   if (totalTTC !== undefined && totalTTC > 0) {
-    note += `\\nMontant: ${totalTTC.toFixed(2)} DH`;
+    params.push(`amount=${totalTTC.toFixed(2)}`);
   }
   if (clientName) {
-    note += `\\nClient: ${clientName}`;
+    params.push(`client=${encodeURIComponent(clientName)}`);
   }
-  note += `\\nICE: ${COMPANY.ice}`;
 
-  lines.push(`NOTE:${note}`);
-  lines.push('END:VCARD');
+  if (params.length > 0) {
+    qrUrl += '?' + params.join('&');
+  }
 
-  const qrContent = lines.join('\n');
+  const qrContent = qrUrl;
 
   // Generate QR as PNG buffer
   const qrBuffer = await QRCode.toBuffer(qrContent, {

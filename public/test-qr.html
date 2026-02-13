@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test QR Code - LE TATCHE BOIS</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: linear-gradient(135deg, #f5f5f0 0%, #e8e4d8 100%);
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #6B3A22 0%, #4A2511 100%);
+      color: white;
+      padding: 32px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+    }
+    .subtitle {
+      font-size: 15px;
+      opacity: 0.9;
+    }
+    .section {
+      padding: 32px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .section:last-child {
+      border-bottom: none;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #C4973B;
+      margin-bottom: 16px;
+      letter-spacing: 0.8px;
+    }
+    .qr-container {
+      text-align: center;
+      margin: 24px 0;
+    }
+    .qr-container img {
+      border: 2px solid #C4973B;
+      border-radius: 8px;
+      padding: 16px;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .info-box {
+      background: #FFF9E6;
+      border-left: 4px solid #C4973B;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 16px 0;
+    }
+    .info-box strong {
+      display: block;
+      color: #4A2511;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .info-box code {
+      display: block;
+      background: white;
+      padding: 12px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      word-break: break-all;
+      color: #333;
+      margin-top: 8px;
+    }
+    .btn {
+      display: inline-block;
+      background: #C4973B;
+      color: white;
+      text-decoration: none;
+      padding: 14px 28px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 15px;
+      transition: background 0.2s;
+      margin: 8px;
+    }
+    .btn:hover {
+      background: #8B6914;
+    }
+    .btn-secondary {
+      background: #6B3A22;
+    }
+    .btn-secondary:hover {
+      background: #4A2511;
+    }
+    .steps {
+      list-style: none;
+      counter-reset: step-counter;
+    }
+    .steps li {
+      counter-increment: step-counter;
+      padding: 16px 16px 16px 48px;
+      position: relative;
+      margin-bottom: 12px;
+      background: #F9F9F9;
+      border-radius: 8px;
+    }
+    .steps li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 16px;
+      top: 16px;
+      background: #C4973B;
+      color: white;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+    }
+    .success {
+      color: #2D5016;
+      background: #F0F8E8;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🧪 Test QR Code</h1>
+      <div class="subtitle">LE TATCHE BOIS — Système de QR Code avec coordonnées bancaires</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">📱 QR Code d'exemple</div>
+
+      <div class="qr-container">
+        <img src="/api/test-qr" alt="Test QR Code" width="250" height="250">
+      </div>
+
+      <div class="info-box">
+        <strong>📄 Document :</strong>
+        FAC-2026/0001
+        <br><br>
+        <strong>💰 Montant :</strong>
+        12,500.00 DH
+        <br><br>
+        <strong>👤 Client :</strong>
+        Test Client Name
+      </div>
+
+      <div class="info-box">
+        <strong>🔗 Le QR code contient cette URL :</strong>
+        <code id="qr-url">Chargement...</code>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">✅ Comment tester</div>
+
+      <ol class="steps">
+        <li>Scannez le QR code ci-dessus avec votre téléphone (caméra ou app QR)</li>
+        <li>Votre téléphone devrait ouvrir automatiquement la page d'informations</li>
+        <li>La page affichera toutes les coordonnées bancaires avec boutons "Copier"</li>
+        <li>Testez les boutons de copie pour RIB et IBAN</li>
+      </ol>
+
+      <div class="success">
+        <strong>✨ Avantages de cette approche :</strong>
+        <ul style="margin-left: 20px; margin-top: 8px;">
+          <li>✓ Page web responsive — s'affiche parfaitement sur mobile</li>
+          <li>✓ Boutons "Copier" pour RIB et IBAN — plus besoin de taper</li>
+          <li>✓ Liens cliquables (téléphone, email, site web)</li>
+          <li>✓ Toutes les infos bancaires visibles clairement</li>
+          <li>✓ Design professionnel aux couleurs LE TATCHE BOIS</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section" style="text-align: center;">
+      <div class="section-title">🔍 Liens de test</div>
+
+      <a href="#" class="btn" id="open-info">
+        📄 Voir la page d'informations
+      </a>
+
+      <a href="/api/test-qr-content" class="btn btn-secondary" target="_blank">
+        📝 Voir le contenu du QR (URL brute)
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Fetch the QR content (URL) and display it
+    fetch('/api/test-qr-content')
+      .then(res => res.text())
+      .then(url => {
+        document.getElementById('qr-url').textContent = url;
+        document.getElementById('open-info').href = url;
+      })
+      .catch(err => {
+        document.getElementById('qr-url').textContent = 'Erreur de chargement';
+        console.error('Error fetching QR content:', err);
+      });
+  </script>
+</body>
+</html>
