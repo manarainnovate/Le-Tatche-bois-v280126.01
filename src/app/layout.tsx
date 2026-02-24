@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import "@/app/globals.css";
 import { prisma } from "@/lib/prisma";
 
@@ -65,6 +66,19 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
       <body suppressHydrationWarning>
+        {/* Google Analytics 4 */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-VZ0VKVXS44"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-VZ0VKVXS44');
+          `}
+        </Script>
         {children}
       </body>
     </html>
