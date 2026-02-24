@@ -66,7 +66,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
       </head>
       <body suppressHydrationWarning>
-        {/* Google Analytics 4 */}
+        {/* Google Analytics 4 & Google Ads Conversion Tracking */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-VZ0VKVXS44"
           strategy="afterInteractive"
@@ -77,6 +77,7 @@ export default function RootLayout({
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
             gtag('config', 'G-VZ0VKVXS44');
+            gtag('config', 'AW-16623923567');
           `}
         </Script>
         {children}
