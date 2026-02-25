@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { locales, type Locale, getDirection } from "@/i18n/config";
+import { WhatsAppFloatingButton } from "@/components/WhatsAppFloatingButton";
 
 // ═══════════════════════════════════════════════════════════
 // Constants
@@ -102,6 +103,8 @@ export default async function LocaleLayout({ children, params }: Props) {
     >
       <NextIntlClientProvider messages={messages}>
         {children}
+        {/* Global WhatsApp Floating Button */}
+        <WhatsAppFloatingButton />
       </NextIntlClientProvider>
     </div>
   );

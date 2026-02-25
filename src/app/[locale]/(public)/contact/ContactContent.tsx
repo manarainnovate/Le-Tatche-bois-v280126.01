@@ -947,22 +947,6 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
           </motion.div>
         </div>
       </section>
-
-      {/* Floating WhatsApp Button */}
-      <a
-        href={whatsappLink}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={trackWhatsAppConversion}
-        className={cn(
-          "fixed bottom-6 z-50 flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-full shadow-lg transition-all hover:scale-105",
-          isRTL ? "left-6" : "right-6"
-        )}
-        aria-label={translations.whatsapp.button}
-      >
-        <MessageCircle className="w-6 h-6" />
-        <span className="font-medium hidden sm:block">{translations.whatsapp.button}</span>
-      </a>
       </main>
     </>
   );
