@@ -1061,12 +1061,12 @@ model CompanySettings {
   country    String  @default("Maroc")
 
   // Contact
-  phone    String? @default("0687441840")
+  phone    String? @default("0687441184")
   phoneAlt String? @default("0698013468")
   fax      String?
   email    String? @default("contact@letatchebois.com")
   website  String? @default("www.letatchbois.com")
-  whatsapp String? @default("+212687441840")
+  whatsapp String? @default("+212687441184")
 
   // Social Media
   facebook  String?

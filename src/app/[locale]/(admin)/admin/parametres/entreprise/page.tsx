@@ -29,7 +29,7 @@ export default async function CompanySettingsPage({
         address: "Lot Hamane El Fetouaki N°365, Lamhamid",
         city: "Marrakech",
         country: "Maroc",
-        phone: "0687441840",
+        phone: "0687441184",
         phoneAlt: "0698013468",
         email: "contact@letatchebois.com",
         website: "www.letatchebois.com",

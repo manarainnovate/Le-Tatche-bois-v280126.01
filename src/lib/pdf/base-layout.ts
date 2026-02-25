@@ -62,7 +62,7 @@ export const COMPANY = {
   pat: '64601859',
   email: 'letatchebois@gmail.com',
   email2: 'contact@letatchebois.com',
-  tel1: '0687 44 184',
+  tel1: '06 87 44 11 84',
   tel2: '0698 01 34 68',
   website: 'www.letatchebois.com',
   // Bank details — Banque Populaire NAKHIL
