@@ -164,7 +164,7 @@ const getMockOrder = (orderNumber: string): OrderData | null => {
 const trackWhatsAppConversion = () => {
   if (typeof window !== "undefined" && (window as any).gtag) {
     (window as any).gtag("event", "conversion", {
-      send_to: "AW-16623923567",
+      send_to: "AW-16623923567/ApMwCPyK9f4bEO_i8_Y9",
       value: 150.0,
       currency: "MAD",
     });
