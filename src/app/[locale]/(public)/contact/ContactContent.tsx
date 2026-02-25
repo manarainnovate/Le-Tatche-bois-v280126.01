@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MapPin,
@@ -166,6 +167,7 @@ const staggerContainer = {
 // ═══════════════════════════════════════════════════════════
 
 export function ContactContent({ locale, translations, mapEmbedUrl }: ContactContentProps) {
+  const router = useRouter();
   const isRTL = locale === "ar";
   const theme = useThemeSettings();
 
@@ -286,6 +288,10 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
         _timestamp: Date.now(),
       });
       setAttachments([]);
+      // Redirect to thank you page after short delay
+      setTimeout(() => {
+        router.push(`/${locale}/contact/merci`);
+      }, 1500);
     } catch {
       setSubmitStatus("error");
     } finally {
@@ -295,6 +301,17 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
 
   // WhatsApp link
   const whatsappLink = getWhatsAppLink(translations.whatsapp.message);
+
+  // Track WhatsApp conversion
+  const trackWhatsAppConversion = () => {
+    if (typeof window !== "undefined" && (window as any).gtag) {
+      (window as any).gtag("event", "conversion", {
+        send_to: "AW-16623923567",
+        value: 150.0,
+        currency: "MAD",
+      });
+    }
+  };
 
   const successModalTranslations = {
     fr: {
@@ -798,6 +815,7 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
                         href={whatsappLink}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={trackWhatsAppConversion}
                         className="inline-flex items-center gap-1 text-sm text-green-600 hover:underline"
                       >
                         <MessageCircle className="w-4 h-4" />
@@ -935,6 +953,7 @@ export function ContactContent({ locale, translations, mapEmbedUrl }: ContactCon
         href={whatsappLink}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={trackWhatsAppConversion}
         className={cn(
           "fixed bottom-6 z-50 flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-full shadow-lg transition-all hover:scale-105",
           isRTL ? "left-6" : "right-6"

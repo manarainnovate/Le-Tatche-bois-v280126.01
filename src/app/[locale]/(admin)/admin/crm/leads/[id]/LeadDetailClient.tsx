@@ -22,6 +22,17 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCurrency } from "@/stores/currency";
+
+// Helper function to track WhatsApp conversion
+const trackWhatsAppConversion = () => {
+  if (typeof window !== "undefined" && (window as any).gtag) {
+    (window as any).gtag("event", "conversion", {
+      send_to: "AW-16623923567",
+      value: 150.0,
+      currency: "MAD",
+    });
+  }
+};
 import {
   LeadStatusBadge,
   LeadForm,
@@ -530,6 +541,7 @@ export function LeadDetailClient({
                   href={`https://wa.me/${lead.whatsapp.replace(/\D/g, "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={trackWhatsAppConversion}
                   className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition-colors"
                 >
                   <MessageSquare className="h-5 w-5 text-green-600" />

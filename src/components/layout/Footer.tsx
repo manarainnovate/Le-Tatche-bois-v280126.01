@@ -96,6 +96,17 @@ const legalLinks: FooterLink[] = [
 // FOOTER COMPONENT
 // ═══════════════════════════════════════════════════════════
 
+// Helper function to track WhatsApp conversion
+const trackWhatsAppConversion = () => {
+  if (typeof window !== "undefined" && (window as any).gtag) {
+    (window as any).gtag("event", "conversion", {
+      send_to: "AW-16623923567",
+      value: 150.0,
+      currency: "MAD",
+    });
+  }
+};
+
 export function Footer() {
   const t = useTranslations("footer");
   const tNav = useTranslations("nav");
@@ -185,12 +196,14 @@ export function Footer() {
             <div className={cn("flex gap-3", isRTL && "justify-end")}>
               {socialLinks.map((social) => {
                 const Icon = social.icon;
+                const isWhatsApp = social.name === "WhatsApp";
                 return (
                   <a
                     key={social.name}
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={isWhatsApp ? trackWhatsAppConversion : undefined}
                     className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center hover:bg-wood-primary transition-colors"
                     aria-label={social.name}
                   >

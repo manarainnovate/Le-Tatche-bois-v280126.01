@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useDirection } from "@/hooks/useDirection";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
@@ -252,6 +253,7 @@ function ProgressIndicator({
 // ═══════════════════════════════════════════════════════════
 
 export function QuoteFormContent({ locale, translations }: QuoteFormContentProps) {
+  const router = useRouter();
   const direction = useDirection();
   const isRTL = direction === "rtl";
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -464,6 +466,8 @@ export function QuoteFormContent({ locale, translations }: QuoteFormContentProps
 
       setReferenceNumber(data.data?.reference ?? `DEV-${Date.now().toString(36).toUpperCase()}`);
       setIsSuccess(true);
+      // Redirect to thank you page
+      router.push(`/${locale}/devis/merci`);
     } catch (error) {
       console.error("Submit error:", error);
       setErrors({ submit: error instanceof Error ? error.message : "Submission failed" });

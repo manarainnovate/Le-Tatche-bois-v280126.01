@@ -40,13 +40,18 @@ const socialLinks: SocialLink[] = [
     href: "https://youtube.com/@letatche-bois",
     color: "hover:text-red-400",
   },
-  {
-    name: "WhatsApp",
-    icon: MessageCircle,
-    href: "https://wa.me/212500000000",
-    color: "hover:text-green-400",
-  },
 ];
+
+// Helper function to track WhatsApp conversion
+const trackWhatsAppConversion = () => {
+  if (typeof window !== "undefined" && (window as any).gtag) {
+    (window as any).gtag("event", "conversion", {
+      send_to: "AW-16623923567",
+      value: 150.0,
+      currency: "MAD",
+    });
+  }
+};
 
 // ═══════════════════════════════════════════════════════════
 // TOPBAR COMPONENT
@@ -129,6 +134,17 @@ export function TopBar() {
                   </a>
                 );
               })}
+              {/* WhatsApp with conversion tracking */}
+              <a
+                href="https://wa.me/212698013468"
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={trackWhatsAppConversion}
+                className="transition-colors hover:text-green-400"
+                aria-label="WhatsApp"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </a>
             </div>
 
             {/* Divider */}

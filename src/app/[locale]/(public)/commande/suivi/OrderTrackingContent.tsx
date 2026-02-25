@@ -160,6 +160,17 @@ const getMockOrder = (orderNumber: string): OrderData | null => {
 // MAIN COMPONENT
 // ═══════════════════════════════════════════════════════════
 
+// Helper function to track WhatsApp conversion
+const trackWhatsAppConversion = () => {
+  if (typeof window !== "undefined" && (window as any).gtag) {
+    (window as any).gtag("event", "conversion", {
+      send_to: "AW-16623923567",
+      value: 150.0,
+      currency: "MAD",
+    });
+  }
+};
+
 export function OrderTrackingContent({
   locale,
   initialOrderNumber,
@@ -578,9 +589,10 @@ export function OrderTrackingContent({
                 </p>
 
                 <a
-                  href="https://wa.me/212500000000"
+                  href="https://wa.me/212698013468"
                   target="_blank"
                   rel="noopener noreferrer"
+                  onClick={trackWhatsAppConversion}
                   className={cn(
                     "inline-flex items-center gap-2 px-4 py-2 rounded-lg",
                     "bg-green-500 text-white hover:bg-green-600 transition-colors",
