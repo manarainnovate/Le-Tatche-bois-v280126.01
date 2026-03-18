@@ -328,32 +328,12 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // P0-3: Generate document number based on draft mode
+    // Generate official document number (always use real sequential number)
     const docType = mapDocumentType(data.type);
-    let number: string;
-    let isDraft = true;
-    let isLocked = false;
-    let issuedAt: Date | null = null;
-
-    if (data.issueImmediately) {
-      // Issue immediately with official number
-      number = await generateB2BNumber(docType);
-      isDraft = false;
-      isLocked = true;
-      issuedAt = new Date();
-    } else if (data.isDraft !== false) {
-      // Create as draft with temporary number
-      const timestamp = Date.now().toString(36).toUpperCase();
-      const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-      number = `DRAFT-${docType}-${timestamp}${random}`;
-      isDraft = true;
-    } else {
-      // Legacy behavior: issue immediately
-      number = await generateB2BNumber(docType);
-      isDraft = false;
-      isLocked = true;
-      issuedAt = new Date();
-    }
+    const number = await generateB2BNumber(docType);
+    const isDraft = data.isDraft !== false && !data.issueImmediately;
+    const isLocked = !isDraft;
+    const issuedAt: Date | null = isDraft ? null : new Date();
 
     // Calculate totals
     const calculated = calculateDocumentTotals(

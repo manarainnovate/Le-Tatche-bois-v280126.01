@@ -946,23 +946,27 @@ export function drawClientBox(
      .text(client.name || '[Nom du client]', textX, textY, { width: boxWidth - 2 * padLeft });
   doc.restore();
 
-  // Address - BUG 4 FIX: Better spacing
-  textY += 12;
-  doc.save();
-  doc.fillColor(COLORS.GRAY_DARK)
-     .font('Helvetica')
-     .fontSize(8.5)
-     .text(client.address || '[Adresse du client]', textX, textY, { width: boxWidth - 2 * padLeft });
-  doc.restore();
+  // Address (only if provided)
+  if (client.address) {
+    textY += 12;
+    doc.save();
+    doc.fillColor(COLORS.GRAY_DARK)
+       .font('Helvetica')
+       .fontSize(8.5)
+       .text(client.address, textX, textY, { width: boxWidth - 2 * padLeft });
+    doc.restore();
+  }
 
-  // City
-  textY += 11;
-  doc.save();
-  doc.fillColor(COLORS.GRAY_DARK)
-     .font('Helvetica')
-     .fontSize(8.5)
-     .text(client.city || '[Ville]', textX, textY, { width: boxWidth - 2 * padLeft });
-  doc.restore();
+  // City (only if provided)
+  if (client.city) {
+    textY += 11;
+    doc.save();
+    doc.fillColor(COLORS.GRAY_DARK)
+       .font('Helvetica')
+       .fontSize(8.5)
+       .text(client.city, textX, textY, { width: boxWidth - 2 * padLeft });
+    doc.restore();
+  }
 
   // ICE (if provided)
   if (client.ice) {
