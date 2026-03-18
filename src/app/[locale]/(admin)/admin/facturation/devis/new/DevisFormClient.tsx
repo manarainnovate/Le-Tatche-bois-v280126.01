@@ -86,6 +86,37 @@ interface Settings {
   quoteFooter: string | null;
 }
 
+interface ExistingDocument {
+  id: string;
+  number: string;
+  clientId: string;
+  projectId: string | null;
+  date: string;
+  validUntil: string | null;
+  deliveryTime: string | null;
+  discountType: string | null;
+  discountValue: number | null;
+  depositPercent: number | null;
+  publicNotes: string | null;
+  internalNotes: string | null;
+  footerText: string | null;
+  includes: string[] | null;
+  excludes: string[] | null;
+  items: {
+    id: string;
+    catalogItemId: string | null;
+    reference: string | null;
+    designation: string;
+    description: string | null;
+    quantity: number;
+    unit: string;
+    unitPriceHT: number;
+    discountPercent: number | null;
+    tvaRate: number;
+    totalHT: number;
+  }[];
+}
+
 interface DevisFormClientProps {
   locale: string;
   clients: Client[];
@@ -94,6 +125,7 @@ interface DevisFormClientProps {
   settings: Settings;
   preselectedClientId?: string;
   preselectedProjectId?: string;
+  editDocument?: ExistingDocument;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -337,26 +369,53 @@ export function DevisFormClient({
   settings,
   preselectedClientId,
   preselectedProjectId,
+  editDocument,
 }: DevisFormClientProps) {
   const router = useRouter();
   const t = translations[locale] || translations.fr;
   const isRTL = locale === "ar";
+  const isEdit = !!editDocument;
 
-  // Form state
-  const [clientId, setClientId] = useState(preselectedClientId || "");
-  const [projectId, setProjectId] = useState(preselectedProjectId || "");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [validityDays, setValidityDays] = useState(settings.quoteValidityDays);
-  const [deliveryTime, setDeliveryTime] = useState("");
-  const [items, setItems] = useState<LineItem[]>([]);
-  const [globalDiscountType, setGlobalDiscountType] = useState<"percentage" | "fixed">("percentage");
-  const [globalDiscountValue, setGlobalDiscountValue] = useState(0);
-  const [depositPercent, setDepositPercent] = useState(settings.defaultDepositPercent || 0);
-  const [includes, setIncludes] = useState<string[]>([]);
-  const [excludes, setExcludes] = useState<string[]>([]);
-  const [publicNotes, setPublicNotes] = useState("");
-  const [internalNotes, setInternalNotes] = useState("");
-  const [footerText, setFooterText] = useState(settings.quoteFooter || "");
+  // Form state - pre-fill from editDocument if editing
+  const [clientId, setClientId] = useState(editDocument?.clientId || preselectedClientId || "");
+  const [projectId, setProjectId] = useState(editDocument?.projectId || preselectedProjectId || "");
+  const [date, setDate] = useState(editDocument?.date || new Date().toISOString().split("T")[0]);
+  const [validityDays, setValidityDays] = useState(() => {
+    if (editDocument?.validUntil && editDocument?.date) {
+      const diff = new Date(editDocument.validUntil).getTime() - new Date(editDocument.date).getTime();
+      return Math.round(diff / (24 * 60 * 60 * 1000));
+    }
+    return settings.quoteValidityDays;
+  });
+  const [deliveryTime, setDeliveryTime] = useState(editDocument?.deliveryTime || "");
+  const [items, setItems] = useState<LineItem[]>(() => {
+    if (editDocument?.items) {
+      return editDocument.items.map((item) => ({
+        id: item.id || `item-${Date.now()}-${Math.random()}`,
+        catalogItemId: item.catalogItemId,
+        reference: item.reference || "",
+        designation: item.designation,
+        description: item.description || "",
+        quantity: item.quantity,
+        unit: item.unit,
+        unitPriceHT: item.unitPriceHT,
+        discountPercent: item.discountPercent || 0,
+        tvaRate: item.tvaRate,
+        totalHT: item.totalHT,
+      }));
+    }
+    return [];
+  });
+  const [globalDiscountType, setGlobalDiscountType] = useState<"percentage" | "fixed">(
+    (editDocument?.discountType as "percentage" | "fixed") || "percentage"
+  );
+  const [globalDiscountValue, setGlobalDiscountValue] = useState(editDocument?.discountValue || 0);
+  const [depositPercent, setDepositPercent] = useState(editDocument?.depositPercent || settings.defaultDepositPercent || 0);
+  const [includes, setIncludes] = useState<string[]>(editDocument?.includes || []);
+  const [excludes, setExcludes] = useState<string[]>(editDocument?.excludes || []);
+  const [publicNotes, setPublicNotes] = useState(editDocument?.publicNotes || "");
+  const [internalNotes, setInternalNotes] = useState(editDocument?.internalNotes || "");
+  const [footerText, setFooterText] = useState(editDocument?.footerText || settings.quoteFooter || "");
 
   // UI state
   const [showCatalogModal, setShowCatalogModal] = useState(false);
@@ -548,49 +607,64 @@ export function DevisFormClient({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/crm/documents`, {
-        method: "POST",
+      const apiUrl = isEdit
+        ? `/api/crm/documents/${editDocument!.id}`
+        : `/api/crm/documents`;
+      const method = isEdit ? "PUT" : "POST";
+
+      const payload: Record<string, unknown> = {
+        deliveryTime,
+        items: items.map((item, index) => ({
+          catalogItemId: item.catalogItemId,
+          reference: item.reference,
+          designation: item.designation,
+          description: item.description,
+          quantity: item.quantity,
+          unit: item.unit,
+          unitPriceHT: item.unitPriceHT,
+          discountPercent: item.discountPercent,
+          tvaRate: item.tvaRate,
+          order: index,
+        })),
+        discountType: globalDiscountType,
+        discountValue: globalDiscountValue,
+        depositPercent,
+        includes,
+        excludes,
+        publicNotes,
+        internalNotes,
+        footerText,
+      };
+
+      if (!isEdit) {
+        // Only for new documents
+        payload.type = "DEVIS";
+        payload.clientId = clientId;
+        payload.projectId = projectId || null;
+        payload.date = date;
+        payload.validUntil = new Date(new Date(date).getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString();
+        payload.isDraft = !sendEmail;
+        payload.issueImmediately = sendEmail;
+      } else {
+        // For edit, update validUntil
+        payload.validUntil = new Date(new Date(date).getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString();
+        if (sendEmail) payload.status = "SENT";
+      }
+
+      const response = await fetch(apiUrl, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "DEVIS",
-          clientId,
-          projectId: projectId || null,
-          date,
-          validUntil: new Date(new Date(date).getTime() + validityDays * 24 * 60 * 60 * 1000).toISOString(),
-          deliveryTime,
-          items: items.map((item, index) => ({
-            catalogItemId: item.catalogItemId,
-            reference: item.reference,
-            designation: item.designation,
-            description: item.description,
-            quantity: item.quantity,
-            unit: item.unit,
-            unitPriceHT: item.unitPriceHT,
-            discountPercent: item.discountPercent,
-            tvaRate: item.tvaRate,
-            order: index,
-          })),
-          discountType: globalDiscountType,
-          discountValue: globalDiscountValue,
-          depositPercent,
-          includes,
-          excludes,
-          publicNotes,
-          internalNotes,
-          footerText,
-          isDraft: !sendEmail,
-          issueImmediately: sendEmail,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        const errorMsg = errorData?.error || "Erreur lors de la création du devis";
+        const errorMsg = errorData?.error || "Erreur lors de la sauvegarde du devis";
         throw new Error(errorMsg);
       }
 
       const result = await response.json();
-      const docId = result.data?.id || result.id;
+      const docId = isEdit ? editDocument!.id : (result.data?.id || result.id);
       router.push(`/${locale}/admin/facturation/devis/${docId}`);
     } catch (error) {
       console.error("Error creating devis:", error);
@@ -623,7 +697,7 @@ export function DevisFormClient({
             {t.back}
           </Link>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t.title}
+            {isEdit ? `Modifier ${editDocument!.number}` : t.title}
           </h1>
         </div>
         <div className="flex gap-2">

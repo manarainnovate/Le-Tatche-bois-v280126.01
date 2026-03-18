@@ -8,15 +8,15 @@ import { z } from "zod";
 // ═══════════════════════════════════════════════════════════
 
 const documentItemSchema = z.object({
-  id: z.string().optional(), // For existing items
-  catalogItemId: z.string().optional(),
-  reference: z.string().optional(),
+  id: z.string().optional().nullable(),
+  catalogItemId: z.string().optional().nullable(),
+  reference: z.string().optional().nullable(),
   designation: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
   quantity: z.number().positive(),
   unit: z.string().default("pcs"),
   unitPriceHT: z.number().min(0),
-  discountPercent: z.number().min(0).max(100).optional(),
+  discountPercent: z.number().min(0).max(100).optional().nullable(),
   tvaRate: z.number().default(20),
 });
 
@@ -30,21 +30,21 @@ const updateDocumentSchema = z.object({
   validUntil: z.string().optional().nullable(),
   dueDate: z.string().optional().nullable(),
   deliveryDate: z.string().optional().nullable(),
-  deliveryAddress: z.string().optional(),
-  deliveryCity: z.string().optional(),
-  deliveryNotes: z.string().optional(),
-  items: z.array(documentItemSchema).optional(),
+  deliveryAddress: z.string().optional().nullable(),
+  deliveryCity: z.string().optional().nullable(),
+  deliveryNotes: z.string().optional().nullable(),
+  items: z.array(documentItemSchema).optional().nullable(),
   discountType: z.enum(["percentage", "fixed"]).optional().nullable(),
   discountValue: z.number().optional().nullable(),
   depositPercent: z.number().min(0).max(100).optional().nullable(),
-  deliveryTime: z.string().optional(),
-  includes: z.array(z.string()).optional(),
-  excludes: z.array(z.string()).optional(),
-  conditions: z.string().optional(),
-  paymentTerms: z.string().optional(),
-  internalNotes: z.string().optional(),
-  publicNotes: z.string().optional(),
-  footerText: z.string().optional(),
+  deliveryTime: z.string().optional().nullable(),
+  includes: z.array(z.string()).optional().nullable(),
+  excludes: z.array(z.string()).optional().nullable(),
+  conditions: z.string().optional().nullable(),
+  paymentTerms: z.string().optional().nullable(),
+  internalNotes: z.string().optional().nullable(),
+  publicNotes: z.string().optional().nullable(),
+  footerText: z.string().optional().nullable(),
   // PV specific
   workDescription: z.string().optional(),
   hasReserves: z.boolean().optional(),
@@ -66,7 +66,7 @@ const updateDocumentSchema = z.object({
 // ═══════════════════════════════════════════════════════════
 
 function recalculateTotals(
-  items: { quantity: number; unitPriceHT: number; discountPercent?: number; tvaRate: number }[],
+  items: { quantity: number; unitPriceHT: number; discountPercent?: number | null; tvaRate: number }[],
   discountType?: string | null,
   discountValue?: number | null,
   depositPercent?: number | null
@@ -270,14 +270,9 @@ export async function PUT(
       return apiError("Document non trouvé", 404);
     }
 
-    // FIX 2: Check if document is locked (issued)
-    if (existing.isLocked) {
+    // Check if document is locked (issued/finalized)
+    if (existing.isLocked && data.status !== "CANCELLED") {
       return apiError("Ce document a été émis et ne peut plus être modifié", 400);
-    }
-
-    // FIX 2: Check if document is no longer a draft
-    if (!existing.isDraft && data.status !== "CANCELLED") {
-      return apiError("Ce document a un numéro officiel et ne peut plus être modifié", 400);
     }
 
     // Check if document can be edited based on status
