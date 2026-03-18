@@ -9,57 +9,57 @@ import { generateB2BNumber, mapDocumentType } from "@/lib/crm/generate-document-
 // ═══════════════════════════════════════════════════════════
 
 const documentItemSchema = z.object({
-  catalogItemId: z.string().optional(),
-  sourceItemId: z.string().optional(), // For PV: link to source BL item
-  reference: z.string().optional(),
+  catalogItemId: z.string().optional().nullable(),
+  sourceItemId: z.string().optional().nullable(), // For PV: link to source BL item
+  reference: z.string().optional().nullable(),
   designation: z.string().min(1),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
   quantity: z.number().positive(),
   unit: z.string().default("pcs"),
   unitPriceHT: z.number().min(0),
-  discountPercent: z.number().min(0).max(100).optional(),
+  discountPercent: z.number().min(0).max(100).optional().nullable(),
   tvaRate: z.number().default(20),
-  metadata: z.any().optional(), // For PV: quantityDelivered, status, remarks
+  metadata: z.any().optional().nullable(), // For PV: quantityDelivered, status, remarks
 });
 
 const createDocumentSchema = z.object({
   type: z.enum(["DEVIS", "BON_COMMANDE", "BON_LIVRAISON", "PV_RECEPTION", "FACTURE", "FACTURE_ACOMPTE", "AVOIR"]),
   clientId: z.string().min(1),
-  projectId: z.string().optional(),
+  projectId: z.string().optional().nullable(),
   // Accept both simple date strings (YYYY-MM-DD) and ISO datetime strings
-  date: z.string().optional(),
-  validUntil: z.string().optional(),
-  dueDate: z.string().optional(),
-  deliveryDate: z.string().optional(),
-  deliveryAddress: z.string().optional(),
-  deliveryCity: z.string().optional(),
-  deliveryNotes: z.string().optional(),
+  date: z.string().optional().nullable(),
+  validUntil: z.string().optional().nullable(),
+  dueDate: z.string().optional().nullable(),
+  deliveryDate: z.string().optional().nullable(),
+  deliveryAddress: z.string().optional().nullable(),
+  deliveryCity: z.string().optional().nullable(),
+  deliveryNotes: z.string().optional().nullable(),
   items: z.array(documentItemSchema),
-  discountType: z.enum(["percentage", "fixed"]).optional(),
-  discountValue: z.number().optional(),
-  depositPercent: z.number().min(0).max(100).optional(),
-  deliveryTime: z.string().optional(),
-  includes: z.array(z.string()).optional(),
-  excludes: z.array(z.string()).optional(),
-  conditions: z.string().optional(),
-  paymentTerms: z.string().optional(),
-  internalNotes: z.string().optional(),
-  publicNotes: z.string().optional(),
-  footerText: z.string().optional(),
+  discountType: z.enum(["percentage", "fixed"]).optional().nullable(),
+  discountValue: z.number().optional().nullable(),
+  depositPercent: z.number().min(0).max(100).optional().nullable(),
+  deliveryTime: z.string().optional().nullable(),
+  includes: z.array(z.string()).optional().nullable(),
+  excludes: z.array(z.string()).optional().nullable(),
+  conditions: z.string().optional().nullable(),
+  paymentTerms: z.string().optional().nullable(),
+  internalNotes: z.string().optional().nullable(),
+  publicNotes: z.string().optional().nullable(),
+  footerText: z.string().optional().nullable(),
   // For conversion from another document
-  parentId: z.string().optional(),
+  parentId: z.string().optional().nullable(),
   // P0-3: Draft mode - if true, creates draft with temporary number
   isDraft: z.boolean().optional().default(true),
   // If issueImmediately is true, bypass draft mode and issue with official number
   issueImmediately: z.boolean().optional().default(false),
   // PV Reception specific fields
-  receptionDate: z.string().optional(), // PV reception date (separate from document date)
-  signedBy: z.string().optional(), // Name of person who signed the PV
-  workDescription: z.string().optional(), // Work description for PV
-  hasReserves: z.boolean().optional(), // Whether there are reserves
-  reserves: z.string().optional(), // Description of reserves
+  receptionDate: z.string().optional().nullable(), // PV reception date (separate from document date)
+  signedBy: z.string().optional().nullable(), // Name of person who signed the PV
+  workDescription: z.string().optional().nullable(), // Work description for PV
+  hasReserves: z.boolean().optional().nullable(), // Whether there are reserves
+  reserves: z.string().optional().nullable(), // Description of reserves
   // BL Reception specific
-  receivedBy: z.string().optional(), // Name of person who received delivery
+  receivedBy: z.string().optional().nullable(), // Name of person who received delivery
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -79,8 +79,8 @@ interface CalculatedItem {
   totalHT: number;
   totalTVA: number;
   totalTTC: number;
-  catalogItemId?: string;
-  sourceItemId?: string;
+  catalogItemId?: string | null;
+  sourceItemId?: string | null;
   metadata?: any;
   order: number;
 }
@@ -358,9 +358,9 @@ export async function POST(request: NextRequest) {
     // Calculate totals
     const calculated = calculateDocumentTotals(
       data.items,
-      data.discountType,
-      data.discountValue,
-      data.depositPercent
+      data.discountType ?? undefined,
+      data.discountValue ?? undefined,
+      data.depositPercent ?? undefined
     );
 
     // Handle parent document (for conversions)
