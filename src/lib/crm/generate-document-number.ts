@@ -13,7 +13,7 @@ import { SequenceResetType } from "@prisma/client";
 // - BL:              BL-2026-000001 (yearly reset)
 // - PV:              PV-2026-000001 (yearly reset)
 // - AVOIR:           AV-2026-000001 (yearly reset)
-// - CLIENT:          CLI-000001 (continuous, never resets)
+// - CLIENT:          TBC00001 (continuous, never resets) — TB=Tatche Bois, C=Client
 // - LEAD:            L-2026-000001 (yearly reset)
 // - PROJECT:         PRJ-2026-000001 (yearly reset)
 // - PAYMENT:         PAY-2026-000001 (yearly reset)
@@ -59,7 +59,7 @@ const DOC_CONFIG: Record<CRMDocType, DocTypeConfig> = {
   BL: { prefix: "BL", resetType: SequenceResetType.YEARLY, padLength: 6 },
   RFT: { prefix: "PV", resetType: SequenceResetType.YEARLY, padLength: 6 }, // PV_RECEPTION
   AVOIR: { prefix: "AV", resetType: SequenceResetType.YEARLY, padLength: 6 },
-  CLIENT: { prefix: "CLI", resetType: SequenceResetType.CONTINUOUS, padLength: 6 },
+  CLIENT: { prefix: "TBC", resetType: SequenceResetType.CONTINUOUS, padLength: 5 },
   LEAD: { prefix: "L", resetType: SequenceResetType.YEARLY, padLength: 6 },
   PROJECT: { prefix: "PRJ", resetType: SequenceResetType.YEARLY, padLength: 6 },
   PAYMENT: { prefix: "PAY", resetType: SequenceResetType.YEARLY, padLength: 6 },
@@ -113,7 +113,7 @@ const FORMAT_PATTERNS: Record<SequenceResetType, RegExp> = {
   DAILY: /^[A-Z]{2,4}-\d{4}-\d{6}$/, // Not used anymore, but kept for backward compatibility
   MONTHLY: /^[A-Z]{1,4}-\d{4}-\d{6}$/, // Not used anymore
   YEARLY: /^[A-Z]{1,4}-\d{4}-\d{6}$/, // FAC-2026-000001, DEV-2026-000001
-  CONTINUOUS: /^[A-Z]{2,3}-\d{6}$/, // CLI-000001
+  CONTINUOUS: /^[A-Z]{2,3}\d{5,6}$/, // TBC00001
 };
 
 function validateFormat(number: string, resetType: SequenceResetType, prefix: string): boolean {
@@ -121,7 +121,12 @@ function validateFormat(number: string, resetType: SequenceResetType, prefix: st
   if (!pattern.test(number)) {
     return false;
   }
-  // Also verify prefix matches (before the first dash)
+  // Verify prefix matches
+  if (resetType === SequenceResetType.CONTINUOUS) {
+    // No dash for continuous: TBC00001
+    return number.startsWith(prefix);
+  }
+  // Dash-separated for others: FAC-2026-000001
   const expectedStart = prefix + "-";
   return number.startsWith(expectedStart);
 }
@@ -265,8 +270,8 @@ export async function generateB2BNumber(type: CRMDocType, date: Date = new Date(
           generatedNumber = `${config.prefix}-${year}-${seqNum}`;
           break;
         case SequenceResetType.CONTINUOUS:
-          // Format: PREFIX-NNNNNN (no year for continuous)
-          generatedNumber = `${config.prefix}-${seqNum}`;
+          // Format: PREFIXNNNNN (no dash, no year for continuous) e.g., TBC00001
+          generatedNumber = `${config.prefix}${seqNum}`;
           break;
       }
 
@@ -340,14 +345,14 @@ export async function previewB2BNumber(type: CRMDocType, date: Date = new Date()
   const nextNum = (existing?.lastNumber ?? 0) + 1;
   const seqNum = formatNumber(nextNum, config.padLength);
 
-  // Build the preview number in new readable format: PREFIX-YYYY-NNNNNN
+  // Build the preview number
   switch (config.resetType) {
     case SequenceResetType.DAILY:
     case SequenceResetType.MONTHLY:
     case SequenceResetType.YEARLY:
       return `${config.prefix}-${year}-${seqNum}`;
     case SequenceResetType.CONTINUOUS:
-      return `${config.prefix}-${seqNum}`;
+      return `${config.prefix}${seqNum}`;
   }
 }
 
@@ -425,10 +430,18 @@ export function parseB2BNumber(documentNumber: string): {
   const config = DOC_CONFIG[matchedDocType];
 
   if (config.resetType === SequenceResetType.CONTINUOUS) {
-    // Format: PREFIX-NNNNNN (e.g., CLI-000001)
+    // Format: PREFIXNNNNN (e.g., TBC00001) or legacy PREFIX-NNNNNN (e.g., CLI-000001)
     if (parts.length === 2) {
       const sequence = parseInt(parts[1], 10);
       if (!isNaN(sequence)) {
+        return { type: matchedDocType, prefix, sequence };
+      }
+    }
+    // No-dash format: TBC00001
+    if (parts.length === 1) {
+      const rest = documentNumber.slice(prefix.length);
+      const sequence = parseInt(rest, 10);
+      if (!isNaN(sequence) && sequence > 0) {
         return { type: matchedDocType, prefix, sequence };
       }
     }

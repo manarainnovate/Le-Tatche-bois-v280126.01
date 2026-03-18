@@ -283,18 +283,36 @@ export function ClientForm({
           : "/api/crm/clients";
         const method = isEdit ? "PUT" : "POST";
 
+        // Map form fields to API schema
+        const apiData = {
+          clientType: formData.type === "ENTREPRISE" ? "COMPANY" : "INDIVIDUAL",
+          fullName: formData.name,
+          company: formData.type === "ENTREPRISE" ? formData.name : undefined,
+          phone: formData.phone || undefined,
+          email: formData.email || undefined,
+          billingAddress: formData.address || undefined,
+          billingCity: formData.city || undefined,
+          ice: formData.ice || undefined,
+          rc: formData.rc || undefined,
+          taxId: formData.patente || undefined,
+          notes: formData.notes || undefined,
+        };
+
         const response = await fetch(url, {
           method,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
+          body: JSON.stringify(apiData),
         });
 
         if (!response.ok) {
-          throw new Error("Failed to save client");
+          const errorData = await response.json().catch(() => null);
+          const errorMsg = errorData?.message || "Failed to save client";
+          throw new Error(errorMsg);
         }
 
         const result = await response.json();
-        router.push(`/${locale}/admin/crm/clients/${result.data.id}`);
+        const clientData = result.data?.client || result.data;
+        router.push(`/${locale}/admin/crm/clients/${clientData.id}`);
         router.refresh();
       }
     } catch (error) {

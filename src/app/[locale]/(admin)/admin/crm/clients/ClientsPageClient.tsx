@@ -29,12 +29,13 @@ import { useCurrency } from "@/stores/currency";
 interface Client {
   id: string;
   clientNumber: string;
-  name: string;
-  type: "PARTICULIER" | "ENTREPRISE";
+  fullName: string;
+  company: string | null;
+  clientType: "INDIVIDUAL" | "COMPANY";
   email?: string | null;
   phone?: string | null;
-  city?: string | null;
-  totalRevenue: number;
+  billingCity?: string | null;
+  totalInvoiced: number;
   totalPaid: number;
   balance: number;
   createdAt: Date | string;
@@ -81,8 +82,10 @@ const translations: Record<string, Record<string, string>> = {
     edit: "Modifier",
     projects: "projets",
     documents: "documents",
-    PARTICULIER: "Particulier",
-    ENTREPRISE: "Entreprise",
+    INDIVIDUAL: "Particulier",
+    COMPANY: "Entreprise",
+    dateCreated: "Date de création",
+    code: "Code",
   },
   en: {
     clients: "Clients",
@@ -103,8 +106,10 @@ const translations: Record<string, Record<string, string>> = {
     edit: "Edit",
     projects: "projects",
     documents: "documents",
-    PARTICULIER: "Individual",
-    ENTREPRISE: "Company",
+    INDIVIDUAL: "Individual",
+    COMPANY: "Company",
+    dateCreated: "Created",
+    code: "Code",
   },
   es: {
     clients: "Clientes",
@@ -125,8 +130,10 @@ const translations: Record<string, Record<string, string>> = {
     edit: "Editar",
     projects: "proyectos",
     documents: "documentos",
-    PARTICULIER: "Particular",
-    ENTREPRISE: "Empresa",
+    INDIVIDUAL: "Particular",
+    COMPANY: "Empresa",
+    dateCreated: "Fecha de creación",
+    code: "Código",
   },
   ar: {
     clients: "العملاء",
@@ -147,8 +154,10 @@ const translations: Record<string, Record<string, string>> = {
     edit: "تعديل",
     projects: "مشاريع",
     documents: "مستندات",
-    PARTICULIER: "فرد",
-    ENTREPRISE: "شركة",
+    INDIVIDUAL: "فرد",
+    COMPANY: "شركة",
+    dateCreated: "تاريخ الإنشاء",
+    code: "الرمز",
   },
 };
 
@@ -193,7 +202,8 @@ export function ClientsPageClient({
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch =
-        client.name.toLowerCase().includes(query) ||
+        client.fullName.toLowerCase().includes(query) ||
+        client.company?.toLowerCase().includes(query) ||
         client.email?.toLowerCase().includes(query) ||
         client.phone?.includes(query) ||
         client.clientNumber.toLowerCase().includes(query);
@@ -201,10 +211,10 @@ export function ClientsPageClient({
     }
 
     // Type
-    if (selectedType && client.type !== selectedType) return false;
+    if (selectedType && client.clientType !== selectedType) return false;
 
     // City
-    if (selectedCity && client.city !== selectedCity) return false;
+    if (selectedCity && client.billingCity !== selectedCity) return false;
 
     // Balance
     if (withBalanceOnly && client.balance <= 0) return false;
@@ -221,7 +231,7 @@ export function ClientsPageClient({
       const response = await fetch("/api/crm/clients");
       if (response.ok) {
         const data = await response.json();
-        setClients(data.data || []);
+        setClients(data.data?.clients || []);
       }
     } catch (error) {
       console.error("Error refreshing clients:", error);
@@ -401,8 +411,8 @@ export function ClientsPageClient({
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-amber-500 focus:border-transparent"
             >
               <option value="">{t.allTypes}</option>
-              <option value="PARTICULIER">{t.PARTICULIER}</option>
-              <option value="ENTREPRISE">{t.ENTREPRISE}</option>
+              <option value="INDIVIDUAL">{t.INDIVIDUAL}</option>
+              <option value="COMPANY">{t.COMPANY}</option>
             </select>
 
             {/* City Filter */}
@@ -455,6 +465,9 @@ export function ClientsPageClient({
               <thead className="bg-gray-50 dark:bg-gray-900/50">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    {t.code}
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Client
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -467,7 +480,7 @@ export function ClientsPageClient({
                     {t.balance}
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Stats
+                    {t.dateCreated}
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Actions
@@ -478,20 +491,28 @@ export function ClientsPageClient({
                 {filteredClients.map((client) => (
                   <tr
                     key={client.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                    onClick={() => window.location.href = `/${locale}/admin/crm/clients/${client.id}`}
                   >
+                    {/* Code */}
+                    <td className="px-4 py-4">
+                      <span className="font-mono text-sm font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
+                        {client.clientNumber}
+                      </span>
+                    </td>
+
                     {/* Client */}
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-3">
                         <div
                           className={cn(
                             "p-2 rounded-lg",
-                            client.type === "ENTREPRISE"
+                            client.clientType === "COMPANY"
                               ? "bg-purple-100 dark:bg-purple-900/30"
                               : "bg-blue-100 dark:bg-blue-900/30"
                           )}
                         >
-                          {client.type === "ENTREPRISE" ? (
+                          {client.clientType === "COMPANY" ? (
                             <Building2 className="h-5 w-5 text-purple-600" />
                           ) : (
                             <User className="h-5 w-5 text-blue-600" />
@@ -499,10 +520,10 @@ export function ClientsPageClient({
                         </div>
                         <div>
                           <p className="font-medium text-gray-900 dark:text-white">
-                            {client.name}
+                            {client.fullName}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
-                            {client.clientNumber}
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {t[client.clientType]}
                           </p>
                         </div>
                       </div>
@@ -511,7 +532,7 @@ export function ClientsPageClient({
                     {/* Contact */}
                     <td className="px-4 py-4">
                       <div className="space-y-1 text-sm">
-                        {client.phone && (
+                        {client.phone && client.phone !== "+212" && (
                           <div className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
                             <Phone className="h-3.5 w-3.5" />
                             {client.phone}
@@ -523,10 +544,10 @@ export function ClientsPageClient({
                             {client.email}
                           </div>
                         )}
-                        {client.city && (
+                        {client.billingCity && (
                           <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
                             <MapPin className="h-3.5 w-3.5" />
-                            {client.city}
+                            {client.billingCity}
                           </div>
                         )}
                       </div>
@@ -535,10 +556,10 @@ export function ClientsPageClient({
                     {/* Revenue */}
                     <td className="px-4 py-4">
                       <p className="font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(client.totalRevenue)}
+                        {formatCurrency(Number(client.totalInvoiced) || 0)}
                       </p>
                       <p className="text-xs text-green-600">
-                        Payé: {formatCurrency(client.totalPaid)}
+                        Payé: {formatCurrency(Number(client.totalPaid) || 0)}
                       </p>
                     </td>
 
@@ -547,30 +568,29 @@ export function ClientsPageClient({
                       <p
                         className={cn(
                           "font-medium",
-                          client.balance > 0
+                          Number(client.balance) > 0
                             ? "text-red-600"
                             : "text-gray-500 dark:text-gray-400"
                         )}
                       >
-                        {formatCurrency(client.balance)}
+                        {formatCurrency(Number(client.balance) || 0)}
                       </p>
                     </td>
 
-                    {/* Stats */}
+                    {/* Date Created */}
                     <td className="px-4 py-4">
-                      <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                        <span>
-                          {client._count.projects} {t.projects}
-                        </span>
-                        <span>
-                          {client._count.documents} {t.documents}
-                        </span>
-                      </div>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {new Date(client.createdAt).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
                     </td>
 
                     {/* Actions */}
                     <td className="px-4 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <Link
                           href={`/${locale}/admin/crm/clients/${client.id}`}
                           className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
