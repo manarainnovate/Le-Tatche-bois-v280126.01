@@ -578,19 +578,23 @@ export function DevisFormClient({
           publicNotes,
           internalNotes,
           footerText,
-          status: sendEmail ? "SENT" : "DRAFT",
+          isDraft: !sendEmail,
+          issueImmediately: sendEmail,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create document");
+        const errorData = await response.json().catch(() => null);
+        const errorMsg = errorData?.error || "Erreur lors de la création du devis";
+        throw new Error(errorMsg);
       }
 
-      const data = await response.json();
-      router.push(`/${locale}/admin/facturation/devis/${data.id}`);
+      const result = await response.json();
+      const docId = result.data?.id || result.id;
+      router.push(`/${locale}/admin/facturation/devis/${docId}`);
     } catch (error) {
       console.error("Error creating devis:", error);
-      setErrors({ submit: "Une erreur est survenue" });
+      setErrors({ submit: error instanceof Error ? error.message : "Une erreur est survenue" });
     } finally {
       setIsSubmitting(false);
     }
@@ -639,6 +643,14 @@ export function DevisFormClient({
           </Button>
         </div>
       </div>
+
+      {/* Submit Error */}
+      {errors.submit && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p>{errors.submit}</p>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main Form */}

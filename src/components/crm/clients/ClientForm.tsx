@@ -253,6 +253,7 @@ export function ClientForm({
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState("");
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -267,6 +268,7 @@ export function ClientForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError("");
 
     if (!validateForm()) {
       return;
@@ -306,8 +308,11 @@ export function ClientForm({
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
-          const errorMsg = errorData?.message || "Failed to save client";
-          throw new Error(errorMsg);
+          if (errorData?.data && Array.isArray(errorData.data)) {
+            const messages = errorData.data.map((err: { field: string; message: string }) => err.message).join(". ");
+            throw new Error(messages);
+          }
+          throw new Error(errorData?.error || "Erreur lors de la sauvegarde du client");
         }
 
         const result = await response.json();
@@ -317,6 +322,7 @@ export function ClientForm({
       }
     } catch (error) {
       console.error("Error saving client:", error);
+      setSubmitError(error instanceof Error ? error.message : "Erreur lors de la sauvegarde du client");
     } finally {
       setIsSubmitting(false);
     }
@@ -663,6 +669,17 @@ export function ClientForm({
           className={cn(inputClass, "resize-none")}
         />
       </div>
+
+      {/* Submit Error */}
+      {submitError && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-sm text-red-700 dark:text-red-400 flex items-start gap-2">
+          <FileText className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="font-medium">Erreur</p>
+            <p className="text-xs mt-0.5">{submitError}</p>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex justify-end gap-3">
