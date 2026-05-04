@@ -986,10 +986,48 @@ export function drawClientBox(
  * Item interface for table
  */
 export interface TableItem {
-  desc: string;      // Description
-  qty: number;       // Quantity
-  price: number;     // Unit price HT
-  unit?: string;     // Unit (default: "U")
+  desc: string;          // Designation (main line)
+  description?: string;  // Optional sub-description (rendered as smaller line(s) below)
+  qty: number;           // Quantity
+  price: number;         // Unit price HT
+  unit?: string;         // Unit (default: "U")
+}
+
+// Layout constants for multi-line designation rendering
+const BASE_ROW_HEIGHT = 5.5 * MM;   // ~15.6pt — main designation band
+const SUB_LINE_HEIGHT = 4 * MM;     // ~11.3pt — each extra description line
+const ROW_BOTTOM_PAD = 1 * MM;      // small breathing room at bottom of multi-line rows
+
+/**
+ * Split an item's designation/description into a main line + sub-lines.
+ * Handles \n inside `desc` and an optional separate `description` field.
+ */
+function splitItemLines(item: TableItem): { main: string; subs: string[] } {
+  const descParts = (item.desc || '')
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const main = descParts[0] || '';
+  let subs = descParts.slice(1);
+
+  if (item.description) {
+    const extra = item.description
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    subs = subs.concat(extra);
+  }
+
+  return { main, subs };
+}
+
+/**
+ * Compute the rendered height of a row, taking sub-lines into account.
+ */
+function getRowHeight(item: TableItem): number {
+  const { subs } = splitItemLines(item);
+  if (subs.length === 0) return BASE_ROW_HEIGHT;
+  return BASE_ROW_HEIGHT + subs.length * SUB_LINE_HEIGHT + ROW_BOTTOM_PAD;
 }
 
 /**
@@ -1044,9 +1082,8 @@ export function drawItemsTable(
     totalHT: 19 * MM,  // TOTAL HT
   };
 
-  // Row heights
+  // Row heights — data rows are dynamic per item; see getRowHeight()
   const headerRowHeight = 7 * MM;
-  const dataRowHeight = 5.5 * MM;
 
   // Calculate subtotal
   let subtotal = 0;
@@ -1136,31 +1173,35 @@ export function drawItemsTable(
 
     // ── Draw data rows ──
     currentY = headerY + headerRowHeight;
+    const singlePageRowHeights: number[] = [];
 
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const rowY = currentY;
       const total = item.qty * item.price;
+      const { main, subs } = splitItemLines(item);
+      const rowHeight = getRowHeight(item);
+      singlePageRowHeights.push(rowHeight);
 
       // Alternating row background (very subtle)
       if (i % 2 === 0) {
         doc.save();
         doc.fillColor('#FAF8F0')
            .opacity(0.35)
-           .rect(margin, rowY, tableWidth, dataRowHeight)
+           .rect(margin, rowY, tableWidth, rowHeight)
            .fill();
         doc.restore();
       } else {
         doc.save();
         doc.fillColor(COLORS.WHITE)
            .opacity(0.35)
-           .rect(margin, rowY, tableWidth, dataRowHeight)
+           .rect(margin, rowY, tableWidth, rowHeight)
            .fill();
         doc.restore();
       }
 
-      // Row text
-      const textY = rowY + (dataRowHeight / 2) - 2.5;
+      // Main row text - vertically centered within the BASE band (top portion of the row)
+      const textY = rowY + (BASE_ROW_HEIGHT / 2) - 2.5;
       xPos = margin;
 
       doc.save();
@@ -1172,8 +1213,9 @@ export function drawItemsTable(
       doc.text(`${i + 1}`, xPos, textY, { width: colWidths.num, align: 'center', lineBreak: false });
       xPos += colWidths.num;
 
-      // Description (left aligned with padding)
-      doc.text(item.desc, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
+      // Description main line (left aligned with padding)
+      doc.text(main, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
+      const descX = xPos;
       xPos += colWidths.desc;
 
       // Unit (centered)
@@ -1193,7 +1235,24 @@ export function drawItemsTable(
 
       doc.restore();
 
-      currentY += dataRowHeight;
+      // Draw sub-description lines (smaller, gray) below the main line
+      if (subs.length > 0) {
+        doc.save();
+        doc.fillColor(COLORS.GRAY_DARK)
+           .font('Helvetica')
+           .fontSize(7);
+        for (let s = 0; s < subs.length; s++) {
+          const subY = rowY + BASE_ROW_HEIGHT + s * SUB_LINE_HEIGHT;
+          doc.text(subs[s], descX + 2, subY, {
+            width: colWidths.desc - 4,
+            align: 'left',
+            lineBreak: false,
+          });
+        }
+        doc.restore();
+      }
+
+      currentY += rowHeight;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -1239,13 +1298,14 @@ export function drawItemsTable(
        .lineTo(margin + tableWidth, tableTop + headerRowHeight)
        .stroke();
 
-    // Horizontal lines between data rows (subtle)
+    // Horizontal lines between data rows (subtle) — use accumulated heights
     doc.strokeColor('#8B7355')
        .lineWidth(0.3);
-    for (let i = 1; i < items.length; i++) {
-      const y = headerY + headerRowHeight + (i * dataRowHeight);
-      doc.moveTo(margin, y)
-         .lineTo(margin + tableWidth, y)
+    let lineAccY = headerY + headerRowHeight;
+    for (let i = 0; i < singlePageRowHeights.length - 1; i++) {
+      lineAccY += singlePageRowHeights[i];
+      doc.moveTo(margin, lineAccY)
+         .lineTo(margin + tableWidth, lineAccY)
          .stroke();
     }
 
@@ -1330,33 +1390,41 @@ export function drawItemsTable(
       doc.restore();
     };
 
-    // Helper function to draw rows
-    const drawRows = (pageItems: TableItem[], startRowNumber: number, rowsStartY: number) => {
+    // Helper function to draw rows; returns { endY, rowHeights } so grid lines match exactly
+    const drawRows = (
+      pageItems: TableItem[],
+      startRowNumber: number,
+      rowsStartY: number
+    ): { endY: number; rowHeights: number[] } => {
       let rowY = rowsStartY;
+      const rowHeights: number[] = [];
 
       for (let i = 0; i < pageItems.length; i++) {
         const item = pageItems[i];
         const total = item.qty * item.price;
+        const { main, subs } = splitItemLines(item);
+        const rowHeight = getRowHeight(item);
+        rowHeights.push(rowHeight);
 
         // Alternating row background (very subtle)
         if (i % 2 === 0) {
           doc.save();
           doc.fillColor('#FAF8F0')
              .opacity(0.35)
-             .rect(margin, rowY, tableWidth, dataRowHeight)
+             .rect(margin, rowY, tableWidth, rowHeight)
              .fill();
           doc.restore();
         } else {
           doc.save();
           doc.fillColor(COLORS.WHITE)
              .opacity(0.35)
-             .rect(margin, rowY, tableWidth, dataRowHeight)
+             .rect(margin, rowY, tableWidth, rowHeight)
              .fill();
           doc.restore();
         }
 
-        // Row text
-        const textY = rowY + (dataRowHeight / 2) - 2.5;
+        // Main row text — vertically centered in the BASE band
+        const textY = rowY + (BASE_ROW_HEIGHT / 2) - 2.5;
         let xPos = margin;
 
         doc.save();
@@ -1368,8 +1436,9 @@ export function drawItemsTable(
         doc.text(`${startRowNumber + i}`, xPos, textY, { width: colWidths.num, align: 'center', lineBreak: false });
         xPos += colWidths.num;
 
-        // Description (left aligned with padding)
-        doc.text(item.desc, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
+        // Description main line (left aligned with padding)
+        doc.text(main, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
+        const descX = xPos;
         xPos += colWidths.desc;
 
         // Unit (centered)
@@ -1389,14 +1458,31 @@ export function drawItemsTable(
 
         doc.restore();
 
-        rowY += dataRowHeight;
+        // Sub-description lines below the main line
+        if (subs.length > 0) {
+          doc.save();
+          doc.fillColor(COLORS.GRAY_DARK)
+             .font('Helvetica')
+             .fontSize(7);
+          for (let s = 0; s < subs.length; s++) {
+            const subY = rowY + BASE_ROW_HEIGHT + s * SUB_LINE_HEIGHT;
+            doc.text(subs[s], descX + 2, subY, {
+              width: colWidths.desc - 4,
+              align: 'left',
+              lineBreak: false,
+            });
+          }
+          doc.restore();
+        }
+
+        rowY += rowHeight;
       }
 
-      return rowY;
+      return { endY: rowY, rowHeights };
     };
 
-    // Helper function to draw grid lines
-    const drawGridLines = (tableTop: number, tableBottom: number, numRows: number) => {
+    // Helper function to draw grid lines (uses real per-row heights)
+    const drawGridLines = (tableTop: number, tableBottom: number, rowHeights: number[]) => {
       doc.save();
       doc.strokeColor('#8B7355')  // Medium brown for grid
          .lineWidth(0.5);
@@ -1434,13 +1520,14 @@ export function drawItemsTable(
          .lineTo(margin + tableWidth, tableTop + headerRowHeight)
          .stroke();
 
-      // Horizontal lines between data rows (subtle)
+      // Horizontal lines between data rows (subtle) — use per-row heights
       doc.strokeColor('#8B7355')
          .lineWidth(0.3);
-      for (let i = 1; i < numRows; i++) {
-        const y = tableTop + headerRowHeight + (i * dataRowHeight);
-        doc.moveTo(margin, y)
-           .lineTo(margin + tableWidth, y)
+      let lineAccY = tableTop + headerRowHeight;
+      for (let i = 0; i < rowHeights.length - 1; i++) {
+        lineAccY += rowHeights[i];
+        doc.moveTo(margin, lineAccY)
+           .lineTo(margin + tableWidth, lineAccY)
            .stroke();
       }
 
@@ -1480,7 +1567,8 @@ export function drawItemsTable(
 
       // Draw rows for this page
       const tableTopForPage = isFirstPage ? startY : (currentY - headerRowHeight - (isFirstPage ? 0 : 6 * MM));
-      currentY = drawRows(pageItems, itemIndex + 1, currentY);
+      const drawn = drawRows(pageItems, itemIndex + 1, currentY);
+      currentY = drawn.endY;
 
       // Update running subtotal
       for (const item of pageItems) {
@@ -1488,7 +1576,7 @@ export function drawItemsTable(
       }
 
       // Draw grid lines for this page
-      drawGridLines(tableTopForPage, currentY, pageItems.length);
+      drawGridLines(tableTopForPage, currentY, drawn.rowHeights);
 
       if (!isLastPage) {
         // Draw "Report page suivante" row

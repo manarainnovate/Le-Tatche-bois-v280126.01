@@ -266,6 +266,7 @@ export async function generateAvoirPDF(data: AvoirData): Promise<Buffer> {
         // IMPORTANT: Negate the price for credit note (avoir)
         return {
           desc: item.designation,
+          description: item.description,
           qty: item.quantity,
           price: -price,  // Negative amount
           unit: item.unit || 'U',

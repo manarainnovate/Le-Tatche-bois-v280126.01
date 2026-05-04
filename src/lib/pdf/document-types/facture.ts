@@ -434,6 +434,7 @@ export async function generateFacturePDF(data: FactureData): Promise<Buffer> {
 
         return {
           desc: item.designation,
+          description: item.description,
           qty: item.quantity,
           price: price,
           unit: item.unit || 'U',

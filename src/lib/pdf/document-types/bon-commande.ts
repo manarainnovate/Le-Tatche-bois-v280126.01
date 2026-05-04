@@ -330,6 +330,7 @@ export async function generateBonCommandePDF(data: BonCommandeData): Promise<Buf
 
         return {
           desc: item.designation,
+          description: item.description,
           qty: item.quantity,
           price: price,
           unit: item.unit || 'U',
