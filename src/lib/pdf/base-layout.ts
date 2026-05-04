@@ -1843,11 +1843,24 @@ export function drawSignatureSection(doc: PDFDocument, startY: number): void {
      .text('Cachet et signature du vendeur', margin, y);
   doc.restore();
 
+  // Pre-stamped vendor cachet — drawn before the box so the dashed border frames it
+  const vendorBoxTop = y + 3;
+  const vendorBoxHeight = boxHeight - 3;
+  const cachetSize = 22 * MM;
+  drawCachet(
+    doc,
+    margin + boxWidth / 2,
+    vendorBoxTop + vendorBoxHeight / 2,
+    cachetSize,
+    0.85,
+    -7
+  );
+
   doc.save();
   doc.strokeColor(COLORS.GOLD)
      .lineWidth(0.5)
      .dash(2, { space: 2 })
-     .rect(margin, y + 3, boxWidth, boxHeight - 3)
+     .rect(margin, vendorBoxTop, boxWidth, vendorBoxHeight)
      .stroke();
   doc.restore();
 
