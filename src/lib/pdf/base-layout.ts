@@ -1846,7 +1846,7 @@ export function drawSignatureSection(doc: PDFDocument, startY: number): void {
   // Pre-stamped vendor cachet — drawn before the box so the dashed border frames it
   const vendorBoxTop = y + 3;
   const vendorBoxHeight = boxHeight - 3;
-  const cachetSize = 22 * MM;
+  const cachetSize = 44 * MM;
   drawCachet(
     doc,
     margin + boxWidth / 2,
