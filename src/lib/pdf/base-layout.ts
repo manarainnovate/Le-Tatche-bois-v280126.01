@@ -94,7 +94,70 @@ export const ASSETS = {
   frameBottom: path.join(ASSETS_BASE, 'frame_bottom.png'),
   frameLeft: path.join(ASSETS_BASE, 'frame_left.png'),
   frameRight: path.join(ASSETS_BASE, 'frame_right.png'),
+  cachet: path.join(ASSETS_BASE, 'cachet.png'),
 } as const;
+
+/**
+ * Resolve the cachet image path with multi-path fallback (dev + Docker prod)
+ */
+function resolveCachetPath(): string | null {
+  const candidates = [
+    ASSETS.cachet,
+    path.join(process.cwd(), 'pdf-assets', 'le-tatche-bois-pdf-assets', 'cachet.png'),
+    path.join('/app', 'public', 'pdf-assets', 'le-tatche-bois-pdf-assets', 'cachet.png'),
+    path.join(__dirname, '..', '..', '..', '..', 'public', 'pdf-assets', 'le-tatche-bois-pdf-assets', 'cachet.png'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+/**
+ * Draw the company cachet (round stamp) at the given position with subtle opacity.
+ * Used inside vendor/employer signature boxes across all document types.
+ *
+ * @param doc - PDFDocument instance
+ * @param centerX - Horizontal center position
+ * @param centerY - Vertical center position
+ * @param size - Width/height of the stamp in points (typical: 30–45mm)
+ * @param opacity - Stamp opacity (default 0.85 for natural ink look)
+ * @param rotationDeg - Optional rotation angle in degrees
+ */
+export function drawCachet(
+  doc: PDFDocument,
+  centerX: number,
+  centerY: number,
+  size: number,
+  opacity: number = 0.85,
+  rotationDeg: number = 0
+): void {
+  const cachetPath = resolveCachetPath();
+  if (!cachetPath) {
+    console.warn('[PDF] Cachet image not found, skipping');
+    return;
+  }
+
+  const x = centerX - size / 2;
+  const y = centerY - size / 2;
+
+  try {
+    doc.save();
+    doc.opacity(opacity);
+
+    if (rotationDeg !== 0) {
+      doc.rotate(rotationDeg, { origin: [centerX, centerY] });
+    }
+
+    doc.image(cachetPath, x, y, {
+      width: size,
+      height: size,
+    });
+    doc.restore();
+  } catch (error) {
+    console.warn(`[PDF] Failed to draw cachet: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 /** Unit conversion constant: 1mm = 2.834645669 points */
 const MM = 2.834645669;
@@ -993,10 +1056,15 @@ export interface TableItem {
   unit?: string;         // Unit (default: "U")
 }
 
-// Layout constants for multi-line designation rendering
-const BASE_ROW_HEIGHT = 5.5 * MM;   // ~15.6pt — main designation band
-const SUB_LINE_HEIGHT = 4 * MM;     // ~11.3pt — each extra description line
-const ROW_BOTTOM_PAD = 1 * MM;      // small breathing room at bottom of multi-line rows
+// Layout constants for item rows. The main designation may wrap into multiple
+// lines on its own; sub-description lines sit below it. Row height is computed
+// dynamically per item so nothing overlaps.
+const BASE_ROW_HEIGHT = 5.5 * MM;   // Minimum row height (short single-line designations)
+const ROW_VERT_PAD = 1.5 * MM;      // Vertical padding applied at top + bottom of content
+const SUB_LINE_GAP = 0.8 * MM;      // Gap between (possibly wrapped) main text and first sub-line
+const SUB_LINE_HEIGHT = 4 * MM;     // Height per sub-description line
+const MAIN_FONT_SIZE = 7.5;
+const SUB_FONT_SIZE = 7;
 
 /**
  * Split an item's designation/description into a main line + sub-lines.
@@ -1022,12 +1090,17 @@ function splitItemLines(item: TableItem): { main: string; subs: string[] } {
 }
 
 /**
- * Compute the rendered height of a row, taking sub-lines into account.
+ * Measure the actual rendered height of the main designation text when laid
+ * out at MAIN_FONT_SIZE inside the given column width. Accounts for natural
+ * word wrapping (e.g. very long single-line descriptions).
  */
-function getRowHeight(item: TableItem): number {
-  const { subs } = splitItemLines(item);
-  if (subs.length === 0) return BASE_ROW_HEIGHT;
-  return BASE_ROW_HEIGHT + subs.length * SUB_LINE_HEIGHT + ROW_BOTTOM_PAD;
+function measureMainTextHeight(doc: PDFDocument, main: string, width: number): number {
+  if (!main) return 0;
+  doc.save();
+  doc.font('Helvetica').fontSize(MAIN_FONT_SIZE);
+  const h = doc.heightOfString(main, { width });
+  doc.restore();
+  return h;
 }
 
 /**
@@ -1082,7 +1155,7 @@ export function drawItemsTable(
     totalHT: 19 * MM,  // TOTAL HT
   };
 
-  // Row heights — data rows are dynamic per item; see getRowHeight()
+  // Row heights — data rows are dynamic per item (computed inline below)
   const headerRowHeight = 7 * MM;
 
   // Calculate subtotal
@@ -1180,7 +1253,10 @@ export function drawItemsTable(
       const rowY = currentY;
       const total = item.qty * item.price;
       const { main, subs } = splitItemLines(item);
-      const rowHeight = getRowHeight(item);
+      const mainH = measureMainTextHeight(doc, main, colWidths.desc - 4);
+      const subsH = subs.length > 0 ? SUB_LINE_GAP + subs.length * SUB_LINE_HEIGHT : 0;
+      const rowHeight = Math.max(BASE_ROW_HEIGHT, mainH + subsH + 2 * ROW_VERT_PAD);
+      const topY = rowY + (rowHeight - (mainH + subsH)) / 2;
       singlePageRowHeights.push(rowHeight);
 
       // Alternating row background (very subtle)
@@ -1200,54 +1276,53 @@ export function drawItemsTable(
         doc.restore();
       }
 
-      // Main row text - vertically centered within the BASE band (top portion of the row)
-      const textY = rowY + (BASE_ROW_HEIGHT / 2) - 2.5;
       xPos = margin;
 
       doc.save();
       doc.fillColor(COLORS.BROWN_DARK)
          .font('Helvetica')
-         .fontSize(7.5);
+         .fontSize(MAIN_FONT_SIZE);
 
-      // N° (centered)
-      doc.text(`${i + 1}`, xPos, textY, { width: colWidths.num, align: 'center', lineBreak: false });
+      // N° (centered) — top-aligned with first line of main text
+      doc.text(`${i + 1}`, xPos, topY, { width: colWidths.num, align: 'center', lineBreak: false });
       xPos += colWidths.num;
 
-      // Description main line (left aligned with padding)
-      doc.text(main, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
       const descX = xPos;
+      // Designation main text — allow natural wrapping into multiple lines
+      doc.text(main, xPos + 2, topY, { width: colWidths.desc - 4, align: 'left' });
       xPos += colWidths.desc;
 
       // Unit (centered)
-      doc.text(item.unit || 'U', xPos, textY, { width: colWidths.unit, align: 'center', lineBreak: false });
+      doc.text(item.unit || 'U', xPos, topY, { width: colWidths.unit, align: 'center', lineBreak: false });
       xPos += colWidths.unit;
 
       // Quantity (centered)
-      doc.text(`${item.qty}`, xPos, textY, { width: colWidths.qty, align: 'center', lineBreak: false });
+      doc.text(`${item.qty}`, xPos, topY, { width: colWidths.qty, align: 'center', lineBreak: false });
       xPos += colWidths.qty;
 
       // Unit price (right aligned)
-      doc.text(formatNumber(item.price), xPos, textY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
+      doc.text(formatNumber(item.price), xPos, topY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
       xPos += colWidths.puHT;
 
       // Total (right aligned)
-      doc.text(formatNumber(total), xPos, textY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
+      doc.text(formatNumber(total), xPos, topY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
 
       doc.restore();
 
-      // Draw sub-description lines (smaller, gray) below the main line
+      // Draw sub-description lines (smaller, gray) below the wrapped main text block
       if (subs.length > 0) {
         doc.save();
         doc.fillColor(COLORS.GRAY_DARK)
            .font('Helvetica')
-           .fontSize(7);
-        for (let s = 0; s < subs.length; s++) {
-          const subY = rowY + BASE_ROW_HEIGHT + s * SUB_LINE_HEIGHT;
-          doc.text(subs[s], descX + 2, subY, {
+           .fontSize(SUB_FONT_SIZE);
+        let subY = topY + mainH + SUB_LINE_GAP;
+        for (const sub of subs) {
+          doc.text(sub, descX + 2, subY, {
             width: colWidths.desc - 4,
             align: 'left',
             lineBreak: false,
           });
+          subY += SUB_LINE_HEIGHT;
         }
         doc.restore();
       }
@@ -1403,7 +1478,10 @@ export function drawItemsTable(
         const item = pageItems[i];
         const total = item.qty * item.price;
         const { main, subs } = splitItemLines(item);
-        const rowHeight = getRowHeight(item);
+        const mainH = measureMainTextHeight(doc, main, colWidths.desc - 4);
+        const subsH = subs.length > 0 ? SUB_LINE_GAP + subs.length * SUB_LINE_HEIGHT : 0;
+        const rowHeight = Math.max(BASE_ROW_HEIGHT, mainH + subsH + 2 * ROW_VERT_PAD);
+        const topY = rowY + (rowHeight - (mainH + subsH)) / 2;
         rowHeights.push(rowHeight);
 
         // Alternating row background (very subtle)
@@ -1423,54 +1501,53 @@ export function drawItemsTable(
           doc.restore();
         }
 
-        // Main row text — vertically centered in the BASE band
-        const textY = rowY + (BASE_ROW_HEIGHT / 2) - 2.5;
         let xPos = margin;
 
         doc.save();
         doc.fillColor(COLORS.BROWN_DARK)
            .font('Helvetica')
-           .fontSize(7.5);
+           .fontSize(MAIN_FONT_SIZE);
 
         // N° (centered) - CONTINUOUS numbering
-        doc.text(`${startRowNumber + i}`, xPos, textY, { width: colWidths.num, align: 'center', lineBreak: false });
+        doc.text(`${startRowNumber + i}`, xPos, topY, { width: colWidths.num, align: 'center', lineBreak: false });
         xPos += colWidths.num;
 
-        // Description main line (left aligned with padding)
-        doc.text(main, xPos + 2, textY, { width: colWidths.desc - 4, align: 'left', lineBreak: false });
         const descX = xPos;
+        // Designation main text — allow natural wrapping into multiple lines
+        doc.text(main, xPos + 2, topY, { width: colWidths.desc - 4, align: 'left' });
         xPos += colWidths.desc;
 
         // Unit (centered)
-        doc.text(item.unit || 'U', xPos, textY, { width: colWidths.unit, align: 'center', lineBreak: false });
+        doc.text(item.unit || 'U', xPos, topY, { width: colWidths.unit, align: 'center', lineBreak: false });
         xPos += colWidths.unit;
 
         // Quantity (centered)
-        doc.text(`${item.qty}`, xPos, textY, { width: colWidths.qty, align: 'center', lineBreak: false });
+        doc.text(`${item.qty}`, xPos, topY, { width: colWidths.qty, align: 'center', lineBreak: false });
         xPos += colWidths.qty;
 
         // Unit price (right aligned)
-        doc.text(formatNumber(item.price), xPos, textY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
+        doc.text(formatNumber(item.price), xPos, topY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
         xPos += colWidths.puHT;
 
         // Total (right aligned)
-        doc.text(formatNumber(total), xPos, textY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
+        doc.text(formatNumber(total), xPos, topY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
 
         doc.restore();
 
-        // Sub-description lines below the main line
+        // Sub-description lines below the wrapped main text block
         if (subs.length > 0) {
           doc.save();
           doc.fillColor(COLORS.GRAY_DARK)
              .font('Helvetica')
-             .fontSize(7);
-          for (let s = 0; s < subs.length; s++) {
-            const subY = rowY + BASE_ROW_HEIGHT + s * SUB_LINE_HEIGHT;
-            doc.text(subs[s], descX + 2, subY, {
+             .fontSize(SUB_FONT_SIZE);
+          let subY = topY + mainH + SUB_LINE_GAP;
+          for (const sub of subs) {
+            doc.text(sub, descX + 2, subY, {
               width: colWidths.desc - 4,
               align: 'left',
               lineBreak: false,
             });
+            subY += SUB_LINE_HEIGHT;
           }
           doc.restore();
         }
