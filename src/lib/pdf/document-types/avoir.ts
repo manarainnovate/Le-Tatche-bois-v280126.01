@@ -254,24 +254,17 @@ export async function generateAvoirPDF(data: AvoirData): Promise<Buffer> {
       // FIXED: In PDFKit, larger Y = lower on page, so use Math.max
       const tableY = Math.max(leftBottom, clientBottom) + 4 * MM;
 
-      // Convert AvoirItem[] to TableItem[] with NEGATIVE prices
-      const tableItems: TableItem[] = data.document.items.map((item) => {
-        let price = item.unitPriceHT;
-
-        // Apply item-level discount if exists
-        if (item.discountPercent && item.discountPercent > 0) {
-          price = price * (1 - item.discountPercent / 100);
-        }
-
-        // IMPORTANT: Negate the price for credit note (avoir)
-        return {
-          desc: item.designation,
-          description: item.description,
-          qty: item.quantity,
-          price: -price,  // Negative amount
-          unit: item.unit || 'U',
-        };
-      });
+      // Convert AvoirItem[] to TableItem[] with NEGATIVE prices.
+      // Pass the ORIGINAL (negated) unit price + discount %; the table applies the
+      // discount and renders a REMISE column when any line has one.
+      const tableItems: TableItem[] = data.document.items.map((item) => ({
+        desc: item.designation,
+        description: item.description,
+        qty: item.quantity,
+        price: -item.unitPriceHT,  // Negative amount (credit note)
+        unit: item.unit || 'U',
+        discountPercent: item.discountPercent,
+      }));
 
       // Draw table with TVA (20% standard rate for Morocco)
       const tableResult = drawItemsTable(

@@ -69,7 +69,8 @@ export interface BonCommandeData {
     status: string;
     items: BonCommandeItem[];
     client: BonCommandeClient;
-    discountGlobal?: number;
+    discountGlobal?: number;   // Global discount AMOUNT in DH (already computed)
+    discountLabel?: string;    // Optional label, e.g. "Remise globale"
     notes?: string;
     internalNotes?: string;
     conditionsLivraison?: string;
@@ -236,17 +237,19 @@ export async function generateBonCommandePDF(data: BonCommandeData): Promise<Buf
       }
 
       // ── Generate QR code (async, must be done before drawing) ──
-      // Calculate total TTC for QR
-      let qrTotalTTC = 0;
+      // Calculate total TTC for QR — line discounts, then global discount, then TVA
+      let qrSubtotalHT = 0;
       for (const item of data.document.items) {
         let price = item.unitPriceHT;
         if (item.discountPercent && item.discountPercent > 0) {
           price = price * (1 - item.discountPercent / 100);
         }
-        const lineTotalHT = item.quantity * price;
-        const lineTotalTTC = lineTotalHT * (1 + item.tvaRate / 100);
-        qrTotalTTC += lineTotalTTC;
+        qrSubtotalHT += item.quantity * price;
       }
+      const qrDiscount = data.document.discountGlobal && data.document.discountGlobal > 0
+        ? data.document.discountGlobal
+        : 0;
+      const qrTotalTTC = (qrSubtotalHT - qrDiscount) * 1.20;  // 20% standard TVA
 
       const qrBuffer = await generateInvoiceQR(
         data.document.number,
@@ -320,22 +323,21 @@ export async function generateBonCommandePDF(data: BonCommandeData): Promise<Buf
       const tableY = Math.max(leftBottom, clientBottom) + 4 * MM;
 
       // Convert BonCommandeItem[] to TableItem[]
-      const tableItems: TableItem[] = data.document.items.map((item) => {
-        let price = item.unitPriceHT;
+      // Pass the ORIGINAL unit price + discount %; the table applies the discount
+      // and renders a REMISE column when any line has one.
+      const tableItems: TableItem[] = data.document.items.map((item) => ({
+        desc: item.designation,
+        description: item.description,
+        qty: item.quantity,
+        price: item.unitPriceHT,
+        unit: item.unit || 'U',
+        discountPercent: item.discountPercent,
+      }));
 
-        // Apply item-level discount if exists
-        if (item.discountPercent && item.discountPercent > 0) {
-          price = price * (1 - item.discountPercent / 100);
-        }
-
-        return {
-          desc: item.designation,
-          description: item.description,
-          qty: item.quantity,
-          price: price,
-          unit: item.unit || 'U',
-        };
-      });
+      // Global (document-level) discount
+      const globalDiscountAmount = data.document.discountGlobal && data.document.discountGlobal > 0
+        ? data.document.discountGlobal
+        : 0;
 
       // Draw table with TVA (20% standard rate for Morocco)
       const tableResult = drawItemsTable(
@@ -349,7 +351,10 @@ export async function generateBonCommandePDF(data: BonCommandeData): Promise<Buf
           docNumber: data.document.number,
           maxItemsFirstPage: maxFirstPage,
           maxItemsContinuation: maxContinuation,
-        } : undefined
+        } : undefined,
+        globalDiscountAmount > 0
+          ? { amount: globalDiscountAmount, label: data.document.discountLabel }
+          : undefined
       );
 
       // ── Sequential Y flow (FIXED: always descend) ──

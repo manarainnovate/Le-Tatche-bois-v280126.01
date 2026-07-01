@@ -67,6 +67,13 @@ export async function generateDocumentPDF(
     },
   };
 
+  // Global (document-level) discount, shared across document types.
+  // `discountAmount` is the already-computed remise amount in DH.
+  const globalDiscountAmount = parseFloat((document.discountAmount ?? 0).toString());
+  const globalDiscountFields = globalDiscountAmount > 0
+    ? { discountGlobal: globalDiscountAmount, discountLabel: 'Remise globale' }
+    : {};
+
   // 3. Route to appropriate generator based on document type
   let buffer: Buffer;
 
@@ -77,6 +84,7 @@ export async function generateDocumentPDF(
         ...baseData,
         document: {
           ...baseData.document,
+          ...globalDiscountFields,
           items: document.items.map((item) => ({
             designation: item.designation,
             description: item.description || undefined,
@@ -92,16 +100,12 @@ export async function generateDocumentPDF(
       });
       break;
 
-    case 'DEVIS': {
-      // Global (document-level) discount, if any
-      const devisDiscountAmount = parseFloat((document.discountAmount ?? 0).toString());
-
+    case 'DEVIS':
       buffer = await generateDevisPDF({
         ...baseData,
         document: {
           ...baseData.document,
-          discountGlobal: devisDiscountAmount > 0 ? devisDiscountAmount : undefined,
-          discountLabel: 'Remise globale',
+          ...globalDiscountFields,
           items: document.items.map((item) => ({
             designation: item.designation,
             description: item.description || undefined,
@@ -116,13 +120,13 @@ export async function generateDocumentPDF(
         },
       });
       break;
-    }
 
     case 'BON_COMMANDE':
       buffer = await generateBonCommandePDF({
         ...baseData,
         document: {
           ...baseData.document,
+          ...globalDiscountFields,
           items: document.items.map((item) => ({
             designation: item.designation,
             description: item.description || undefined,
@@ -198,6 +202,7 @@ export async function generateDocumentPDF(
         ...baseData,
         document: {
           ...baseData.document,
+          ...globalDiscountFields,
           items: document.items.map((item) => ({
             designation: item.designation,
             description: item.description || undefined,
