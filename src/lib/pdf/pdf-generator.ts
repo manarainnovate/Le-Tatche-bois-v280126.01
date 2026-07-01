@@ -92,11 +92,16 @@ export async function generateDocumentPDF(
       });
       break;
 
-    case 'DEVIS':
+    case 'DEVIS': {
+      // Global (document-level) discount, if any
+      const devisDiscountAmount = parseFloat((document.discountAmount ?? 0).toString());
+
       buffer = await generateDevisPDF({
         ...baseData,
         document: {
           ...baseData.document,
+          discountGlobal: devisDiscountAmount > 0 ? devisDiscountAmount : undefined,
+          discountLabel: 'Remise globale',
           items: document.items.map((item) => ({
             designation: item.designation,
             description: item.description || undefined,
@@ -111,6 +116,7 @@ export async function generateDocumentPDF(
         },
       });
       break;
+    }
 
     case 'BON_COMMANDE':
       buffer = await generateBonCommandePDF({

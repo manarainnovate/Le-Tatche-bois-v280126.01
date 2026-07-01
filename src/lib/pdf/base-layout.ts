@@ -1052,8 +1052,24 @@ export interface TableItem {
   desc: string;          // Designation (main line)
   description?: string;  // Optional sub-description (rendered as smaller line(s) below)
   qty: number;           // Quantity
-  price: number;         // Unit price HT
+  price: number;         // Unit price HT (original, BEFORE any line discount)
   unit?: string;         // Unit (default: "U")
+  discountPercent?: number; // Optional per-line discount (%). When set, a REMISE column is shown.
+}
+
+/** Optional global (document-level) discount applied below the subtotal */
+export interface GlobalDiscount {
+  amount: number;   // Discount amount in DH (already computed)
+  label?: string;   // Label to show (default: "Remise globale")
+}
+
+/**
+ * Compute a line's TOTAL HT, applying the per-line discount if present.
+ * The stored `price` is always the original unit price HT.
+ */
+function itemLineTotal(item: TableItem): number {
+  const disc = item.discountPercent && item.discountPercent > 0 ? item.discountPercent : 0;
+  return item.qty * item.price * (1 - disc / 100);
 }
 
 // Layout constants for item rows. The main designation may wrap into multiple
@@ -1139,29 +1155,36 @@ export function drawItemsTable(
   items: TableItem[],
   tvaRate: number = 0.20,
   showTVA: boolean = true,
-  pagination?: TablePaginationConfig
+  pagination?: TablePaginationConfig,
+  globalDiscount?: GlobalDiscount
 ): TableResult {
   const margin = 20 * MM;
   const tableWidth = PAGE.WIDTH - 2 * margin;
   const footerLimit = 28 * MM;  // Don't draw below this
 
-  // Column widths
+  // Show a REMISE column only when at least one line actually has a discount.
+  // This keeps documents without discounts (factures, BLs, …) visually unchanged.
+  const showRemise = items.some((it) => (it.discountPercent ?? 0) > 0);
+  const remiseColWidth = showRemise ? 14 * MM : 0;
+
+  // Column widths (base fixed columns total 68mm; REMISE adds 14mm when shown)
   const colWidths = {
     num: 8 * MM,       // N°
-    desc: tableWidth - 68 * MM,  // DÉSIGNATION
+    desc: tableWidth - 68 * MM - remiseColWidth,  // DÉSIGNATION (absorbs remaining width)
     unit: 10 * MM,     // U
     qty: 12 * MM,      // QTÉ
     puHT: 19 * MM,     // P.U. HT
+    remise: remiseColWidth, // REMISE (0 when hidden)
     totalHT: 19 * MM,  // TOTAL HT
   };
 
   // Row heights — data rows are dynamic per item (computed inline below)
   const headerRowHeight = 7 * MM;
 
-  // Calculate subtotal
+  // Calculate subtotal (line discounts applied per item)
   let subtotal = 0;
   for (const item of items) {
-    subtotal += item.qty * item.price;
+    subtotal += itemLineTotal(item);
   }
 
   // Declare currentY here so it's available for both single and multi-page modes
@@ -1239,6 +1262,12 @@ export function drawItemsTable(
     doc.text(headers[4], xPos, headerTextY, { width: colWidths.puHT, align: 'right' });
     xPos += colWidths.puHT;
 
+    // REMISE (only when at least one line has a discount)
+    if (showRemise) {
+      doc.text('REMISE', xPos, headerTextY, { width: colWidths.remise, align: 'center' });
+      xPos += colWidths.remise;
+    }
+
     // TOTAL HT
     doc.text(headers[5], xPos, headerTextY, { width: colWidths.totalHT, align: 'right' });
 
@@ -1251,7 +1280,7 @@ export function drawItemsTable(
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       const rowY = currentY;
-      const total = item.qty * item.price;
+      const total = itemLineTotal(item);
       const { main, subs } = splitItemLines(item);
       const mainH = measureMainTextHeight(doc, main, colWidths.desc - 4);
       const subsH = subs.length > 0 ? SUB_LINE_GAP + subs.length * SUB_LINE_HEIGHT : 0;
@@ -1300,11 +1329,18 @@ export function drawItemsTable(
       doc.text(`${item.qty}`, xPos, topY, { width: colWidths.qty, align: 'center', lineBreak: false });
       xPos += colWidths.qty;
 
-      // Unit price (right aligned)
+      // Unit price (right aligned) — original PU HT before discount
       doc.text(formatNumber(item.price), xPos, topY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
       xPos += colWidths.puHT;
 
-      // Total (right aligned)
+      // Remise (centered) — show "X%" or "-"
+      if (showRemise) {
+        const disc = item.discountPercent && item.discountPercent > 0 ? `${Number.isInteger(item.discountPercent) ? item.discountPercent : formatNumber(item.discountPercent)}%` : '-';
+        doc.text(disc, xPos, topY, { width: colWidths.remise, align: 'center', lineBreak: false });
+        xPos += colWidths.remise;
+      }
+
+      // Total (right aligned) — line total after discount
       doc.text(formatNumber(total), xPos, topY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
 
       doc.restore();
@@ -1359,6 +1395,9 @@ export function drawItemsTable(
       colX.afterQty,    // After QTÉ
       colX.afterPuHT,   // After P.U. HT
     ];
+    if (showRemise) {
+      verticalLines.push(colX.afterPuHT + colWidths.remise);  // After REMISE
+    }
 
     for (const x of verticalLines) {
       doc.moveTo(x, tableTop)
@@ -1459,6 +1498,12 @@ export function drawItemsTable(
       doc.text(headers[4], xPos, headerTextY, { width: colWidths.puHT, align: 'right' });
       xPos += colWidths.puHT;
 
+      // REMISE (only when at least one line has a discount)
+      if (showRemise) {
+        doc.text('REMISE', xPos, headerTextY, { width: colWidths.remise, align: 'center' });
+        xPos += colWidths.remise;
+      }
+
       // TOTAL HT
       doc.text(headers[5], xPos, headerTextY, { width: colWidths.totalHT, align: 'right' });
 
@@ -1476,7 +1521,7 @@ export function drawItemsTable(
 
       for (let i = 0; i < pageItems.length; i++) {
         const item = pageItems[i];
-        const total = item.qty * item.price;
+        const total = itemLineTotal(item);
         const { main, subs } = splitItemLines(item);
         const mainH = measureMainTextHeight(doc, main, colWidths.desc - 4);
         const subsH = subs.length > 0 ? SUB_LINE_GAP + subs.length * SUB_LINE_HEIGHT : 0;
@@ -1525,11 +1570,18 @@ export function drawItemsTable(
         doc.text(`${item.qty}`, xPos, topY, { width: colWidths.qty, align: 'center', lineBreak: false });
         xPos += colWidths.qty;
 
-        // Unit price (right aligned)
+        // Unit price (right aligned) — original PU HT before discount
         doc.text(formatNumber(item.price), xPos, topY, { width: colWidths.puHT - 2, align: 'right', lineBreak: false });
         xPos += colWidths.puHT;
 
-        // Total (right aligned)
+        // Remise (centered) — show "X%" or "-"
+        if (showRemise) {
+          const disc = item.discountPercent && item.discountPercent > 0 ? `${Number.isInteger(item.discountPercent) ? item.discountPercent : formatNumber(item.discountPercent)}%` : '-';
+          doc.text(disc, xPos, topY, { width: colWidths.remise, align: 'center', lineBreak: false });
+          xPos += colWidths.remise;
+        }
+
+        // Total (right aligned) — line total after discount
         doc.text(formatNumber(total), xPos, topY, { width: colWidths.totalHT - 2, align: 'right', lineBreak: false });
 
         doc.restore();
@@ -1583,6 +1635,9 @@ export function drawItemsTable(
         colX.afterQty,    // After QTÉ
         colX.afterPuHT,   // After P.U. HT
       ];
+      if (showRemise) {
+        verticalLines.push(colX.afterPuHT + colWidths.remise);  // After REMISE
+      }
 
       for (const x of verticalLines) {
         doc.moveTo(x, tableTop)
@@ -1649,7 +1704,7 @@ export function drawItemsTable(
 
       // Update running subtotal
       for (const item of pageItems) {
-        runningSubtotal += item.qty * item.price;
+        runningSubtotal += itemLineTotal(item);
       }
 
       // Draw grid lines for this page
@@ -1670,156 +1725,133 @@ export function drawItemsTable(
 
   // ══════════════════════════════════════════════════════════════
   // TOTALS BOX — Right-aligned, with proper padding
+  // Rows are built dynamically so an optional global discount can be
+  // inserted between the subtotal and the TVA line.
   // ══════════════════════════════════════════════════════════════
   const totalsBoxWidth = 200;  // Total width of box in points
   const totalsBoxX = margin + tableWidth - totalsBoxWidth;  // Right-aligned with table
   const totalsBoxTop = currentY + 8;  // 8pt gap below table
   const totalsRowHeight = 18;  // Height of each row in totals
+  const grandExtra = 4;        // Extra height for the grand-total row
   const totalsPadLeft = 10;  // Left padding inside box
   const totalsPadRight = 10;  // Right padding inside box
-  const labelColWidth = 80;  // Width for "Total HT", "TVA (20%)" labels
+  const labelColWidth = 92;  // Width for labels ("Total HT net", "Remise globale", …)
   const valueColWidth = totalsBoxWidth - labelColWidth;  // Rest for values
 
-  // Calculate totals
-  const tvaAmount = showTVA ? subtotal * tvaRate : 0;
-  const totalTTC = subtotal + tvaAmount;
+  // Calculate totals — global discount applied to the subtotal before TVA
+  const discountAmount = globalDiscount && globalDiscount.amount > 0 ? globalDiscount.amount : 0;
+  const hasGlobalDiscount = discountAmount > 0;
+  const netHT = subtotal - discountAmount;
+  const tvaAmount = showTVA ? netHT * tvaRate : 0;
+  const totalTTC = netHT + tvaAmount;
 
-  // Row 1: Total HT
-  const row1Y = totalsBoxTop;
-  // Row 2: TVA
-  const row2Y = row1Y + totalsRowHeight;
-  // Row 3: Total TTC (bold, bigger)
-  const row3Y = row2Y + totalsRowHeight;
-  const totalsBoxBottom = showTVA ? (row3Y + totalsRowHeight + 4) : (row1Y + totalsRowHeight + 4);
+  if (!showTVA && !hasGlobalDiscount) {
+    // ── Simple single-row layout (no TVA, no discount) — unchanged behavior ──
+    const row1Y = totalsBoxTop;
+    const totalsBoxBottom = row1Y + totalsRowHeight + grandExtra;
 
-  // Draw box background — same semi-transparent style as table data rows
-  doc.save();
-
-  if (showTVA) {
-    // Rows 1-2: Same as table even rows (subtle semi-transparent)
     doc.save();
-    doc.fillColor('#FAF8F0')
-       .opacity(0.35)
-       .rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight * 2)
-       .fill();
+    doc.fillColor('#FAF8F0').opacity(0.35)
+       .rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight + grandExtra).fill();
     doc.restore();
 
-    // Row 3 (Total TTC): Slightly more visible
     doc.save();
-    doc.fillColor('#FAF8F0')
-       .opacity(0.45)
-       .rect(totalsBoxX, row3Y, totalsBoxWidth, totalsRowHeight + 4)
-       .fill();
-    doc.restore();
-  } else {
-    doc.save();
-    doc.fillColor('#FAF8F0')
-       .opacity(0.35)
-       .rect(totalsBoxX, row1Y, totalsBoxWidth, totalsRowHeight + 4)
-       .fill();
-    doc.restore();
-  }
-
-  // Draw outer border
-  doc.strokeColor(COLORS.GOLD)
-     .lineWidth(0.8)
-     .rect(totalsBoxX, totalsBoxTop, totalsBoxWidth, totalsBoxBottom - totalsBoxTop)
-     .stroke();
-
-  doc.restore();
-
-  // ── TEXT (drawn AFTER backgrounds and borders) ──
-
-  if (showTVA) {
-    // Row 1: Total HT
-    const textY1 = row1Y + 5;  // 5pt top padding
-    doc.save();
-    doc.font('Helvetica').fontSize(9).fillColor(COLORS.GRAY_DARK)
-       .text('Total HT', totalsBoxX + totalsPadLeft, textY1, {
-         width: labelColWidth - totalsPadLeft,
-         align: 'left',
-         lineBreak: false,
-       });
-    doc.text(`${formatNumber(subtotal)} DH`, totalsBoxX + labelColWidth, textY1, {
-      width: valueColWidth - totalsPadRight,
-      align: 'right',
-      lineBreak: false,
-    });
+    doc.strokeColor(COLORS.GOLD).lineWidth(0.8)
+       .rect(totalsBoxX, totalsBoxTop, totalsBoxWidth, totalsBoxBottom - totalsBoxTop).stroke();
     doc.restore();
 
-    // Row 2: TVA
-    const textY2 = row2Y + 5;
-    doc.save();
-    doc.font('Helvetica').fontSize(9).fillColor(COLORS.GRAY_DARK)
-       .text(`TVA (${Math.round(tvaRate * 100)}%)`, totalsBoxX + totalsPadLeft, textY2, {
-         width: labelColWidth - totalsPadLeft,
-         align: 'left',
-         lineBreak: false,
-       });
-    doc.text(`${formatNumber(tvaAmount)} DH`, totalsBoxX + labelColWidth, textY2, {
-      width: valueColWidth - totalsPadRight,
-      align: 'right',
-      lineBreak: false,
-    });
-    doc.restore();
-
-    // Horizontal separator between TVA and Total TTC (drawn BEFORE text)
-    doc.save();
-    doc.strokeColor(COLORS.GOLD)
-       .lineWidth(0.5)
-       .moveTo(totalsBoxX, row3Y)
-       .lineTo(totalsBoxX + totalsBoxWidth, row3Y)
-       .stroke();
-    doc.restore();
-
-    // Row 3: Total TTC (bold, larger, brown color)
-    const textY3 = row3Y + 5;
-    doc.save();
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(COLORS.BROWN_DARK)
-       .text('Total TTC', totalsBoxX + totalsPadLeft, textY3, {
-         width: labelColWidth - totalsPadLeft,
-         align: 'left',
-         lineBreak: false,
-       });
-    doc.fillColor('#C41E1E')  // Red for TTC amount
-       .text(`${formatNumber(totalTTC)} DH`, totalsBoxX + labelColWidth, textY3, {
-         width: valueColWidth - totalsPadRight,
-         align: 'right',
-         lineBreak: false,
-       });
-    doc.restore();
-  } else {
-    // No TVA - just show total
     const textY1 = row1Y + 5;
     doc.save();
     doc.font('Helvetica-Bold').fontSize(10).fillColor(COLORS.BROWN_DARK)
        .text('Total', totalsBoxX + totalsPadLeft, textY1, {
-         width: labelColWidth - totalsPadLeft,
-         align: 'left',
-         lineBreak: false,
+         width: labelColWidth - totalsPadLeft, align: 'left', lineBreak: false,
        });
     doc.text(`${formatNumber(subtotal)} DH`, totalsBoxX + labelColWidth, textY1, {
-      width: valueColWidth - totalsPadRight,
-      align: 'right',
-      lineBreak: false,
+      width: valueColWidth - totalsPadRight, align: 'right', lineBreak: false,
     });
     doc.restore();
 
-    // Note about TVA
     const noteY = row1Y + totalsRowHeight / 2 + 3;
     doc.save();
     doc.font('Helvetica-Oblique').fontSize(7).fillColor(COLORS.GRAY)
        .text('TVA non applicable', totalsBoxX + totalsPadLeft, noteY, {
-         width: totalsBoxWidth - totalsPadLeft - totalsPadRight,
-         align: 'center',
-         lineBreak: false,
+         width: totalsBoxWidth - totalsPadLeft - totalsPadRight, align: 'center', lineBreak: false,
+       });
+    doc.restore();
+
+    return { afterTableY: totalsBoxBottom, totalTTC };
+  }
+
+  // ── Dynamic multi-row layout ──
+  type TotalRow = { label: string; value: number; kind: 'normal' | 'discount' | 'net' | 'grand' };
+  const rows: TotalRow[] = [];
+  rows.push({ label: 'Total HT', value: subtotal, kind: 'normal' });
+  if (hasGlobalDiscount) {
+    rows.push({ label: globalDiscount?.label || 'Remise globale', value: -discountAmount, kind: 'discount' });
+    rows.push({ label: 'Total HT net', value: netHT, kind: 'net' });
+  }
+  if (showTVA) {
+    rows.push({ label: `TVA (${Math.round(tvaRate * 100)}%)`, value: tvaAmount, kind: 'normal' });
+  }
+  rows.push({ label: showTVA ? 'Total TTC' : 'Total', value: totalTTC, kind: 'grand' });
+
+  // Compute Y positions (grand-total row is slightly taller)
+  const rowYs: number[] = [];
+  let acc = totalsBoxTop;
+  for (const r of rows) {
+    rowYs.push(acc);
+    acc += totalsRowHeight + (r.kind === 'grand' ? grandExtra : 0);
+  }
+  const totalsBoxBottom = acc;
+  const grandIdx = rows.length - 1;
+
+  // Backgrounds — light fill across the whole box, grand row a touch more visible
+  doc.save();
+  doc.fillColor('#FAF8F0').opacity(0.35)
+     .rect(totalsBoxX, totalsBoxTop, totalsBoxWidth, totalsBoxBottom - totalsBoxTop).fill();
+  doc.restore();
+  doc.save();
+  doc.fillColor('#FAF8F0').opacity(0.45)
+     .rect(totalsBoxX, rowYs[grandIdx], totalsBoxWidth, totalsRowHeight + grandExtra).fill();
+  doc.restore();
+
+  // Outer border
+  doc.save();
+  doc.strokeColor(COLORS.GOLD).lineWidth(0.8)
+     .rect(totalsBoxX, totalsBoxTop, totalsBoxWidth, totalsBoxBottom - totalsBoxTop).stroke();
+  doc.restore();
+
+  // Separator line just above the grand-total row
+  doc.save();
+  doc.strokeColor(COLORS.GOLD).lineWidth(0.5)
+     .moveTo(totalsBoxX, rowYs[grandIdx]).lineTo(totalsBoxX + totalsBoxWidth, rowYs[grandIdx]).stroke();
+  doc.restore();
+
+  // Row text
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const textY = rowYs[i] + 5;
+    const emphasize = r.kind === 'grand' || r.kind === 'net';
+    const labelFont = emphasize ? 'Helvetica-Bold' : 'Helvetica';
+    const labelSize = r.kind === 'grand' ? 11 : 9;
+    const labelColor = emphasize ? COLORS.BROWN_DARK : COLORS.GRAY_DARK;
+    const valueColor = (r.kind === 'grand' || r.kind === 'discount')
+      ? '#C41E1E'
+      : (r.kind === 'net' ? COLORS.BROWN_DARK : COLORS.GRAY_DARK);
+
+    doc.save();
+    doc.font(labelFont).fontSize(labelSize).fillColor(labelColor)
+       .text(r.label, totalsBoxX + totalsPadLeft, textY, {
+         width: labelColWidth - totalsPadLeft, align: 'left', lineBreak: false,
+       });
+    doc.font(labelFont).fillColor(valueColor)
+       .text(`${formatNumber(r.value)} DH`, totalsBoxX + labelColWidth, textY, {
+         width: valueColWidth - totalsPadRight, align: 'right', lineBreak: false,
        });
     doc.restore();
   }
 
-  const afterTableY = totalsBoxBottom;
-
-  return { afterTableY, totalTTC };
+  return { afterTableY: totalsBoxBottom, totalTTC };
 }
 
 /**
