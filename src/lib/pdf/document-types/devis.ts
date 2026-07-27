@@ -73,8 +73,10 @@ export interface DevisData {
     discountGlobal?: number;   // Global discount AMOUNT in DH (already computed)
     discountLabel?: string;    // Optional label, e.g. "Remise globale (5%)"
     notes?: string;
+    publicNotes?: string;      // Notes client — visible on the document
     internalNotes?: string;
     conditions?: string;
+    footerText?: string;       // Pied de page personnalisé
   };
 }
 
@@ -173,38 +175,44 @@ function drawAmountInWordsBox(
 }
 
 /**
- * Draw conditions section
+ * Draw a titled text section (e.g. "Notes :", "Conditions :").
+ * Measures the actual wrapped text height so multiple sections stack cleanly.
+ * Returns the Y position just below the rendered block.
  */
-function drawConditionsSection(
+function drawTextSection(
   doc: PDFDocument,
   startY: number,
-  conditions?: string
+  title: string,
+  text?: string | null
 ): number {
-  if (!conditions) {
-    return startY;  // Skip if no conditions
+  if (!text || !text.trim()) {
+    return startY;  // Skip if empty
   }
 
   const margin = 25 * MM;
+  const contentWidth = PAGE.WIDTH - 2 * margin;
+  const titleGap = 5 * MM;
   const y = startY;
 
   doc.save();
   doc.fillColor(COLORS.BROWN_DARK)
      .font('Helvetica-Bold')
      .fontSize(9)
-     .text('Conditions :', margin, y);
+     .text(title, margin, y);
 
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
-     .fontSize(8.5)
-     .text(conditions, margin, y + 5 * MM, {
-       width: PAGE.WIDTH - 2 * margin,
-       align: 'left',
-     });
+     .fontSize(8.5);
+  const textHeight = doc.heightOfString(text, { width: contentWidth, align: 'left' });
+  doc.text(text, margin, y + titleGap, {
+    width: contentWidth,
+    align: 'left',
+  });
 
   doc.restore();
 
   // FIXED: PDFKit Y increases downward
-  return y + 15 * MM;  // Return next Y position (below current element)
+  return y + titleGap + textHeight + 2 * MM;  // Next Y position below this block
 }
 
 // ────────────────────────────────────────────────────────────────────────────────
@@ -370,18 +378,27 @@ export async function generateDevisPDF(data: DevisData): Promise<Buffer> {
       const amountBoxBottom = drawAmountInWordsBox(doc, currentY, tableResult.totalTTC);
       currentY = amountBoxBottom + 5 * MM;
 
+      // Notes client (public notes visible on the document)
+      const publicNotes = data.document.publicNotes || data.document.notes;
+      if (publicNotes && publicNotes.trim()) {
+        currentY = drawTextSection(doc, currentY, 'Notes :', publicNotes);
+        currentY += 2 * MM;
+      }
+
       // Conditions section (if exists)
       if (data.document.conditions) {
-        currentY = drawConditionsSection(
-          doc,
-          currentY,
-          data.document.conditions
-        );
-        currentY += 3 * MM;
+        currentY = drawTextSection(doc, currentY, 'Conditions :', data.document.conditions);
+        currentY += 2 * MM;
+      }
+
+      // Custom footer text (Pied de page)
+      if (data.document.footerText && data.document.footerText.trim()) {
+        currentY = drawTextSection(doc, currentY, 'Pied de page :', data.document.footerText);
+        currentY += 2 * MM;
       }
 
       // Signature section
-      drawSignatureSection(doc, currentY + 10 * MM);
+      drawSignatureSection(doc, currentY + 8 * MM);
 
       // ── Draw footer ──
       drawFooter(doc);

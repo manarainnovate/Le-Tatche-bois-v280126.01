@@ -106,6 +106,9 @@ export async function generateDocumentPDF(
         document: {
           ...baseData.document,
           ...globalDiscountFields,
+          publicNotes: document.publicNotes || undefined,
+          conditions: document.conditions || undefined,
+          footerText: document.footerText || undefined,
           items: document.items.map((item) => ({
             designation: item.designation,
             description: item.description || undefined,
