@@ -25,6 +25,7 @@ import {
   RefreshCcw,
   Eye,
   Download,
+  Trash2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DocumentStatusBadge } from "@/components/crm/documents";
@@ -610,6 +611,12 @@ export function FactureDetailClient({ document, locale }: FactureDetailClientPro
   const [savingPayment, setSavingPayment] = useState(false);
   const [pdfLoading, setPdfLoading] = useState(false);
 
+  // Delete confirmation (type the exact invoice number to enable)
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const basePath = `/${locale}/admin/facturation/factures`;
 
   const { format: formatCurrency } = useCurrency();
@@ -750,6 +757,91 @@ export function FactureDetailClient({ document, locale }: FactureDetailClientPro
     router.push(`/${locale}/admin/facturation/avoirs/new?factureId=${document.id}`);
   };
 
+  // Only draft documents can be deleted (mirrors the API rules)
+  const canDelete = document.status === "DRAFT";
+
+  const handleDelete = async () => {
+    // Guard: require the exact invoice number to be typed
+    if (deleteConfirmText.trim() !== document.number) return;
+
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const response = await fetch(`/api/crm/documents/${document.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || "Erreur lors de la suppression");
+      }
+      // Success → go back to the list
+      router.push(basePath);
+      router.refresh();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Erreur lors de la suppression");
+      setDeleting(false);
+    }
+  };
+
+  // Localized strings for the delete confirmation modal
+  const deleteT = ({
+    fr: {
+      button: "Supprimer",
+      title: "Supprimer la facture",
+      warning:
+        "Cette action est irréversible. Pour confirmer, saisissez le numéro exact de la facture ci-dessous.",
+      typeLabel: "Saisissez",
+      placeholder: "Numéro de la facture",
+      cancel: "Annuler",
+      confirm: "Supprimer définitivement",
+      deleting: "Suppression...",
+    },
+    en: {
+      button: "Delete",
+      title: "Delete invoice",
+      warning:
+        "This action cannot be undone. To confirm, type the exact invoice number below.",
+      typeLabel: "Type",
+      placeholder: "Invoice number",
+      cancel: "Cancel",
+      confirm: "Delete permanently",
+      deleting: "Deleting...",
+    },
+    es: {
+      button: "Eliminar",
+      title: "Eliminar factura",
+      warning:
+        "Esta acción es irreversible. Para confirmar, escriba el número exacto de la factura a continuación.",
+      typeLabel: "Escriba",
+      placeholder: "Número de factura",
+      cancel: "Cancelar",
+      confirm: "Eliminar definitivamente",
+      deleting: "Eliminando...",
+    },
+    ar: {
+      button: "حذف",
+      title: "حذف الفاتورة",
+      warning: "هذا الإجراء لا يمكن التراجع عنه. للتأكيد، اكتب رقم الفاتورة بالضبط أدناه.",
+      typeLabel: "اكتب",
+      placeholder: "رقم الفاتورة",
+      cancel: "إلغاء",
+      confirm: "حذف نهائي",
+      deleting: "جارٍ الحذف...",
+    },
+  } as const)[locale as "fr" | "en" | "es" | "ar"] ?? {
+    button: "Supprimer",
+    title: "Supprimer la facture",
+    warning:
+      "Cette action est irréversible. Pour confirmer, saisissez le numéro exact de la facture ci-dessous.",
+    typeLabel: "Saisissez",
+    placeholder: "Numéro de la facture",
+    cancel: "Annuler",
+    confirm: "Supprimer définitivement",
+    deleting: "Suppression...",
+  };
+
+  const deleteConfirmed = deleteConfirmText.trim() === document.number;
+
   // Get related avoirs
   const relatedAvoirs = document.children.filter((c) => c.type === "AVOIR");
 
@@ -820,6 +912,20 @@ export function FactureDetailClient({ document, locale }: FactureDetailClientPro
               <Edit className="h-4 w-4" />
               {t.edit}
             </Link>
+          )}
+
+          {canDelete && (
+            <button
+              onClick={() => {
+                setDeleteConfirmText("");
+                setDeleteError(null);
+                setShowDeleteModal(true);
+              }}
+              className="flex items-center gap-2 px-3 py-2 border border-red-300 dark:border-red-800 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleteT.button}
+            </button>
           )}
 
           {canAddPayment && (
@@ -1417,6 +1523,82 @@ export function FactureDetailClient({ document, locale }: FactureDetailClientPro
                   <CreditCard className="h-4 w-4" />
                 )}
                 {savingPayment ? t.addPaymentModal.saving : t.addPaymentModal.save}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal (type-to-confirm) */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="flex items-center gap-2 text-lg font-semibold text-red-600 dark:text-red-400">
+                <AlertTriangle className="h-5 w-5" />
+                {deleteT.title}
+              </h3>
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg disabled:opacity-50"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {deleteT.warning}
+              </p>
+
+              <div className="rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-center">
+                <span className="font-mono font-semibold text-red-700 dark:text-red-300">
+                  {document.number}
+                </span>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {deleteT.typeLabel} <span className="font-mono">{document.number}</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && deleteConfirmed && !deleting) handleDelete();
+                  }}
+                  placeholder={deleteT.placeholder}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-800 font-mono"
+                />
+              </div>
+
+              {deleteError && (
+                <p className="text-sm text-red-600 dark:text-red-400">{deleteError}</p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                disabled={deleting}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {deleteT.cancel}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={!deleteConfirmed || deleting}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+              >
+                {deleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                {deleting ? deleteT.deleting : deleteT.confirm}
               </button>
             </div>
           </div>
