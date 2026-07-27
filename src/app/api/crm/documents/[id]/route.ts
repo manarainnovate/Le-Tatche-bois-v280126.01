@@ -450,27 +450,17 @@ export async function DELETE(
       return apiError("Document non trouvé", 404);
     }
 
-    // FIX 2: Check if document is locked (issued)
-    if (document.isLocked) {
-      return apiError("Ce document a été émis et ne peut pas être supprimé", 400);
-    }
-
-    // FIX 2: Check if document has been issued (has official number)
-    if (!document.isDraft) {
-      return apiError("Ce document a un numéro officiel et ne peut pas être supprimé", 400);
-    }
-
-    // Check if document can be deleted
-    if (document.status !== "DRAFT") {
-      return apiError("Seuls les brouillons peuvent être supprimés", 400);
-    }
+    // NOTE: Draft-only restriction intentionally relaxed — issued documents can
+    // now be deleted (per admin request). Deleting an issued document leaves a
+    // gap in the sequential numbering; that trade-off is accepted.
+    // The following data-integrity guards are still enforced:
 
     if (document.children.length > 0) {
-      return apiError("Ce document a des documents liés", 400);
+      return apiError("Ce document a des documents liés et ne peut pas être supprimé", 400);
     }
 
     if (document.payments.length > 0) {
-      return apiError("Ce document a des paiements enregistrés", 400);
+      return apiError("Ce document a des paiements enregistrés et ne peut pas être supprimé", 400);
     }
 
     // Delete document (items will cascade)

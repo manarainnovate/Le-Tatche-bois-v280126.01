@@ -396,6 +396,12 @@ export function FacturesPageClient({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
+  // Single-row delete (type-to-confirm)
+  const [deleteTarget, setDeleteTarget] = useState<Document | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [rowDeleting, setRowDeleting] = useState(false);
+
   const basePath = `/${locale}/admin/facturation/factures`;
 
   // Calculate stats
@@ -431,6 +437,31 @@ export function FacturesPageClient({
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     updateUrl({ search: searchQuery, page: "1" });
+  };
+
+  // Delete a single invoice (requires typing the exact number to confirm)
+  const handleRowDelete = async () => {
+    if (!deleteTarget) return;
+    if (deleteConfirmText.trim() !== deleteTarget.number) return;
+
+    setRowDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/crm/documents/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || "Erreur de suppression");
+      }
+      setDeleteTarget(null);
+      setDeleteConfirmText("");
+      router.refresh();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "Erreur de suppression");
+    } finally {
+      setRowDeleting(false);
+    }
   };
 
   const clearFilters = () => {
@@ -1061,6 +1092,17 @@ export function FacturesPageClient({
                           <CreditCard className="h-4 w-4" />
                         </button>
                       )}
+                      <button
+                        onClick={() => {
+                          setDeleteTarget(doc);
+                          setDeleteConfirmText("");
+                          setDeleteError(null);
+                        }}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -1221,6 +1263,91 @@ export function FacturesPageClient({
                   className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {isDeleting ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Suppression...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-4 w-4" />
+                      Supprimer définitivement
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Single Invoice Delete — type-to-confirm */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-3 bg-red-100 dark:bg-red-900/20 rounded-full">
+                  <AlertTriangle className="h-6 w-6 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Supprimer la facture
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Cette action est irréversible
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                Pour confirmer, saisissez le numéro exact de la facture :
+              </p>
+
+              <div className="mb-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-2 text-center">
+                <span className="font-mono font-semibold text-red-700 dark:text-red-300">
+                  {deleteTarget.number}
+                </span>
+                <span className="block text-xs text-gray-500 dark:text-gray-400">
+                  {deleteTarget.clientName}
+                </span>
+              </div>
+
+              <input
+                type="text"
+                autoFocus
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "Enter" &&
+                    deleteConfirmText.trim() === deleteTarget.number &&
+                    !rowDeleting
+                  ) {
+                    handleRowDelete();
+                  }
+                }}
+                placeholder={deleteTarget.number}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-white dark:bg-gray-800 font-mono"
+              />
+
+              {deleteError && (
+                <p className="mt-2 text-sm text-red-600 dark:text-red-400">{deleteError}</p>
+              )}
+
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setDeleteTarget(null)}
+                  disabled={rowDeleting}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={handleRowDelete}
+                  disabled={rowDeleting || deleteConfirmText.trim() !== deleteTarget.number}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {rowDeleting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                       Suppression...

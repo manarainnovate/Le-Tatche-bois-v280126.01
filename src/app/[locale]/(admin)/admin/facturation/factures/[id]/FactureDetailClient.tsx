@@ -757,8 +757,10 @@ export function FactureDetailClient({ document, locale }: FactureDetailClientPro
     router.push(`/${locale}/admin/facturation/avoirs/new?factureId=${document.id}`);
   };
 
-  // Only draft documents can be deleted (mirrors the API rules)
-  const canDelete = document.status === "DRAFT";
+  // Any invoice can be deleted as long as it has no linked documents and no
+  // recorded payments (mirrors the API rules).
+  const canDelete =
+    document.children.length === 0 && document.payments.length === 0;
 
   const handleDelete = async () => {
     // Guard: require the exact invoice number to be typed
