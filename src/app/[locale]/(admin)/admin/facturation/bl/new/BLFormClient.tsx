@@ -472,10 +472,10 @@ export function BLFormClient({
     }
   };
 
-  // Update quantity for an item.
-  // Only cap at the ordered quantity when this line came from a Bon de Commande
-  // (quantityOrdered > 0). Custom/manual lines have no ordered quantity, so they
-  // must be freely editable — otherwise Math.min(qty, 0) would force them to 0.
+  // Update delivered quantity for an item.
+  // Only cap at the ordered quantity for lines that came from a Bon de Commande
+  // (they have a sourceItemId) — you cannot deliver more than was ordered.
+  // Custom/manual lines have no ordered reference, so they are freely editable.
   const updateItemQuantity = (itemId: string, quantity: number) => {
     setItems((prev) =>
       prev.map((item) =>
@@ -483,7 +483,7 @@ export function BLFormClient({
           ? {
               ...item,
               quantityDelivered:
-                item.quantityOrdered > 0
+                item.sourceItemId && item.quantityOrdered > 0
                   ? Math.min(quantity, item.quantityOrdered)
                   : quantity,
             }
@@ -823,8 +823,23 @@ export function BLFormClient({
                             placeholder={t.designation}
                           />
                         </td>
-                        <td className="py-2 px-2 text-center text-sm text-gray-500">
-                          {item.quantityOrdered}
+                        <td className="py-2 px-2 text-center">
+                          {item.sourceItemId ? (
+                            // From a Bon de Commande — ordered qty is fixed
+                            <span className="text-sm text-gray-500">{item.quantityOrdered}</span>
+                          ) : (
+                            // Custom line — ordered qty is editable
+                            <input
+                              type="number"
+                              value={item.quantityOrdered}
+                              onChange={(e) =>
+                                updateItemField(item.id, "quantityOrdered", parseFloat(e.target.value) || 0)
+                              }
+                              min="0"
+                              step="0.5"
+                              className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-center focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
+                            />
+                          )}
                         </td>
                         <td className="py-2 px-2">
                           <input
@@ -834,8 +849,8 @@ export function BLFormClient({
                               updateItemQuantity(item.id, parseFloat(e.target.value) || 0)
                             }
                             min="0"
-                            max={item.quantityOrdered > 0 ? item.quantityOrdered : undefined}
-                            step="0.001"
+                            max={item.sourceItemId && item.quantityOrdered > 0 ? item.quantityOrdered : undefined}
+                            step="0.5"
                             className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-center focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
                           />
                         </td>
