@@ -472,12 +472,21 @@ export function BLFormClient({
     }
   };
 
-  // Update quantity for an item
+  // Update quantity for an item.
+  // Only cap at the ordered quantity when this line came from a Bon de Commande
+  // (quantityOrdered > 0). Custom/manual lines have no ordered quantity, so they
+  // must be freely editable — otherwise Math.min(qty, 0) would force them to 0.
   const updateItemQuantity = (itemId: string, quantity: number) => {
     setItems((prev) =>
       prev.map((item) =>
         item.id === itemId
-          ? { ...item, quantityDelivered: Math.min(quantity, item.quantityOrdered) }
+          ? {
+              ...item,
+              quantityDelivered:
+                item.quantityOrdered > 0
+                  ? Math.min(quantity, item.quantityOrdered)
+                  : quantity,
+            }
           : item
       )
     );
@@ -825,7 +834,7 @@ export function BLFormClient({
                               updateItemQuantity(item.id, parseFloat(e.target.value) || 0)
                             }
                             min="0"
-                            max={item.quantityOrdered}
+                            max={item.quantityOrdered > 0 ? item.quantityOrdered : undefined}
                             step="0.001"
                             className="w-20 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-center focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
                           />
