@@ -143,7 +143,17 @@ function drawSimpleTable(
   const colObs = tableWidth - colNo - colDesignation - colQty - colUnit;
 
   const headerHeight = 8 * MM;
-  const rowHeight = 6 * MM;
+  const rowHeight = 6 * MM;  // Minimum row height (short single-line designations)
+
+  // Measure the height a row needs so long designations wrap instead of
+  // overlapping the next row (mirrors the devis/facture dynamic-height tables).
+  const measureRowHeight = (item: BonLivraisonItem): number => {
+    doc.save();
+    doc.font('Helvetica').fontSize(8);
+    const h = doc.heightOfString(item.designation || '', { width: colDesignation - 4 });
+    doc.restore();
+    return Math.max(rowHeight, h + 3.5 * MM);  // + vertical padding (top + bottom)
+  };
 
   // Check if pagination is needed
   const needsPagination = pagination && items.length > pagination.maxItemsFirstPage;
@@ -206,33 +216,35 @@ function drawSimpleTable(
        .fontSize(8);
 
     items.forEach((item, index) => {
-      // Row border
-      doc.rect(margin, y, tableWidth, rowHeight).stroke();
+      const rowH = measureRowHeight(item);
 
-      // Row content
+      // Row border
+      doc.rect(margin, y, tableWidth, rowH).stroke();
+
+      // Row content (top-aligned so multi-line designations sit cleanly)
       const textY = y + 2 * MM;
       let xPos = margin + 2;
 
       // N°
-      doc.text(String(index + 1), xPos, textY, { width: colNo, align: 'center' });
+      doc.text(String(index + 1), xPos, textY, { width: colNo, align: 'center', lineBreak: false });
       xPos += colNo;
 
-      // Désignation
+      // Désignation (wraps as needed)
       doc.text(item.designation, xPos, textY, { width: colDesignation - 4, align: 'left' });
       xPos += colDesignation;
 
       // Qté
-      doc.text(String(item.quantity), xPos, textY, { width: colQty, align: 'center' });
+      doc.text(String(item.quantity), xPos, textY, { width: colQty, align: 'center', lineBreak: false });
       xPos += colQty;
 
       // Unité
-      doc.text(item.unit || 'U', xPos, textY, { width: colUnit, align: 'center' });
+      doc.text(item.unit || 'U', xPos, textY, { width: colUnit, align: 'center', lineBreak: false });
       xPos += colUnit;
 
       // Observations
       doc.text(item.observations || '', xPos, textY, { width: colObs - 4, align: 'left' });
 
-      y += rowHeight;
+      y += rowH;
     });
 
     doc.restore();
@@ -303,33 +315,35 @@ function drawSimpleTable(
          .fontSize(8);
 
       pageItems.forEach((item, index) => {
-        // Row border
-        doc.rect(margin, rowY, tableWidth, rowHeight).stroke();
+        const rowH = measureRowHeight(item);
 
-        // Row content
+        // Row border
+        doc.rect(margin, rowY, tableWidth, rowH).stroke();
+
+        // Row content (top-aligned)
         const textY = rowY + 2 * MM;
         let xPos = margin + 2;
 
         // N° - CONTINUOUS numbering across pages
-        doc.text(String(startRowNumber + index), xPos, textY, { width: colNo, align: 'center' });
+        doc.text(String(startRowNumber + index), xPos, textY, { width: colNo, align: 'center', lineBreak: false });
         xPos += colNo;
 
-        // Désignation
+        // Désignation (wraps as needed)
         doc.text(item.designation, xPos, textY, { width: colDesignation - 4, align: 'left' });
         xPos += colDesignation;
 
         // Qté
-        doc.text(String(item.quantity), xPos, textY, { width: colQty, align: 'center' });
+        doc.text(String(item.quantity), xPos, textY, { width: colQty, align: 'center', lineBreak: false });
         xPos += colQty;
 
         // Unité
-        doc.text(item.unit || 'U', xPos, textY, { width: colUnit, align: 'center' });
+        doc.text(item.unit || 'U', xPos, textY, { width: colUnit, align: 'center', lineBreak: false });
         xPos += colUnit;
 
         // Observations
         doc.text(item.observations || '', xPos, textY, { width: colObs - 4, align: 'left' });
 
-        rowY += rowHeight;
+        rowY += rowH;
       });
 
       doc.restore();
