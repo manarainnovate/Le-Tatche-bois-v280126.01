@@ -48,6 +48,10 @@ const createDocumentSchema = z.object({
   footerText: z.string().optional().nullable(),
   // For conversion from another document
   parentId: z.string().optional().nullable(),
+  // Manual document references (e.g. on a Bon de Livraison)
+  devisRef: z.string().optional().nullable(),
+  factureRef: z.string().optional().nullable(),
+  bcRef: z.string().optional().nullable(),
   // P0-3: Draft mode - if true, creates draft with temporary number
   isDraft: z.boolean().optional().default(true),
   // If issueImmediately is true, bypass draft mode and issue with official number
@@ -384,6 +388,10 @@ export async function POST(request: NextRequest) {
         projectId: data.projectId || null,
         parentId: data.parentId || null,
         ...parentRefs,
+        // Manual references take precedence over auto-derived parent refs
+        devisRef: data.devisRef ?? parentRefs.devisRef ?? null,
+        factureRef: data.factureRef ?? parentRefs.factureRef ?? null,
+        bcRef: data.bcRef ?? parentRefs.bcRef ?? null,
         date: data.date ? new Date(data.date.includes("T") ? data.date : `${data.date}T00:00:00.000Z`) : new Date(),
         validUntil: data.validUntil ? new Date(data.validUntil.includes("T") ? data.validUntil : `${data.validUntil}T00:00:00.000Z`) : null,
         dueDate: data.dueDate ? new Date(data.dueDate.includes("T") ? data.dueDate : `${data.dueDate}T00:00:00.000Z`) : null,

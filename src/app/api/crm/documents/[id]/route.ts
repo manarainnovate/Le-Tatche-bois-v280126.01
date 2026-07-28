@@ -45,6 +45,10 @@ const updateDocumentSchema = z.object({
   internalNotes: z.string().optional().nullable(),
   publicNotes: z.string().optional().nullable(),
   footerText: z.string().optional().nullable(),
+  // Manual document references (e.g. on a Bon de Livraison)
+  devisRef: z.string().optional().nullable(),
+  factureRef: z.string().optional().nullable(),
+  bcRef: z.string().optional().nullable(),
   // PV specific
   workDescription: z.string().optional(),
   hasReserves: z.boolean().optional(),
@@ -316,6 +320,11 @@ export async function PUT(
     if (data.internalNotes !== undefined) updateData.internalNotes = data.internalNotes;
     if (data.publicNotes !== undefined) updateData.publicNotes = data.publicNotes;
     if (data.footerText !== undefined) updateData.footerText = data.footerText;
+
+    // Manual document references
+    if (data.devisRef !== undefined) updateData.devisRef = data.devisRef;
+    if (data.factureRef !== undefined) updateData.factureRef = data.factureRef;
+    if (data.bcRef !== undefined) updateData.bcRef = data.bcRef;
 
     // PV specific
     if (data.workDescription !== undefined) updateData.workDescription = data.workDescription;

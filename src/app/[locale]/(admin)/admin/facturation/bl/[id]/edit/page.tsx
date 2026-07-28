@@ -73,6 +73,8 @@ export default async function EditBLPage({ params }: EditBLPageProps) {
     deliveryAddress: document.deliveryAddress,
     publicNotes: document.publicNotes,
     internalNotes: document.internalNotes,
+    factureRef: document.factureRef,
+    devisRef: document.devisRef,
     items: document.items.map((item) => ({
       id: item.id,
       reference: item.reference,

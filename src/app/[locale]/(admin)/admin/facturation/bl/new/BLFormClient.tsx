@@ -107,6 +107,8 @@ interface EditBLDocument {
   deliveryAddress?: string | null;
   publicNotes?: string | null;
   internalNotes?: string | null;
+  factureRef?: string | null;
+  devisRef?: string | null;
   items: {
     id: string;
     reference: string | null;
@@ -434,6 +436,9 @@ export function BLFormClient({
   const [deliveryAddress, setDeliveryAddress] = useState(editDocument?.deliveryAddress || "");
   const [notes, setNotes] = useState(editDocument?.publicNotes || "");
   const [internalNotes, setInternalNotes] = useState(editDocument?.internalNotes || "");
+  // Optional manual references shown on the BL PDF ("Réf. Facture", "Réf. Devis")
+  const [refFacture, setRefFacture] = useState(editDocument?.factureRef || "");
+  const [refDevis, setRefDevis] = useState(editDocument?.devisRef || "");
   const [items, setItems] = useState<BLLineItem[]>(
     editDocument
       ? editDocument.items.map((it) => ({
@@ -626,6 +631,8 @@ export function BLFormClient({
         deliveryAddress,
         publicNotes: notes,
         internalNotes,
+        factureRef: refFacture.trim() || null,
+        devisRef: refDevis.trim() || null,
         items: deliveredItems.map((item) => ({
           sourceItemId: item.sourceItemId,
           reference: item.reference,
@@ -812,6 +819,36 @@ export function BLFormClient({
                   type="text"
                   value={deliveryAddress}
                   onChange={(e) => setDeliveryAddress(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
+                />
+              </div>
+
+              {/* Réf. Facture (optional, shown on the PDF) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <FileText className="h-4 w-4 inline mr-1" />
+                  Réf. Facture <span className="text-gray-400">(optionnel)</span>
+                </label>
+                <input
+                  type="text"
+                  value={refFacture}
+                  onChange={(e) => setRefFacture(e.target.value)}
+                  placeholder="Ex : FA-2026-000001"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
+                />
+              </div>
+
+              {/* Réf. Devis (optional, shown on the PDF) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <FileText className="h-4 w-4 inline mr-1" />
+                  Réf. Devis <span className="text-gray-400">(optionnel)</span>
+                </label>
+                <input
+                  type="text"
+                  value={refDevis}
+                  onChange={(e) => setRefDevis(e.target.value)}
+                  placeholder="Ex : DEV-2026-000001"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
                 />
               </div>

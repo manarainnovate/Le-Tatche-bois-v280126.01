@@ -150,6 +150,8 @@ export async function generateDocumentPDF(
         ...baseData,
         document: {
           ...baseData.document,
+          refFacture: document.factureRef || undefined,
+          refDevis: document.devisRef || undefined,
           items: document.items.map((item) => ({
             designation: item.designation,
             description: item.description || undefined,
