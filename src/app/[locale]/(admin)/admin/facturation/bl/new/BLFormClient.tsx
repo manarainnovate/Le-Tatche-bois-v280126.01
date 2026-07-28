@@ -99,11 +99,32 @@ interface BLLineItem {
   tvaRate: number;
 }
 
+interface EditBLDocument {
+  id: string;
+  clientId: string;
+  date: string | Date;
+  deliveryDate?: string | Date | null;
+  deliveryAddress?: string | null;
+  publicNotes?: string | null;
+  internalNotes?: string | null;
+  items: {
+    id: string;
+    reference: string | null;
+    designation: string;
+    description?: string | null;
+    quantity: number;
+    unit: string;
+    unitPriceHT: number;
+    tvaRate: number;
+  }[];
+}
+
 interface BLFormClientProps {
   locale: string;
   clients: Client[];
   bonsCommande: BonCommande[];
   parentDocument?: ParentDocument | null;
+  editDocument?: EditBLDocument | null;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -388,19 +409,47 @@ export function BLFormClient({
   clients,
   bonsCommande,
   parentDocument,
+  editDocument = null,
 }: BLFormClientProps) {
   const router = useRouter();
   const t = (translations[locale] || translations.fr) as Translations;
 
-  // Form state
-  const [selectedClientId, setSelectedClientId] = useState(parentDocument?.clientId || "");
+  const isEditMode = !!editDocument;
+
+  // Form state (prefilled from editDocument when editing)
+  const [selectedClientId, setSelectedClientId] = useState(
+    editDocument?.clientId || parentDocument?.clientId || ""
+  );
   const [selectedBCId, setSelectedBCId] = useState(parentDocument?.id || "");
-  const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
-  const [deliveryDate, setDeliveryDate] = useState("");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const [notes, setNotes] = useState("");
-  const [internalNotes, setInternalNotes] = useState("");
-  const [items, setItems] = useState<BLLineItem[]>([]);
+  const [date, setDate] = useState(
+    editDocument?.date
+      ? new Date(editDocument.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0]
+  );
+  const [deliveryDate, setDeliveryDate] = useState(
+    editDocument?.deliveryDate
+      ? new Date(editDocument.deliveryDate).toISOString().split("T")[0]
+      : ""
+  );
+  const [deliveryAddress, setDeliveryAddress] = useState(editDocument?.deliveryAddress || "");
+  const [notes, setNotes] = useState(editDocument?.publicNotes || "");
+  const [internalNotes, setInternalNotes] = useState(editDocument?.internalNotes || "");
+  const [items, setItems] = useState<BLLineItem[]>(
+    editDocument
+      ? editDocument.items.map((it) => ({
+          id: it.id,
+          reference: it.reference,
+          designation: it.designation,
+          description: it.description ?? undefined,
+          // Existing BL lines have no "ordered" reference — make both editable.
+          quantityOrdered: 0,
+          quantityDelivered: it.quantity,
+          unit: it.unit,
+          unitPriceHT: it.unitPriceHT,
+          tvaRate: it.tvaRate,
+        }))
+      : []
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -557,7 +606,12 @@ export function BLFormClient({
       return;
     }
     // BC source is now OPTIONAL - removed validation
-    if (items.filter((i) => i.quantityDelivered > 0).length === 0) {
+    // Keep only lines that are actually being delivered AND have a designation
+    // (a blank designation would fail server validation with a cryptic message).
+    const deliveredItems = items.filter(
+      (item) => item.quantityDelivered > 0 && item.designation.trim() !== ""
+    );
+    if (deliveredItems.length === 0) {
       setError(t.errors.addItems);
       return;
     }
@@ -566,37 +620,47 @@ export function BLFormClient({
     setError("");
 
     try {
-      const response = await fetch("/api/crm/documents", {
-        method: "POST",
+      // publicNotes is the field the API persists (not "notes").
+      const payload: Record<string, unknown> = {
+        deliveryDate: deliveryDate || undefined,
+        deliveryAddress,
+        publicNotes: notes,
+        internalNotes,
+        items: deliveredItems.map((item) => ({
+          sourceItemId: item.sourceItemId,
+          reference: item.reference,
+          designation: item.designation.trim(),
+          description: item.description,
+          quantity: item.quantityDelivered,
+          unit: item.unit,
+          unitPriceHT: item.unitPriceHT,
+          tvaRate: item.tvaRate,
+        })),
+      };
+
+      if (!isEditMode) {
+        payload.type = "BON_LIVRAISON";
+        payload.clientId = selectedClientId;
+        payload.parentId = selectedBCId || undefined; // BC is optional
+        payload.date = date;
+      }
+
+      const url = isEditMode
+        ? `/api/crm/documents/${editDocument!.id}`
+        : "/api/crm/documents";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "BON_LIVRAISON",
-          clientId: selectedClientId,
-          parentId: selectedBCId || undefined, // BC is now optional
-          date: date, // Send as string, API will handle conversion
-          deliveryDate: deliveryDate || undefined,
-          deliveryAddress,
-          notes,
-          internalNotes,
-          items: items
-            .filter((item) => item.quantityDelivered > 0)
-            .map((item) => ({
-              sourceItemId: item.sourceItemId,
-              reference: item.reference,
-              designation: item.designation,
-              description: item.description,
-              quantity: item.quantityDelivered,
-              unit: item.unit,
-              unitPriceHT: item.unitPriceHT,
-              tvaRate: item.tvaRate,
-            })),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        router.push(`${basePath}/${data.data.id}`);
+        const docId = isEditMode ? editDocument!.id : data.data.id;
+        router.push(`${basePath}/${docId}`);
       } else {
         setError(data.error || "An error occurred");
       }
@@ -621,10 +685,10 @@ export function BLFormClient({
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Truck className="h-7 w-7 text-amber-600" />
-              {t.title}
+              {isEditMode ? "Modifier le Bon de Livraison" : t.title}
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-              {t.subtitle}
+              {isEditMode ? "Modifier les articles et informations du BL" : t.subtitle}
             </p>
           </div>
         </div>
@@ -671,11 +735,14 @@ export function BLFormClient({
                   value={selectedClientId}
                   onChange={(e) => {
                     setSelectedClientId(e.target.value);
+                    // Changing the client invalidates any BC-sourced lines (they
+                    // belong to the previous client's BC), but keep the manual
+                    // lines the user typed.
                     setSelectedBCId("");
-                    setItems([]);
+                    setItems((prev) => prev.filter((item) => !item.sourceItemId));
                   }}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
-                  disabled={!!parentDocument}
+                  disabled={!!parentDocument || isEditMode}
                 >
                   <option value="">{t.selectClient}</option>
                   {clients.map((client) => (
@@ -696,7 +763,7 @@ export function BLFormClient({
                   value={selectedBCId}
                   onChange={(e) => handleBCChange(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 bg-white dark:bg-gray-800"
-                  disabled={!!parentDocument}
+                  disabled={!!parentDocument || isEditMode}
                 >
                   <option value="">{t.selectBC}</option>
                   {filteredBCs.map((bc) => (
