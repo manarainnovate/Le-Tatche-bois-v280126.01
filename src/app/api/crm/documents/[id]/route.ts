@@ -15,7 +15,7 @@ const documentItemSchema = z.object({
   description: z.string().optional().nullable(),
   quantity: z.number().positive(),
   unit: z.string().default("pcs"),
-  unitPriceHT: z.number().min(0),
+  unitPriceHT: z.number(), // may be negative for acompte/deduction lines
   discountPercent: z.number().min(0).max(100).optional().nullable(),
   tvaRate: z.number().default(20),
 });

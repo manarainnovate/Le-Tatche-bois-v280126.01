@@ -7,6 +7,7 @@ import {
   Receipt,
   ArrowLeft,
   Plus,
+  Minus,
   Trash2,
   Calculator,
   Save,
@@ -124,6 +125,8 @@ interface LineItem {
   unitPriceHT: number;
   discountPercent: number;
   tvaRate: number;
+  // A deposit/acompte deduction line — allowed to have a negative amount
+  isDeposit?: boolean;
   // Validation state
   isValidated: boolean;
   isEditing: boolean;
@@ -539,6 +542,8 @@ export function FactureFormClient({
         unitPriceHT: item.unitPriceHT,
         discountPercent: item.discountPercent || 0,
         tvaRate: item.tvaRate,
+        // A negative-priced line is an acompte deduction
+        isDeposit: item.unitPriceHT < 0,
         // Pre-filled items start as validated
         isValidated: true,
         isEditing: false,
@@ -712,6 +717,34 @@ export function FactureFormClient({
     }
   };
 
+  // Add an acompte (advance) deduction line — a pre-labelled negative line so
+  // the final invoice shows only the remaining amount to pay.
+  const addDepositLine = () => {
+    const newId = crypto.randomUUID();
+    setItems([
+      ...items,
+      {
+        id: newId,
+        reference: "",
+        designation: "Déduction de l'acompte déjà versé",
+        description: "",
+        quantity: 1,
+        unit: "forfait",
+        unitPriceHT: 0, // enter the advance as a negative amount, e.g. -25000
+        discountPercent: 0,
+        tvaRate: 20,
+        isDeposit: true,
+        isValidated: false,
+        isEditing: true,
+        validationErrors: [],
+      },
+    ]);
+    setTimeout(() => {
+      const newRow = document.querySelector(`[data-row-id="${newId}"] input[type="number"]`);
+      if (newRow instanceof HTMLInputElement) newRow.focus();
+    }, 100);
+  };
+
   // Validate line item
   const validateLine = (itemId: string) => {
     const itemIndex = items.findIndex((i) => i.id === itemId);
@@ -722,7 +755,8 @@ export function FactureFormClient({
 
     if (!item.designation.trim()) errors.push("designation");
     if (item.quantity <= 0) errors.push("quantity");
-    if (item.unitPriceHT < 0) errors.push("unitPriceHT");
+    // Deposit lines are allowed to be negative
+    if (!item.isDeposit && item.unitPriceHT < 0) errors.push("unitPriceHT");
 
     if (errors.length > 0) {
       // Show errors
@@ -1514,14 +1548,25 @@ export function FactureFormClient({
                 <FileText className="h-5 w-5 text-amber-600" />
                 {t.items}
               </h2>
-              <button
-                type="button"
-                onClick={() => addItem(false)}
-                className="flex items-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors text-sm"
-              >
-                <Plus className="h-4 w-4" />
-                {t.addItem}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={addDepositLine}
+                  className="flex items-center gap-2 px-3 py-2 border border-amber-600 text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors text-sm"
+                  title="Insérer une ligne de déduction d'acompte (montant négatif)"
+                >
+                  <Minus className="h-4 w-4" />
+                  Déduire un acompte
+                </button>
+                <button
+                  type="button"
+                  onClick={() => addItem(false)}
+                  className="flex items-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors text-sm"
+                >
+                  <Plus className="h-4 w-4" />
+                  {t.addItem}
+                </button>
+              </div>
             </div>
 
             {/* Items Table */}
@@ -1771,9 +1816,9 @@ export function FactureFormClient({
                             onChange={(e) => updateItem(item.id, "unitPriceHT", parseFloat(e.target.value) || 0)}
                             onKeyDown={(e) => handleItemKeyDown(e, item.id, "unitPriceHT")}
                             disabled={item.isValidated}
-                            min="0"
+                            min={item.isDeposit ? undefined : "0"}
                             step="0.01"
-                            placeholder="Prix HT"
+                            placeholder={item.isDeposit ? "Ex : -25000" : "Prix HT"}
                             className={cn(
                               "w-full px-2 py-2 text-sm text-right border rounded-lg focus:ring-1 focus:ring-amber-200 focus:border-amber-400 bg-white dark:bg-gray-800",
                               item.validationErrors.includes("unitPriceHT")
