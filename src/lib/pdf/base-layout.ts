@@ -12,7 +12,7 @@
 import path from 'path';
 import fs from 'fs';
 import QRCode from 'qrcode';
-import { formatNumber } from './helpers/format-utils';
+import { formatNumber, sanitizePdfText } from './helpers/format-utils';
 
 // Import PDFKit types
 type PDFDocument = PDFKit.PDFDocument;
@@ -1006,7 +1006,7 @@ export function drawClientBox(
   doc.fillColor(COLORS.BLACK)
      .font('Helvetica-Bold')
      .fontSize(10)
-     .text(client.name || '[Nom du client]', textX, textY, { width: boxWidth - 2 * padLeft });
+     .text(sanitizePdfText(client.name) || '[Nom du client]', textX, textY, { width: boxWidth - 2 * padLeft });
   doc.restore();
 
   // Address (only if provided)
@@ -1016,7 +1016,7 @@ export function drawClientBox(
     doc.fillColor(COLORS.GRAY_DARK)
        .font('Helvetica')
        .fontSize(8.5)
-       .text(client.address, textX, textY, { width: boxWidth - 2 * padLeft });
+       .text(sanitizePdfText(client.address), textX, textY, { width: boxWidth - 2 * padLeft });
     doc.restore();
   }
 
@@ -1027,7 +1027,7 @@ export function drawClientBox(
     doc.fillColor(COLORS.GRAY_DARK)
        .font('Helvetica')
        .fontSize(8.5)
-       .text(client.city, textX, textY, { width: boxWidth - 2 * padLeft });
+       .text(sanitizePdfText(client.city), textX, textY, { width: boxWidth - 2 * padLeft });
     doc.restore();
   }
 
@@ -1087,7 +1087,7 @@ const SUB_FONT_SIZE = 7;
  * Handles \n inside `desc` and an optional separate `description` field.
  */
 function splitItemLines(item: TableItem): { main: string; subs: string[] } {
-  const descParts = (item.desc || '')
+  const descParts = sanitizePdfText(item.desc)
     .split(/\r?\n/)
     .map((s) => s.trim())
     .filter(Boolean);
@@ -1095,7 +1095,7 @@ function splitItemLines(item: TableItem): { main: string; subs: string[] } {
   let subs = descParts.slice(1);
 
   if (item.description) {
-    const extra = item.description
+    const extra = sanitizePdfText(item.description)
       .split(/\r?\n/)
       .map((s) => s.trim())
       .filter(Boolean);

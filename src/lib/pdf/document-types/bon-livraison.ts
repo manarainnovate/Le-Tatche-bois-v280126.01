@@ -25,7 +25,7 @@ import {
   HeaderResult,
   ClientInfo,
 } from '../base-layout';
-import { formatDate } from '../helpers/format-utils';
+import { formatDate, sanitizePdfText } from '../helpers/format-utils';
 
 // Type alias for PDFDocument
 type PDFDocument = PDFKit.PDFDocument;
@@ -150,7 +150,7 @@ function drawSimpleTable(
   const measureRowHeight = (item: BonLivraisonItem): number => {
     doc.save();
     doc.font('Helvetica').fontSize(8);
-    const h = doc.heightOfString(item.designation || '', { width: colDesignation - 4 });
+    const h = doc.heightOfString(sanitizePdfText(item.designation), { width: colDesignation - 4 });
     doc.restore();
     return Math.max(rowHeight, h + 3.5 * MM);  // + vertical padding (top + bottom)
   };
@@ -230,7 +230,7 @@ function drawSimpleTable(
       xPos += colNo;
 
       // Désignation (wraps as needed)
-      doc.text(item.designation, xPos, textY, { width: colDesignation - 4, align: 'left' });
+      doc.text(sanitizePdfText(item.designation), xPos, textY, { width: colDesignation - 4, align: 'left' });
       xPos += colDesignation;
 
       // Qté
@@ -242,7 +242,7 @@ function drawSimpleTable(
       xPos += colUnit;
 
       // Observations
-      doc.text(item.observations || '', xPos, textY, { width: colObs - 4, align: 'left' });
+      doc.text(sanitizePdfText(item.observations), xPos, textY, { width: colObs - 4, align: 'left' });
 
       y += rowH;
     });
@@ -329,7 +329,7 @@ function drawSimpleTable(
         xPos += colNo;
 
         // Désignation (wraps as needed)
-        doc.text(item.designation, xPos, textY, { width: colDesignation - 4, align: 'left' });
+        doc.text(sanitizePdfText(item.designation), xPos, textY, { width: colDesignation - 4, align: 'left' });
         xPos += colDesignation;
 
         // Qté
@@ -341,7 +341,7 @@ function drawSimpleTable(
         xPos += colUnit;
 
         // Observations
-        doc.text(item.observations || '', xPos, textY, { width: colObs - 4, align: 'left' });
+        doc.text(sanitizePdfText(item.observations), xPos, textY, { width: colObs - 4, align: 'left' });
 
         rowY += rowH;
       });

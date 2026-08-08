@@ -25,7 +25,7 @@ import {
   TableItem,
 } from '../base-layout';
 import { amountInFrench } from '../helpers/french-numbers';
-import { formatDate } from '../helpers/format-utils';
+import { formatDate, sanitizePdfText } from '../helpers/format-utils';
 
 // Type alias for PDFDocument
 type PDFDocument = PDFKit.PDFDocument;
@@ -185,7 +185,8 @@ function drawTextSection(
   title: string,
   text?: string | null
 ): number {
-  if (!text || !text.trim()) {
+  const clean = sanitizePdfText(text);
+  if (!clean || !clean.trim()) {
     return startY;  // Skip if empty
   }
 
@@ -203,8 +204,8 @@ function drawTextSection(
   doc.fillColor(COLORS.GRAY_DARK)
      .font('Helvetica')
      .fontSize(8.5);
-  const textHeight = doc.heightOfString(text, { width: contentWidth, align: 'left' });
-  doc.text(text, margin, y + titleGap, {
+  const textHeight = doc.heightOfString(clean, { width: contentWidth, align: 'left' });
+  doc.text(clean, margin, y + titleGap, {
     width: contentWidth,
     align: 'left',
   });
